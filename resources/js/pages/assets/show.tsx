@@ -131,7 +131,7 @@ interface Asset {
 
     assigned_user?: AssignedUser | null;
 
-    maintenanceRecords?: MaintenanceRecord[];
+    maintenance_records?: MaintenanceRecord[];
 
     created_at: string;
 
@@ -446,7 +446,7 @@ export default function ShowAsset({
     */
 
     const maintenanceRecords =
-        asset.maintenanceRecords ?? [];
+    asset.maintenance_records ?? [];
 
 
     /*
