@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +31,13 @@ Route::middleware(['auth'])->group(function () {
             ]),
         ]);
     })->name('dashboard');
+
+
+    //ASSETS
+    Route::get('/assets', [
+        AssetController::class,
+        'index',
+    ])->name('assets.index');
 });
 
 require __DIR__ . '/settings.php';
