@@ -1,19 +1,23 @@
 import {
-    BookOpen,
+    Archive,
+    BarChart3,
+    Bell,
+    Boxes,
+    Building2,
+    CalendarClock,
     ClipboardList,
-    FileArchive,
-    FilePlus2,
-    FileSpreadsheet,
+    FileBarChart,
     FileText,
-    FolderOpen,
+    Gauge,
+    History,
     LayoutGrid,
+    Package,
     Settings,
     ShieldCheck,
-    Upload,
+    Truck,
+    UserCog,
     Users,
-    Building2,
-    BarChart3,
-    Search,
+    Wrench,
 } from 'lucide-react';
 
 import { Link } from '@inertiajs/react';
@@ -31,6 +35,7 @@ import {
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { type NavItem } from '@/types';
+
 import AppLogo from './app-logo';
 
 
@@ -41,136 +46,325 @@ import AppLogo from './app-logo';
 */
 
 const mainNavItems: NavItem[] = [
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
     {
         title: 'Dashboard',
         url: '/dashboard',
         icon: LayoutGrid,
     },
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSET MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
     {
-        title: 'Documents',
+        title: 'Assets',
+        url: '#',
+        icon: Boxes,
+        items: [
+
+            {
+                title: 'All Assets',
+                url: '/assets',
+                icon: Archive,
+            },
+
+            {
+                title: 'Register Asset',
+                url: '/assets/create',
+                icon: Package,
+            },
+
+            {
+                title: 'Asset Categories',
+                url: '/asset-categories',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'Asset Locations',
+                url: '/asset-locations',
+                icon: Building2,
+            },
+
+            {
+                title: 'Asset History',
+                url: '/assets/history',
+                icon: History,
+            },
+
+        ],
+    },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MAINTENANCE
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        title: 'Maintenance',
+        url: '#',
+        icon: Wrench,
+        items: [
+
+            {
+                title: 'Maintenance Overview',
+                url: '/maintenance',
+                icon: Gauge,
+            },
+
+            {
+                title: 'Preventive Maintenance',
+                url: '/maintenance/preventive',
+                icon: CalendarClock,
+            },
+
+            {
+                title: 'Maintenance Schedule',
+                url: '/maintenance/schedule',
+                icon: CalendarClock,
+            },
+
+            {
+                title: 'Maintenance History',
+                url: '/maintenance/history',
+                icon: History,
+            },
+
+        ],
+    },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WORK ORDERS
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        title: 'Work Orders',
+        url: '#',
+        icon: ClipboardList,
+        items: [
+
+            {
+                title: 'All Work Orders',
+                url: '/work-orders',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'Create Work Order',
+                url: '/work-orders/create',
+                icon: FileText,
+            },
+
+            {
+                title: 'My Work Orders',
+                url: '/work-orders/my',
+                icon: UserCog,
+            },
+
+            {
+                title: 'Pending Approval',
+                url: '/work-orders/pending',
+                icon: Bell,
+            },
+
+            {
+                title: 'Completed',
+                url: '/work-orders/completed',
+                icon: History,
+            },
+
+        ],
+    },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SERVICE REQUESTS
+    |--------------------------------------------------------------------------
+    */
+
+    {
+        title: 'Requests',
         url: '#',
         icon: FileText,
         items: [
+
             {
-                title: 'My Documents',
-                url: '/documents',
+                title: 'All Requests',
+                url: '/requests',
             },
+
             {
-                title: 'Create Document',
-                url: '/documents/create',
+                title: 'New Request',
+                url: '/requests/create',
             },
+
             {
-                title: 'Document Tracking',
-                url: '/documents/tracking',
+                title: 'My Requests',
+                url: '/requests/my',
             },
+
+            {
+                title: 'Pending Requests',
+                url: '/requests/pending',
+            },
+
         ],
     },
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | INVENTORY
+    |--------------------------------------------------------------------------
+    */
+
     {
-        title: 'Templates',
+        title: 'Inventory',
         url: '#',
-        icon: FileArchive,
+        icon: Package,
         items: [
+
             {
-                title: 'All Templates',
-                url: '/templates',
+                title: 'Inventory Overview',
+                url: '/inventory',
+                icon: Boxes,
             },
+
             {
-                title: 'Word Templates',
-                url: '/templates?type=word',
-                icon: FileText,
+                title: 'Parts & Supplies',
+                url: '/inventory/items',
+                icon: Package,
             },
+
             {
-                title: 'Excel Templates',
-                url: '/templates?type=excel',
-                icon: FileSpreadsheet,
+                title: 'Stock Movement',
+                url: '/inventory/movements',
+                icon: History,
             },
+
+            {
+                title: 'Low Stock',
+                url: '/inventory/low-stock',
+                icon: Bell,
+            },
+
+            {
+                title: 'Suppliers',
+                url: '/suppliers',
+                icon: Truck,
+            },
+
         ],
     },
 
-    {
-        title: 'Import',
-        url: '#',
-        icon: Upload,
-        items: [
-            {
-                title: 'Import Word',
-                url: '/templates/import/word',
-                icon: FileText,
-            },
-            {
-                title: 'Import Excel',
-                url: '/templates/import/excel',
-                icon: FileSpreadsheet,
-            },
-        ],
-    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | REPORTS
+    |--------------------------------------------------------------------------
+    */
 
     {
         title: 'Reports',
         url: '#',
         icon: BarChart3,
         items: [
+
             {
-                title: 'Document Reports',
-                url: '/reports/documents',
+                title: 'Maintenance Reports',
+                url: '/reports/maintenance',
+                icon: FileBarChart,
             },
+
             {
-                title: 'Tracking Reports',
-                url: '/reports/tracking',
+                title: 'Asset Reports',
+                url: '/reports/assets',
+                icon: FileBarChart,
             },
+
+            {
+                title: 'Work Order Reports',
+                url: '/reports/work-orders',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Inventory Reports',
+                url: '/reports/inventory',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Cost Reports',
+                url: '/reports/costs',
+                icon: BarChart3,
+            },
+
         ],
     },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMINISTRATION
+    |--------------------------------------------------------------------------
+    */
 
     {
         title: 'Administration',
         url: '#',
         icon: ShieldCheck,
         items: [
+
             {
                 title: 'Users',
                 url: '/admin/users',
                 icon: Users,
             },
+
             {
-                title: 'Offices',
-                url: '/admin/offices',
+                title: 'Departments',
+                url: '/admin/departments',
                 icon: Building2,
             },
+
             {
-                title: 'Document Types',
-                url: '/admin/document-types',
-                icon: ClipboardList,
+                title: 'Locations',
+                url: '/admin/locations',
+                icon: Building2,
             },
+
+            {
+                title: 'Roles & Permissions',
+                url: '/admin/roles',
+                icon: UserCog,
+            },
+
             {
                 title: 'Settings',
                 url: '/admin/settings',
                 icon: Settings,
             },
+
         ],
     },
-];
 
-
-/*
-|--------------------------------------------------------------------------
-| FOOTER
-|--------------------------------------------------------------------------
-*/
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Document Search',
-        url: '/documents/search',
-        icon: Search,
-    },
-
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs',
-        icon: BookOpen,
-    },
 ];
 
 
@@ -181,52 +375,69 @@ const footerNavItems: NavItem[] = [
 */
 
 export function AppSidebar() {
+
     return (
         <Sidebar
             collapsible="icon"
             variant="inset"
         >
-            {/* ============================================================
-                HEADER
-            ============================================================ */}
+
+            {/* ========================================================== */}
+            {/* HEADER */}
+            {/* ========================================================== */}
 
             <SidebarHeader>
+
                 <SidebarMenu>
+
                     <SidebarMenuItem>
+
                         <SidebarMenuButton
                             size="lg"
                             asChild
                         >
+
                             <Link
                                 href="/dashboard"
                                 prefetch
                             >
+
                                 <AppLogo />
+
                             </Link>
+
                         </SidebarMenuButton>
+
                     </SidebarMenuItem>
+
                 </SidebarMenu>
+
             </SidebarHeader>
 
 
-            {/* ============================================================
-                MAIN
-            ============================================================ */}
+            {/* ========================================================== */}
+            {/* MAIN */}
+            {/* ========================================================== */}
 
             <SidebarContent>
+
                 <NavMain
                     items={mainNavItems}
                 />
+
             </SidebarContent>
 
 
-            {/* ============================================================
-                FOOTER
-            ============================================================ */}
+            {/* ========================================================== */}
+            {/* FOOTER */}
+            {/* ========================================================== */}
 
             <SidebarFooter>
+
                 <NavUser />
+
             </SidebarFooter>
+
         </Sidebar>
     );
 }
