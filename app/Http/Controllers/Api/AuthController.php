@@ -154,7 +154,7 @@ class AuthController extends Controller
 
         $smsSent = $smsService->send(
             $user->phone,
-            "Your eDTS verification code is {$otp}. This code expires in 5 minutes."
+            "Your CMMS verification code is {$otp}. This code expires in 5 minutes."
         );
 
         if (!$smsSent) {
@@ -534,7 +534,7 @@ class AuthController extends Controller
 
         $smsSent = $smsService->send(
             $user->phone,
-            "Your new eDTS verification code is {$otp}. This code expires in 5 minutes."
+            "Your new CMMS verification code is {$otp}. This code expires in 5 minutes."
         );
 
         if (!$smsSent) {
@@ -656,7 +656,7 @@ class AuthController extends Controller
         */
 
         $token = $user->createToken(
-            'eDTS Mobile/Web'
+            'CMMS Mobile/Web'
         )->plainTextToken;
 
         /*
@@ -854,7 +854,7 @@ class AuthController extends Controller
 
         $smsSent = $smsService->send(
             $user->phone,
-            "Your eDTS password recovery code is {$otp}. This code expires in 5 minutes."
+            "Your CMMS password recovery code is {$otp}. This code expires in 5 minutes."
         );
 
         if (!$smsSent) {
@@ -1264,7 +1264,7 @@ class AuthController extends Controller
 
         $smsSent = $smsService->send(
             $user->phone,
-            "Your new eDTS password recovery code is {$otp}. This code expires in 5 minutes."
+            "Your new CMMS password recovery code is {$otp}. This code expires in 5 minutes."
         );
 
         if (!$smsSent) {
