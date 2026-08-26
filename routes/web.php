@@ -97,6 +97,10 @@ Route::middleware(['auth'])->group(function () {
         MaintenanceRequestController::class,
         'create',
     ])->name('maintenance-requests.create');
+    Route::post('/maintenance-requests', [
+        MaintenanceRequestController::class,
+        'store',
+    ])->name('maintenance-requests.store');
 });
 
 require __DIR__ . '/settings.php';
