@@ -6,10 +6,10 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Municipality of Estancia | eDTS">
+            <Head title="Municipality of Estancia | CMMS">
                 <meta
                     name="description"
-                    content="Electronic Document Tracking System of the Municipality of Estancia, Iloilo"
+                    content="Computerized Maintenance Management System of the Municipality of Estancia, Iloilo"
                 />
             </Head>
 
@@ -75,6 +75,8 @@ export default function Welcome() {
                 {/* Hero */}
                 <main>
                     <section className="relative overflow-hidden bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900">
+
+                        {/* Grid Background */}
                         <div className="absolute inset-0 opacity-10">
                             <div
                                 className="h-full w-full"
@@ -97,17 +99,17 @@ export default function Welcome() {
                                     </div>
 
                                     <h2 className="max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                                        Electronic Document
+                                        Computerized
                                         <span className="block text-blue-300">
-                                            Tracking System
+                                            Maintenance Management System
                                         </span>
                                     </h2>
 
                                     <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100">
                                         A digital platform of the Municipality of
-                                        Estancia, Iloilo for managing, tracking,
-                                        and monitoring official municipal
-                                        documents and transactions.
+                                        Estancia, Iloilo for managing government
+                                        assets, maintenance activities, work orders,
+                                        equipment, vehicles, and maintenance records.
                                     </p>
 
                                     <div className="mt-10 flex flex-wrap gap-4">
@@ -163,17 +165,17 @@ export default function Welcome() {
 
                             <div className="mx-auto max-w-2xl text-center">
                                 <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">
-                                    Municipal Digital Services
+                                    Municipal Asset Management
                                 </p>
 
                                 <h3 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                                    Modernizing Government Transactions
+                                    Smarter Government Maintenance
                                 </h3>
 
                                 <p className="mt-4 text-slate-600">
-                                    eDTS helps the Municipal Government of
-                                    Estancia manage documents efficiently,
-                                    transparently, and securely.
+                                    CMMS helps the Municipal Government of Estancia
+                                    organize assets, schedule maintenance, and track
+                                    maintenance activities across departments.
                                 </p>
                             </div>
 
@@ -193,18 +195,19 @@ export default function Welcome() {
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM10 5h4v2h-4V5z"
                                             />
                                         </svg>
                                     </div>
 
                                     <h4 className="mt-5 text-lg font-bold text-slate-900">
-                                        Document Management
+                                        Asset Management
                                     </h4>
 
                                     <p className="mt-2 leading-7 text-slate-600">
-                                        Manage official municipal documents
-                                        through a centralized digital system.
+                                        Maintain a centralized registry of municipal
+                                        vehicles, equipment, facilities, and other
+                                        government assets.
                                     </p>
                                 </div>
 
@@ -222,18 +225,19 @@ export default function Welcome() {
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 3c-2.755 0-5.293.933-7.31 2.504M5.31 18.496A11.955 11.955 0 0112 21c2.755 0 5.293-.933 7.31-2.504M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                             />
                                         </svg>
                                     </div>
 
                                     <h4 className="mt-5 text-lg font-bold text-slate-900">
-                                        Secure Transactions
+                                        Preventive Maintenance
                                     </h4>
 
                                     <p className="mt-2 leading-7 text-slate-600">
-                                        Keep municipal records organized with
-                                        controlled access and secure accounts.
+                                        Schedule regular inspections and maintenance
+                                        activities before equipment problems become
+                                        costly failures.
                                     </p>
                                 </div>
 
@@ -251,19 +255,18 @@ export default function Welcome() {
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                                             />
                                         </svg>
                                     </div>
 
                                     <h4 className="mt-5 text-lg font-bold text-slate-900">
-                                        Track Documents
+                                        Work Orders
                                     </h4>
 
                                     <p className="mt-2 leading-7 text-slate-600">
-                                        Monitor document movement and
-                                        transactions across municipal
-                                        departments.
+                                        Create, assign, monitor, and document
+                                        maintenance work from request to completion.
                                     </p>
                                 </div>
 
@@ -290,9 +293,9 @@ export default function Welcome() {
                             </p>
 
                             <p className="mx-auto mt-6 max-w-2xl leading-7 text-slate-600">
-                                Serving the people of Estancia through
-                                responsive, transparent, and efficient
-                                municipal government services.
+                                Supporting responsive, accountable, and efficient
+                                municipal operations through organized asset and
+                                maintenance management.
                             </p>
                         </div>
                     </section>
@@ -324,9 +327,9 @@ export default function Welcome() {
                             © {new Date().getFullYear()} Municipal Government
                             of Estancia. All rights reserved.
                         </p>
-
                     </div>
                 </footer>
+
             </div>
         </>
     );
