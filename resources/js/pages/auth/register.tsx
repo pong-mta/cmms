@@ -181,14 +181,14 @@ export default function Register() {
                 />
             </Head>
 
-            <div className="min-h-screen bg-slate-100">
+            <div className="h-screen w-full overflow-hidden bg-slate-100">
 
                 {/* ================================================== */}
                 {/* HEADER */}
                 {/* ================================================== */}
 
-                <header className="border-b border-slate-200 bg-white">
-                    <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6">
+                <header className="h-[74px] border-b border-slate-200 bg-white">
+                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-5 sm:px-6">
 
                         {/* Government Branding */}
                         <div className="flex items-center gap-3">
@@ -216,7 +216,7 @@ export default function Register() {
                             </div>
                         </div>
 
-                        {/* CMMS Label */}
+                        {/* CMMS Branding */}
                         <div className="hidden items-center gap-3 sm:flex">
 
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
@@ -232,6 +232,7 @@ export default function Register() {
                                     Maintenance Management
                                 </p>
                             </div>
+
                         </div>
                     </div>
                 </header>
@@ -240,17 +241,17 @@ export default function Register() {
                 {/* MAIN */}
                 {/* ================================================== */}
 
-                <main className="px-4 py-8 sm:px-6 lg:py-12">
+                <main className="flex h-[calc(100vh-74px)] items-center justify-center overflow-hidden px-4 py-4 sm:px-6">
 
-                    <div className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[0.9fr_1.1fr]">
+                    <div className="mx-auto grid max-h-full w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[0.9fr_1.1fr]">
 
                         {/* ================================================== */}
-                        {/* LEFT INFORMATION PANEL */}
+                        {/* LEFT PANEL */}
                         {/* ================================================== */}
 
-                        <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+                        <section className="relative hidden overflow-hidden bg-slate-950 p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10">
 
-                            {/* Background Shapes */}
+                            {/* Background Decoration */}
                             <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full border border-blue-400/10" />
 
                             <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
@@ -260,7 +261,7 @@ export default function Register() {
                             <div className="relative">
 
                                 {/* Logo */}
-                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl xl:h-20 xl:w-20">
                                     <img
                                         src="/images/estancia-logo.png"
                                         alt="Municipality of Estancia"
@@ -268,11 +269,11 @@ export default function Register() {
                                     />
                                 </div>
 
-                                <p className="mt-10 text-[10px] font-semibold uppercase tracking-[0.25em] text-blue-400">
+                                <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.25em] text-blue-400 xl:mt-10 xl:text-[10px]">
                                     Municipal Operations
                                 </p>
 
-                                <h2 className="mt-3 text-4xl font-bold leading-tight tracking-tight">
+                                <h2 className="mt-2 text-3xl font-bold leading-tight tracking-tight xl:text-4xl">
                                     Computerized
                                     <span className="block text-blue-400">
                                         Maintenance
@@ -282,7 +283,7 @@ export default function Register() {
                                     </span>
                                 </h2>
 
-                                <p className="mt-6 max-w-sm text-sm leading-7 text-slate-300">
+                                <p className="mt-4 max-w-sm text-xs leading-6 text-slate-300 xl:mt-6 xl:text-sm xl:leading-7">
                                     A centralized platform for managing
                                     municipal assets, equipment,
                                     maintenance activities, work orders,
@@ -290,34 +291,34 @@ export default function Register() {
                                 </p>
 
                                 {/* Features */}
-                                <div className="mt-10 space-y-4">
+                                <div className="mt-6 space-y-3 xl:mt-8 xl:space-y-4">
 
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-xs text-slate-300">
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
                                             Asset & Equipment Management
                                         </span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-xs text-slate-300">
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
                                             Preventive Maintenance
                                         </span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-xs text-slate-300">
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
                                             Work Order Management
                                         </span>
                                     </div>
@@ -326,7 +327,7 @@ export default function Register() {
                             </div>
 
                             {/* Bottom */}
-                            <div className="relative mt-12">
+                            <div className="relative">
 
                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
@@ -336,7 +337,7 @@ export default function Register() {
                                     </span>
                                 </div>
 
-                                <p className="mt-3 text-[10px] text-slate-500">
+                                <p className="mt-2 text-[9px] text-slate-500">
                                     Municipality of Estancia • Iloilo
                                 </p>
 
@@ -348,48 +349,48 @@ export default function Register() {
                         {/* RIGHT REGISTER FORM */}
                         {/* ================================================== */}
 
-                        <section className="p-6 sm:p-8 lg:p-10">
+                        <section className="overflow-hidden p-5 sm:p-6 lg:p-7">
 
-                            {/* Form Header */}
-                            <div className="mb-7">
+                            {/* Header */}
+                            <div className="mb-4 xl:mb-5">
 
                                 <div className="flex items-center gap-3">
 
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                                         <Building2 className="h-5 w-5" />
                                     </div>
 
                                     <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+                                        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-blue-600">
                                             CMMS Account
                                         </p>
 
-                                        <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                                        <h2 className="text-lg font-bold tracking-tight text-slate-900 xl:text-xl">
                                             Create Account
                                         </h2>
                                     </div>
 
                                 </div>
 
-                                <p className="mt-3 text-sm leading-6 text-slate-500">
+                                <p className="mt-2 text-xs leading-5 text-slate-500 xl:text-sm">
                                     Register your municipal account to
                                     access the maintenance management
                                     system.
                                 </p>
 
-                                <div className="mt-6 h-px bg-slate-100" />
+                                <div className="mt-4 h-px bg-slate-100" />
                             </div>
 
                             <form
                                 onSubmit={submit}
-                                className="space-y-5"
+                                className="space-y-3.5"
                             >
 
                                 {/* ERROR */}
 
                                 {generalError && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                        <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                                        <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-500" />
 
                                         <span>
                                             {generalError}
@@ -402,7 +403,7 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="name"
-                                        className="mb-2 block text-xs font-semibold text-slate-700"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
                                     >
                                         Full Name
                                     </Label>
@@ -422,7 +423,7 @@ export default function Register() {
                                         }
                                         disabled={processing}
                                         placeholder="Juan Dela Cruz"
-                                        className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                                        className="h-10 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                     />
 
                                     <InputError
@@ -435,7 +436,7 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="phone"
-                                        className="mb-2 block text-xs font-semibold text-slate-700"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
                                     >
                                         Mobile Number
                                     </Label>
@@ -458,7 +459,7 @@ export default function Register() {
                                         disabled={processing}
                                         placeholder="09123456789"
                                         maxLength={11}
-                                        className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                                        className="h-10 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                     />
 
                                     <InputError
@@ -471,7 +472,7 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="department_id"
-                                        className="mb-2 block text-xs font-semibold text-slate-700"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
                                     >
                                         Department / Office
                                     </Label>
@@ -493,7 +494,7 @@ export default function Register() {
                                                 processing ||
                                                 loadingDepartments
                                             }
-                                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 pr-10 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <option value="">
                                                 {loadingDepartments
@@ -519,7 +520,7 @@ export default function Register() {
                                             )}
                                         </select>
 
-                                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
                                     </div>
 
@@ -532,12 +533,12 @@ export default function Register() {
 
                                 {/* PASSWORDS */}
 
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid grid-cols-2 gap-3">
 
                                     <div>
                                         <Label
                                             htmlFor="password"
-                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
                                         >
                                             Password
                                         </Label>
@@ -557,7 +558,7 @@ export default function Register() {
                                             }
                                             disabled={processing}
                                             placeholder="••••••••"
-                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                                            className="h-10 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
@@ -570,7 +571,7 @@ export default function Register() {
                                     <div>
                                         <Label
                                             htmlFor="password_confirmation"
-                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
                                         >
                                             Confirm Password
                                         </Label>
@@ -592,7 +593,7 @@ export default function Register() {
                                             }
                                             disabled={processing}
                                             placeholder="••••••••"
-                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                                            className="h-10 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
@@ -606,18 +607,18 @@ export default function Register() {
 
                                 {/* OTP NOTICE */}
 
-                                <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3.5">
+                                <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5">
 
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm">
                                         <ShieldCheck className="h-4 w-4" />
                                     </div>
 
                                     <div>
-                                        <p className="text-xs font-semibold text-blue-900">
+                                        <p className="text-[11px] font-semibold text-blue-900">
                                             Mobile verification required
                                         </p>
 
-                                        <p className="mt-0.5 text-[11px] leading-5 text-blue-700">
+                                        <p className="text-[10px] leading-4 text-blue-700">
                                             Your mobile number will be
                                             verified through OTP after
                                             registration.
@@ -635,7 +636,7 @@ export default function Register() {
                                         loadingDepartments ||
                                         departments.length === 0
                                     }
-                                    className="h-11 w-full rounded-xl bg-blue-700 text-sm font-semibold shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 hover:shadow-blue-700/30"
+                                    className="h-10 w-full rounded-xl bg-blue-700 text-sm font-semibold shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 hover:shadow-blue-700/30"
                                 >
                                     {processing ? (
                                         <>
@@ -651,8 +652,7 @@ export default function Register() {
 
                             {/* LOGIN */}
 
-                            <div className="mt-7 text-center text-sm text-slate-500">
-
+                            <div className="mt-4 text-center text-xs text-slate-500">
                                 Already have an account?{' '}
 
                                 <TextLink
@@ -661,13 +661,12 @@ export default function Register() {
                                 >
                                     Sign in
                                 </TextLink>
-
                             </div>
 
-                            {/* Footer Info */}
+                            {/* Small Footer */}
 
-                            <div className="mt-8 border-t border-slate-100 pt-5 text-center">
-                                <p className="text-[10px] leading-5 text-slate-400">
+                            <div className="mt-4 border-t border-slate-100 pt-3 text-center">
+                                <p className="text-[9px] leading-4 text-slate-400">
                                     Computerized Maintenance Management System
                                     <br />
                                     Municipality of Estancia, Iloilo
@@ -679,15 +678,6 @@ export default function Register() {
                     </div>
 
                 </main>
-
-                {/* Bottom Footer */}
-
-                <footer className="border-t border-slate-200 bg-white py-4 text-center">
-                    <p className="text-[10px] text-slate-400">
-                        © {new Date().getFullYear()} Municipal Government of
-                        Estancia, Iloilo • CMMS
-                    </p>
-                </footer>
 
             </div>
         </>
