@@ -1,17 +1,30 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+
 import {
+    Archive,
     Bell,
+    Building2,
+    CalendarClock,
     CheckCircle2,
+    ClipboardList,
     Clock3,
-    FileCheck2,
-    FileText,
-    FolderOpen,
+    Gauge,
+    History,
+    Package,
     Plus,
-    Send,
+    Settings,
     Users,
+    Wrench,
 } from 'lucide-react';
+
+
+/*
+|--------------------------------------------------------------------------
+| BREADCRUMBS
+|--------------------------------------------------------------------------
+*/
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -19,6 +32,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
+
+
+/*
+|--------------------------------------------------------------------------
+| TYPES
+|--------------------------------------------------------------------------
+*/
 
 interface Department {
     id: number;
@@ -43,9 +63,17 @@ interface DashboardProps {
     user: User;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+*/
+
 export default function Dashboard({
     user,
 }: DashboardProps) {
+
     const departmentName =
         user.department?.name ??
         'No Department';
@@ -54,9 +82,12 @@ export default function Dashboard({
         user.roles?.[0]?.name ??
         'User';
 
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+
+            <Head title="Dashboard | CMMS" />
+
 
             <div className="flex flex-1 flex-col gap-6 p-6">
 
@@ -69,7 +100,7 @@ export default function Dashboard({
                     <div>
 
                         <p className="text-sm font-medium text-blue-700">
-                            Municipality of Estancia
+                            Computerized Maintenance Management System
                         </p>
 
                         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
@@ -77,10 +108,13 @@ export default function Dashboard({
                         </h1>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Welcome to the Electronic Document Tracking System.
+                            Welcome to the Municipality of Estancia CMMS.
                         </p>
 
                     </div>
+
+
+                    {/* USER / NOTIFICATION */}
 
                     <div className="flex items-center gap-3">
 
@@ -95,13 +129,17 @@ export default function Dashboard({
 
                         </button>
 
+
                         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
 
                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+
                                 {user.name
                                     .charAt(0)
                                     .toUpperCase()}
+
                             </div>
+
 
                             <div className="hidden sm:block">
 
@@ -121,6 +159,7 @@ export default function Dashboard({
 
                 </div>
 
+
                 {/* ====================================================== */}
                 {/* USER / DEPARTMENT CARD */}
                 {/* ====================================================== */}
@@ -138,6 +177,7 @@ export default function Dashboard({
                                     .toUpperCase()}
 
                             </div>
+
 
                             <div>
 
@@ -172,6 +212,7 @@ export default function Dashboard({
 
                         </div>
 
+
                         <div className="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
 
                             <p className="text-[10px] uppercase tracking-wider text-blue-200">
@@ -188,6 +229,7 @@ export default function Dashboard({
 
                 </div>
 
+
                 {/* ====================================================== */}
                 {/* STATISTICS */}
                 {/* ====================================================== */}
@@ -195,42 +237,46 @@ export default function Dashboard({
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
                     <StatCard
-                        title="Pending Documents"
+                        title="Total Assets"
                         value="0"
-                        description="Awaiting action"
+                        description="Assets registered in CMMS"
+                        icon={
+                            <Archive className="h-5 w-5" />
+                        }
+                    />
+
+
+                    <StatCard
+                        title="Open Work Orders"
+                        value="0"
+                        description="Work orders awaiting completion"
+                        icon={
+                            <ClipboardList className="h-5 w-5" />
+                        }
+                    />
+
+
+                    <StatCard
+                        title="Maintenance Due"
+                        value="0"
+                        description="Maintenance activities requiring action"
+                        icon={
+                            <CalendarClock className="h-5 w-5" />
+                        }
+                    />
+
+
+                    <StatCard
+                        title="Pending Requests"
+                        value="0"
+                        description="Maintenance requests awaiting action"
                         icon={
                             <Clock3 className="h-5 w-5" />
                         }
                     />
 
-                    <StatCard
-                        title="For Review"
-                        value="0"
-                        description="Documents requiring review"
-                        icon={
-                            <FileText className="h-5 w-5" />
-                        }
-                    />
-
-                    <StatCard
-                        title="Completed"
-                        value="0"
-                        description="Completed documents"
-                        icon={
-                            <CheckCircle2 className="h-5 w-5" />
-                        }
-                    />
-
-                    <StatCard
-                        title="Total Documents"
-                        value="0"
-                        description="Documents in your department"
-                        icon={
-                            <FolderOpen className="h-5 w-5" />
-                        }
-                    />
-
                 </div>
+
 
                 {/* ====================================================== */}
                 {/* MAIN CONTENT */}
@@ -238,7 +284,10 @@ export default function Dashboard({
 
                 <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
 
-                    {/* RECENT DOCUMENTS */}
+
+                    {/* ================================================== */}
+                    {/* RECENT WORK ORDERS */}
+                    {/* ================================================== */}
 
                     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -247,53 +296,67 @@ export default function Dashboard({
                             <div>
 
                                 <h3 className="font-semibold text-slate-900">
-                                    Recent Documents
+                                    Recent Work Orders
                                 </h3>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Latest document activity
+                                    Latest maintenance activities
                                 </p>
 
                             </div>
 
-                            <button
-                                type="button"
+
+                            <Link
+                                href="/work-orders"
                                 className="text-xs font-semibold text-blue-700 hover:text-blue-800"
                             >
                                 View all
-                            </button>
+                            </Link>
 
                         </div>
 
-                        <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+
+                        {/* EMPTY STATE */}
+
+                        <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
 
                             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
 
-                                <FileCheck2 className="h-7 w-7" />
+                                <Wrench className="h-7 w-7" />
 
                             </div>
 
+
                             <h4 className="mt-4 text-sm font-semibold text-slate-800">
-                                No documents yet
+                                No work orders yet
                             </h4>
 
+
                             <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
-                                Documents assigned to your department will appear here.
+                                Maintenance work orders assigned to
+                                your department will appear here.
                             </p>
 
+
                             <Link
-                                href={route('documents.create')}
+                                href="/work-orders/create"
                                 className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800"
                             >
+
                                 <Plus className="h-4 w-4" />
-                                Create Document
+
+                                Create Work Order
+
                             </Link>
 
                         </div>
 
                     </section>
 
+
+                    {/* ================================================== */}
                     {/* QUICK ACTIONS */}
+                    {/* ================================================== */}
 
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
@@ -304,10 +367,11 @@ export default function Dashboard({
                             </h3>
 
                             <p className="mt-1 text-xs text-slate-500">
-                                Common document operations
+                                Common maintenance operations
                             </p>
 
                         </div>
+
 
                         <div className="mt-5 space-y-3">
 
@@ -315,33 +379,39 @@ export default function Dashboard({
                                 icon={
                                     <Plus className="h-5 w-5" />
                                 }
-                                title="Create Document"
-                                description="Start a new municipal document"
-                                href={route('documents.create')}
+                                title="Create Work Order"
+                                description="Create a new maintenance work order"
+                                href="/work-orders/create"
                             />
+
 
                             <QuickAction
                                 icon={
-                                    <Send className="h-5 w-5" />
+                                    <Wrench className="h-5 w-5" />
                                 }
-                                title="Send Document"
-                                description="Route a document to another office"
+                                title="Maintenance Request"
+                                description="Submit a maintenance request"
+                                href="/requests/create"
                             />
+
 
                             <QuickAction
                                 icon={
-                                    <FolderOpen className="h-5 w-5" />
+                                    <Archive className="h-5 w-5" />
                                 }
-                                title="My Documents"
-                                description="View documents assigned to you"
+                                title="Register Asset"
+                                description="Add a municipal asset or equipment"
+                                href="/assets/create"
                             />
+
 
                             <QuickAction
                                 icon={
-                                    <Users className="h-5 w-5" />
+                                    <CalendarClock className="h-5 w-5" />
                                 }
-                                title="Department"
-                                description="View your department activity"
+                                title="Maintenance Schedule"
+                                description="View upcoming maintenance activities"
+                                href="/maintenance/schedule"
                             />
 
                         </div>
@@ -350,10 +420,61 @@ export default function Dashboard({
 
                 </div>
 
+
+                {/* ====================================================== */}
+                {/* LOWER INFORMATION */}
+                {/* ====================================================== */}
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+
+                    <InfoCard
+                        icon={
+                            <Building2 className="h-5 w-5" />
+                        }
+                        title="Department"
+                        value={departmentName}
+                        href="/admin/departments"
+                    />
+
+
+                    <InfoCard
+                        icon={
+                            <Package className="h-5 w-5" />
+                        }
+                        title="Inventory"
+                        value="View stock"
+                        href="/inventory"
+                    />
+
+
+                    <InfoCard
+                        icon={
+                            <Users className="h-5 w-5" />
+                        }
+                        title="Users"
+                        value="Manage users"
+                        href="/admin/users"
+                    />
+
+
+                    <InfoCard
+                        icon={
+                            <Settings className="h-5 w-5" />
+                        }
+                        title="System"
+                        value="CMMS settings"
+                        href="/admin/settings"
+                    />
+
+                </div>
+
             </div>
+
         </AppLayout>
     );
 }
+
 
 /*
 |--------------------------------------------------------------------------
@@ -372,6 +493,7 @@ function StatCard({
     description: string;
     icon: React.ReactNode;
 }) {
+
     return (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
@@ -389,11 +511,13 @@ function StatCard({
 
                 </div>
 
+
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                     {icon}
                 </div>
 
             </div>
+
 
             <p className="mt-3 text-[11px] text-slate-400">
                 {description}
@@ -402,6 +526,7 @@ function StatCard({
         </div>
     );
 }
+
 
 /*
 |--------------------------------------------------------------------------
@@ -420,6 +545,7 @@ function QuickAction({
     description: string;
     href?: string;
 }) {
+
     const content = (
         <>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">
@@ -427,6 +553,7 @@ function QuickAction({
             </div>
 
             <div className="min-w-0">
+
                 <p className="text-xs font-semibold text-slate-800">
                     {title}
                 </p>
@@ -434,11 +561,14 @@ function QuickAction({
                 <p className="mt-0.5 truncate text-[10px] text-slate-500">
                     {description}
                 </p>
+
             </div>
         </>
     );
 
+
     if (href) {
+
         return (
             <Link
                 href={href}
@@ -449,6 +579,7 @@ function QuickAction({
         );
     }
 
+
     return (
         <button
             type="button"
@@ -456,5 +587,54 @@ function QuickAction({
         >
             {content}
         </button>
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| INFORMATION CARD
+|--------------------------------------------------------------------------
+*/
+
+function InfoCard({
+    icon,
+    title,
+    value,
+    href,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    value: string;
+    href: string;
+}) {
+
+    return (
+        <Link
+            href={href}
+            className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+        >
+
+            <div className="flex items-center gap-3">
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-100">
+                    {icon}
+                </div>
+
+                <div className="min-w-0">
+
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                        {title}
+                    </p>
+
+                    <p className="mt-1 truncate text-xs font-semibold text-slate-800">
+                        {value}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </Link>
     );
 }
