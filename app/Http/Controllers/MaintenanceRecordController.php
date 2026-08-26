@@ -373,4 +373,30 @@ class MaintenanceRecordController extends Controller
                 'Maintenance record created successfully.'
             );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| SHOW
+|--------------------------------------------------------------------------
+*/
+
+    public function show(
+        MaintenanceRecord $maintenanceRecord
+    ): Response {
+
+        $maintenanceRecord->load([
+            'asset',
+            'maintenanceType',
+            'department',
+            'requestedBy',
+            'assignedTo',
+        ]);
+
+        return Inertia::render(
+            'maintenance/show',
+            [
+                'record' => $maintenanceRecord,
+            ]
+        );
+    }
 }

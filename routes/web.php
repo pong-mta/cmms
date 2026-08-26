@@ -79,6 +79,10 @@ Route::middleware(['auth'])->group(function () {
         MaintenanceRecordController::class,
         'store',
     ])->name('maintenance.store');
+    Route::get('/maintenance/{maintenanceRecord}', [
+        MaintenanceRecordController::class,
+        'show',
+    ])->name('maintenance.show');
 });
 
 require __DIR__ . '/settings.php';
