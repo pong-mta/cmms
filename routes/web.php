@@ -83,6 +83,21 @@ Route::middleware(['auth'])->group(function () {
         MaintenanceRecordController::class,
         'show',
     ])->name('maintenance.show');
+
+
+
+
+    Route::get('/debug-asset/{asset}', function (\App\Models\Asset $asset) {
+
+        return response()->json([
+            'asset_id' => $asset->id,
+            'asset_code' => $asset->asset_code,
+            'maintenance_count' => $asset->maintenanceRecords()->count(),
+            'maintenance_records' => $asset->maintenanceRecords()
+                ->with('maintenanceType')
+                ->get(),
+        ]);
+    })->name('debug.asset');
 });
 
 require __DIR__ . '/settings.php';
