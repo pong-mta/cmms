@@ -48,6 +48,10 @@ Route::middleware(['auth'])->group(function () {
         AssetController::class,
         'store',
     ])->name('assets.store');
+    Route::get('/assets/{asset}', [
+        AssetController::class,
+        'show',
+    ])->name('assets.show');
 });
 
 require __DIR__ . '/settings.php';

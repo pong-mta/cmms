@@ -272,4 +272,20 @@ class AssetController extends Controller
                 'Asset registered successfully.'
             );
     }
+
+    /**
+     * Display a single asset.
+     */
+    public function show(Asset $asset): Response
+    {
+        $asset->load([
+            'category',
+            'department',
+            'assignedUser',
+        ]);
+
+        return Inertia::render('assets/show', [
+            'asset' => $asset,
+        ]);
+    }
 }
