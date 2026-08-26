@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AdminUserSeeder::class,
             AssetCategorySeeder::class,
+            MaintenanceTypeSeeder::class,
         ]);
     }
 }
