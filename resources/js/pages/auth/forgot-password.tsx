@@ -5,7 +5,9 @@ import {
     CheckCircle2,
     KeyRound,
     LoaderCircle,
+    LockKeyhole,
     ShieldCheck,
+    Wrench,
 } from 'lucide-react';
 import {
     FormEventHandler,
@@ -164,6 +166,10 @@ export default function ForgotPassword({
                     );
 
                     setExistingUserId(
+                        '',
+                    );
+
+                    setExistingPhone(
                         '',
                     );
 
@@ -588,23 +594,28 @@ export default function ForgotPassword({
 
     return (
         <>
-            <Head title="Forgot Password | Municipality of Estancia" />
+            <Head title="Forgot Password | CMMS">
+                <meta
+                    name="description"
+                    content="Recover your CMMS account password using your registered mobile number."
+                />
+            </Head>
 
-            <div className="h-screen overflow-hidden bg-slate-100">
+            <div className="h-screen w-full overflow-hidden bg-slate-100">
 
-                {/* ========================================================== */}
-                {/* TOP HEADER */}
-                {/* ========================================================== */}
+                {/* ================================================== */}
+                {/* HEADER */}
+                {/* ================================================== */}
 
-                <header className="h-[72px] bg-[#0b1f3a]">
+                <header className="h-[74px] border-b border-slate-200 bg-white">
 
-                    <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-5">
+                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-5 sm:px-6">
 
-                        {/* BRAND */}
+                        {/* Government Branding */}
 
                         <div className="flex items-center gap-3">
 
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white p-1.5 shadow-sm">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
 
                                 <img
                                     src="/images/estancia-logo.png"
@@ -614,17 +625,17 @@ export default function ForgotPassword({
 
                             </div>
 
-                            <div className="leading-tight">
+                            <div>
 
-                                <p className="text-[7px] uppercase tracking-[0.18em] text-blue-200">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                     Republic of the Philippines
                                 </p>
 
-                                <p className="text-[12px] font-bold text-white">
+                                <h1 className="text-sm font-bold uppercase tracking-wide text-slate-800 sm:text-base">
                                     Municipality of Estancia
-                                </p>
+                                </h1>
 
-                                <p className="text-[8px] text-blue-200">
+                                <p className="text-[10px] text-slate-500">
                                     Province of Iloilo
                                 </p>
 
@@ -632,17 +643,25 @@ export default function ForgotPassword({
 
                         </div>
 
-                        {/* SYSTEM */}
+                        {/* CMMS Branding */}
 
-                        <div className="text-right">
+                        <div className="hidden items-center gap-3 sm:flex">
 
-                            <p className="text-xs font-bold text-white">
-                                eDTS
-                            </p>
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                <Wrench className="h-4 w-4" />
+                            </div>
 
-                            <p className="text-[8px] text-blue-200">
-                                Electronic Document Tracking System
-                            </p>
+                            <div className="text-right">
+
+                                <p className="text-xs font-bold text-slate-800">
+                                    CMMS
+                                </p>
+
+                                <p className="text-[10px] text-slate-400">
+                                    Maintenance Management
+                                </p>
+
+                            </div>
 
                         </div>
 
@@ -650,142 +669,169 @@ export default function ForgotPassword({
 
                 </header>
 
-                {/* ========================================================== */}
+                {/* ================================================== */}
                 {/* MAIN */}
-                {/* ========================================================== */}
+                {/* ================================================== */}
 
-                <main className="h-[calc(100vh-72px)] overflow-hidden">
+                <main className="flex h-[calc(100vh-74px)] items-center justify-center overflow-hidden px-4 py-4 sm:px-6">
 
-                    <div className="mx-auto flex h-full max-w-6xl items-center justify-center px-4 py-4">
+                    <div className="grid max-h-full w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[1.05fr_0.95fr]">
 
-                        <div className="grid h-full max-h-[760px] w-full max-w-[1200px] overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid-cols-2">
+                        {/* ================================================== */}
+                        {/* LEFT PANEL */}
+                        {/* ================================================== */}
 
-                            {/* ================================================== */}
-                            {/* LEFT PANEL */}
-                            {/* ================================================== */}
+                        <section className="relative hidden overflow-hidden bg-slate-950 p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10">
 
-                            <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#102f55] via-[#124b82] to-[#0d5ca8] p-10 text-white lg:flex lg:flex-col">
+                            {/* Decorative Circles */}
 
-                                {/* DECORATION */}
+                            <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full border border-blue-400/10" />
 
-                                <div className="absolute -right-32 -top-32 h-[360px] w-[360px] rounded-full border border-white/10" />
+                            <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
 
-                                <div className="absolute -bottom-44 -left-32 h-[420px] w-[420px] rounded-full border border-white/10" />
+                            <div className="absolute right-10 top-24 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl" />
 
-                                <div className="relative z-10">
+                            <div className="relative">
 
-                                    {/* LOGO */}
+                                {/* Logo */}
 
-                                    <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white p-4 shadow-xl">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl xl:h-20 xl:w-20">
 
-                                        <img
-                                            src="/images/estancia-logo.png"
-                                            alt="Municipality of Estancia"
-                                            className="h-full w-full object-contain"
-                                        />
+                                    <img
+                                        src="/images/estancia-logo.png"
+                                        alt="Municipality of Estancia"
+                                        className="h-full w-full object-contain"
+                                    />
 
-                                    </div>
+                                </div>
 
-                                    {/* LABEL */}
+                                <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.25em] text-blue-400 xl:mt-10 xl:text-[10px]">
+                                    Municipal Operations
+                                </p>
 
-                                    <p className="mt-10 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-200">
-                                        Municipal Government
-                                    </p>
+                                <h2 className="mt-2 text-3xl font-bold leading-tight tracking-tight xl:text-4xl">
 
-                                    {/* TITLE */}
+                                    Account
+                                    <span className="block text-blue-400">
+                                        Recovery
+                                    </span>
 
-                                    <h1 className="mt-3 text-4xl font-bold leading-[1.05] tracking-tight">
+                                </h2>
 
-                                        Electronic Document
+                                <p className="mt-4 max-w-md text-xs leading-6 text-slate-300 xl:mt-6 xl:text-sm xl:leading-7">
+                                    Recover access to your
+                                    Computerized Maintenance
+                                    Management System account
+                                    using your registered mobile
+                                    number.
+                                </p>
 
-                                        <span className="block text-blue-300">
-                                            Tracking System
+                                {/* FEATURES */}
+
+                                <div className="mt-7 space-y-3 xl:mt-9 xl:space-y-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <ShieldCheck className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Secure account recovery
                                         </span>
 
-                                    </h1>
+                                    </div>
 
-                                    {/* DESCRIPTION */}
+                                    <div className="flex items-center gap-3">
 
-                                    <p className="mt-7 max-w-md text-sm leading-6 text-blue-100">
-                                        Securely manage and track official municipal documents across the Municipality of Estancia.
-                                    </p>
-
-                                    {/* FEATURE */}
-
-                                    <div className="mt-10 flex items-center gap-4">
-
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
-
-                                            <ShieldCheck className="h-6 w-6 text-emerald-300" />
-
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <KeyRound className="h-4 w-4 text-blue-400" />
                                         </div>
 
-                                        <div>
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            One-time verification code
+                                        </span>
 
-                                            <p className="text-sm font-semibold text-white">
-                                                Secure Account Recovery
-                                            </p>
+                                    </div>
 
-                                            <p className="text-[11px] text-blue-200">
-                                                Verification through registered mobile
-                                            </p>
+                                    <div className="flex items-center gap-3">
 
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
                                         </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Registered mobile verification
+                                        </span>
 
                                     </div>
 
                                 </div>
 
-                                {/* FOOTER */}
+                            </div>
 
-                                <div className="relative z-10 mt-auto">
+                            {/* Bottom */}
 
-                                    <p className="text-[10px] text-blue-200">
-                                        Municipality of Estancia
-                                    </p>
+                            <div className="relative">
+
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+
+                                    <LockKeyhole className="h-4 w-4 text-emerald-400" />
+
+                                    <span>
+                                        Secure municipal access
+                                    </span>
 
                                 </div>
 
-                            </section>
+                                <p className="mt-2 text-[9px] text-slate-500">
+                                    Municipality of Estancia • Iloilo
+                                </p>
 
-                            {/* ================================================== */}
-                            {/* RIGHT PANEL */}
-                            {/* ================================================== */}
+                            </div>
 
-                            <section className="flex min-h-0 flex-col justify-center overflow-hidden px-6 py-7 sm:px-10 lg:px-12">
+                        </section>
 
-                                {/* ICON */}
+                        {/* ================================================== */}
+                        {/* RIGHT PANEL */}
+                        {/* ================================================== */}
 
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <section className="flex min-h-0 items-center overflow-hidden p-6 sm:p-8 lg:p-9 xl:p-10">
 
-                                    <KeyRound className="h-6 w-6" />
+                            <div className="w-full">
+
+                                {/* Icon */}
+
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+
+                                    <KeyRound className="h-5 w-5" />
 
                                 </div>
 
                                 {/* TITLE */}
 
-                                <div className="mt-5">
+                                <div className="mt-4">
 
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-600">
-                                        Account Recovery
+                                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-700">
+                                        CMMS Account Recovery
                                     </p>
 
-                                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 xl:text-3xl">
                                         Forgot your password?
                                     </h2>
 
-                                    <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-                                        Enter your registered mobile number and we'll send you a verification code.
+                                    <p className="mt-2 max-w-md text-xs leading-5 text-slate-500 xl:text-sm xl:leading-6">
+                                        Enter your registered mobile
+                                        number and we'll send you a
+                                        verification code.
                                     </p>
 
                                 </div>
 
-                                {/* ================================================== */}
-                                {/* SUCCESS / EXISTING SESSION */}
-                                {/* ================================================== */}
+                                {/* SUCCESS */}
 
                                 {success && (
-                                    <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                    <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
 
                                         <div className="flex items-start gap-3">
 
@@ -800,12 +846,10 @@ export default function ForgotPassword({
                                     </div>
                                 )}
 
-                                {/* ================================================== */}
                                 {/* ERROR */}
-                                {/* ================================================== */}
 
                                 {error && (
-                                    <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                                    <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
 
                                         <p className="text-xs leading-5 text-red-700">
                                             {error}
@@ -814,15 +858,11 @@ export default function ForgotPassword({
                                     </div>
                                 )}
 
-                                {/* ================================================== */}
                                 {/* FORM */}
-                                {/* ================================================== */}
 
                                 <form
-                                    onSubmit={
-                                        submit
-                                    }
-                                    className="mt-6"
+                                    onSubmit={submit}
+                                    className="mt-5"
                                 >
 
                                     {/* PHONE */}
@@ -831,7 +871,7 @@ export default function ForgotPassword({
 
                                         <label
                                             htmlFor="phone"
-                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
                                         >
                                             Registered Mobile Number
                                         </label>
@@ -841,35 +881,24 @@ export default function ForgotPassword({
                                             type="tel"
                                             inputMode="numeric"
                                             autoComplete="tel"
-                                            maxLength={
-                                                11
-                                            }
-                                            value={
-                                                phone
-                                            }
-                                            disabled={
-                                                processing
-                                            }
-                                            onChange={(
-                                                event,
-                                            ) =>
+                                            maxLength={11}
+                                            autoFocus
+                                            value={phone}
+                                            disabled={processing}
+                                            onChange={(event) =>
                                                 handlePhoneChange(
-                                                    event
-                                                        .target
-                                                        .value,
+                                                    event.target.value,
                                                 )
                                             }
                                             placeholder="09XXXXXXXXX"
-                                            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
+                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
                                         />
 
                                     </div>
 
-                                    {/* ================================================== */}
-                                    {/* SECURITY INFORMATION */}
-                                    {/* ================================================== */}
+                                    {/* SECURITY */}
 
-                                    <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
+                                    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
 
                                         <div className="flex gap-3">
 
@@ -881,8 +910,11 @@ export default function ForgotPassword({
                                                     Secure verification
                                                 </p>
 
-                                                <p className="mt-1 text-[11px] leading-5 text-blue-600">
-                                                    A one-time verification code will be sent to your registered mobile number.
+                                                <p className="mt-0.5 text-[10px] leading-5 text-blue-600">
+                                                    A one-time verification
+                                                    code will be sent to
+                                                    your registered mobile
+                                                    number.
                                                 </p>
 
                                             </div>
@@ -891,17 +923,16 @@ export default function ForgotPassword({
 
                                     </div>
 
-                                    {/* ================================================== */}
                                     {/* BUTTON */}
-                                    {/* ================================================== */}
 
                                     {existingSession ? (
+
                                         <button
                                             type="button"
                                             onClick={
                                                 continueToVerification
                                             }
-                                            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0b63ad] text-sm font-semibold text-white shadow-lg shadow-blue-900/10 transition hover:bg-[#09599d]"
+                                            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
                                         >
 
                                             Continue to verification
@@ -909,15 +940,16 @@ export default function ForgotPassword({
                                             <ArrowRight className="h-4 w-4" />
 
                                         </button>
+
                                     ) : (
+
                                         <button
                                             type="submit"
                                             disabled={
                                                 processing ||
-                                                phone.length !==
-                                                    11
+                                                phone.length !== 11
                                             }
-                                            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0b63ad] text-sm font-semibold text-white shadow-lg shadow-blue-900/10 transition hover:bg-[#09599d] disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
 
                                             {processing ? (
@@ -935,41 +967,37 @@ export default function ForgotPassword({
                                             )}
 
                                         </button>
+
                                     )}
 
                                 </form>
 
-                                {/* ================================================== */}
-                                {/* ACTIVE OTP INFORMATION */}
-                                {/* ================================================== */}
+                                {/* ACTIVE OTP */}
 
                                 {existingSession &&
                                     existingSecondsLeft >
                                         0 && (
-                                        <div className="mt-4 text-center">
 
-                                            <p className="text-[10px] text-slate-400">
-                                                Your current verification code expires in
-                                            </p>
+                                    <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-center">
 
-                                            <p className="mt-1 text-sm font-bold tabular-nums text-blue-700">
-                                                {
-                                                    existingMinutes
-                                                }
-                                                :
-                                                {
-                                                    existingSeconds
-                                                }
-                                            </p>
+                                        <p className="text-[10px] text-slate-400">
+                                            Current verification code
+                                            expires in
+                                        </p>
 
-                                        </div>
-                                    )}
+                                        <p className="mt-1 text-sm font-bold tabular-nums text-blue-700">
+                                            {existingMinutes}
+                                            :
+                                            {existingSeconds}
+                                        </p>
 
-                                {/* ================================================== */}
+                                    </div>
+
+                                )}
+
                                 {/* BACK TO LOGIN */}
-                                {/* ================================================== */}
 
-                                <div className="mt-6 border-t border-slate-100 pt-5 text-center">
+                                <div className="mt-5 border-t border-slate-100 pt-4 text-center">
 
                                     <a
                                         href="/login"
@@ -982,13 +1010,13 @@ export default function ForgotPassword({
 
                                 {/* FOOTER */}
 
-                                <p className="mt-5 text-center text-[9px] uppercase tracking-[0.18em] text-slate-300">
+                                <p className="mt-4 text-center text-[8px] uppercase tracking-[0.18em] text-slate-300">
                                     Municipal Government of Estancia
                                 </p>
 
-                            </section>
+                            </div>
 
-                        </div>
+                        </section>
 
                     </div>
 

@@ -1,9 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
+    CheckCircle2,
     LoaderCircle,
     LockKeyhole,
     ShieldCheck,
+    Wrench,
 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -28,6 +30,12 @@ export default function ConfirmPassword() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        /*
+        |--------------------------------------------------------------------------
+        | KEEP EXISTING FUNCTIONALITY
+        |--------------------------------------------------------------------------
+        */
+
         post(route('password.confirm'), {
             onFinish: () => reset('password'),
         });
@@ -35,187 +43,275 @@ export default function ConfirmPassword() {
 
     return (
         <>
-            <Head title="Confirm Password | Municipality of Estancia" />
+            <Head title="Confirm Password | CMMS">
+                <meta
+                    name="description"
+                    content="Confirm your password to continue accessing the Computerized Maintenance Management System."
+                />
+            </Head>
 
-            <div className="h-screen overflow-hidden bg-slate-100">
+            <div className="h-screen w-full overflow-hidden bg-slate-100">
 
                 {/* ================================================== */}
                 {/* HEADER */}
                 {/* ================================================== */}
 
-                <header className="h-[72px] bg-[#0b1f3a] text-white">
-                    <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-5">
+                <header className="h-[74px] border-b border-slate-200 bg-white">
+
+                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-5 sm:px-6">
+
+                        {/* GOVERNMENT BRANDING */}
 
                         <div className="flex items-center gap-3">
 
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white p-1 shadow-md">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+
                                 <img
                                     src="/images/estancia-logo.png"
                                     alt="Municipality of Estancia"
                                     className="h-full w-full object-contain"
                                 />
+
                             </div>
 
                             <div>
-                                <p className="text-[8px] uppercase tracking-[0.2em] text-blue-200">
+
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                     Republic of the Philippines
                                 </p>
 
-                                <h1 className="text-sm font-bold uppercase tracking-wide">
+                                <h1 className="text-sm font-bold uppercase tracking-wide text-slate-800 sm:text-base">
                                     Municipality of Estancia
                                 </h1>
 
-                                <p className="text-[10px] text-blue-200">
+                                <p className="text-[10px] text-slate-500">
                                     Province of Iloilo
                                 </p>
+
                             </div>
+
                         </div>
 
-                        <div className="hidden text-right sm:block">
-                            <p className="text-xs font-semibold">
-                                eDTS
-                            </p>
+                        {/* CMMS BRANDING */}
 
-                            <p className="text-[9px] text-blue-200">
-                                Electronic Document Tracking System
-                            </p>
+                        <div className="hidden items-center gap-3 sm:flex">
+
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                <Wrench className="h-4 w-4" />
+                            </div>
+
+                            <div className="text-right">
+
+                                <p className="text-xs font-bold text-slate-800">
+                                    CMMS
+                                </p>
+
+                                <p className="text-[10px] text-slate-400">
+                                    Maintenance Management
+                                </p>
+
+                            </div>
+
                         </div>
+
                     </div>
+
                 </header>
 
                 {/* ================================================== */}
                 {/* MAIN */}
                 {/* ================================================== */}
 
-                <main className="flex h-[calc(100vh-72px)] items-center justify-center px-4">
+                <main className="flex h-[calc(100vh-74px)] items-center justify-center overflow-hidden px-4 py-4 sm:px-6">
 
-                    <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
+                    <div className="grid max-h-full w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[1.05fr_0.95fr]">
 
                         {/* ================================================== */}
                         {/* LEFT PANEL */}
                         {/* ================================================== */}
 
-                        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#0b1f3a] via-[#123b69] to-[#0b5cab] p-10 text-white lg:flex lg:flex-col lg:justify-between">
+                        <section className="relative hidden overflow-hidden bg-slate-950 p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10">
 
-                            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10" />
+                            {/* DECORATION */}
 
-                            <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full border border-white/10" />
+                            <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full border border-blue-400/10" />
+
+                            <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
+
+                            <div className="absolute right-10 top-24 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl" />
 
                             <div className="relative">
 
-                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white p-2 shadow-xl">
+                                {/* LOGO */}
+
+                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl xl:h-20 xl:w-20">
+
                                     <img
                                         src="/images/estancia-logo.png"
-                                        alt=""
+                                        alt="Municipality of Estancia"
                                         className="h-full w-full object-contain"
                                     />
+
                                 </div>
 
-                                <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">
-                                    Municipal Government
+                                {/* LABEL */}
+
+                                <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.25em] text-blue-400 xl:mt-10 xl:text-[10px]">
+                                    Municipal Operations
                                 </p>
 
-                                <h2 className="mt-2 text-4xl font-bold leading-tight">
-                                    Electronic Document
-                                    <span className="block text-blue-300">
-                                        Tracking System
+                                {/* TITLE */}
+
+                                <h2 className="mt-2 text-3xl font-bold leading-tight tracking-tight xl:text-4xl">
+
+                                    Protected
+                                    <span className="block text-blue-400">
+                                        CMMS Area
                                     </span>
+
                                 </h2>
 
-                                <p className="mt-5 max-w-md text-sm leading-6 text-blue-100">
-                                    Securely manage and track official
-                                    municipal documents across the
-                                    Municipality of Estancia.
+                                {/* DESCRIPTION */}
+
+                                <p className="mt-4 max-w-md text-xs leading-6 text-slate-300 xl:mt-6 xl:text-sm xl:leading-7">
+                                    You're accessing a protected area
+                                    of the Municipality of Estancia's
+                                    Computerized Maintenance Management
+                                    System.
                                 </p>
 
-                                <div className="mt-8 flex items-center gap-3">
+                                {/* SECURITY FEATURES */}
 
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
-                                        <ShieldCheck className="h-5 w-5 text-emerald-300" />
+                                <div className="mt-7 space-y-3 xl:mt-9 xl:space-y-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <ShieldCheck className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Protected municipal data
+                                        </span>
+
                                     </div>
 
-                                    <div>
-                                        <p className="text-xs font-semibold">
-                                            Protected Area
-                                        </p>
+                                    <div className="flex items-center gap-3">
 
-                                        <p className="text-[10px] text-blue-200">
-                                            Password confirmation required
-                                        </p>
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <LockKeyhole className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Password verification required
+                                        </span>
+
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Secure system access
+                                        </span>
+
                                     </div>
 
                                 </div>
+
                             </div>
+
+                            {/* LEFT FOOTER */}
 
                             <div className="relative">
-                                <p className="text-[10px] text-blue-300">
-                                    Municipality of Estancia
+
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+
+                                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+
+                                    <span>
+                                        Secure municipal access
+                                    </span>
+
+                                </div>
+
+                                <p className="mt-2 text-[9px] text-slate-500">
+                                    Municipality of Estancia • Iloilo
                                 </p>
 
-                                <p className="mt-1 text-[10px] text-blue-400">
-                                    Province of Iloilo • Philippines
-                                </p>
                             </div>
+
                         </section>
 
                         {/* ================================================== */}
-                        {/* FORM */}
+                        {/* FORM PANEL */}
                         {/* ================================================== */}
 
-                        <section className="flex items-center p-6 sm:p-8 lg:p-10">
+                        <section className="flex min-h-0 items-center overflow-hidden p-6 sm:p-8 lg:p-9 xl:p-10">
 
                             <div className="w-full">
 
                                 {/* MOBILE LOGO */}
 
-                                <div className="mb-6 flex justify-center lg:hidden">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-1 shadow-md ring-1 ring-slate-200">
+                                <div className="mb-5 flex justify-center lg:hidden">
+
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white p-1 shadow-md ring-1 ring-slate-200">
+
                                         <img
                                             src="/images/estancia-logo.png"
                                             alt="Municipality of Estancia"
                                             className="h-full w-full object-contain"
                                         />
+
                                     </div>
+
                                 </div>
 
                                 {/* ICON */}
 
-                                <div className="mb-5 flex justify-center lg:justify-start">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                                        <LockKeyhole className="h-6 w-6" />
-                                    </div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+
+                                    <LockKeyhole className="h-5 w-5" />
+
                                 </div>
 
                                 {/* TITLE */}
 
-                                <div className="mb-7 text-center lg:text-left">
+                                <div className="mt-4 text-center lg:text-left">
 
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-700">
+                                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-700">
                                         Security Verification
                                     </p>
 
-                                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 xl:text-3xl">
                                         Confirm your password
                                     </h2>
 
-                                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                                    <p className="mt-2 max-w-md text-xs leading-5 text-slate-500 xl:text-sm xl:leading-6">
                                         This is a secure area of the
-                                        application. Please confirm your
-                                        password before continuing.
+                                        application. Please confirm
+                                        your password before continuing.
                                     </p>
+
                                 </div>
 
                                 {/* FORM */}
 
                                 <form
                                     onSubmit={submit}
-                                    className="space-y-5"
+                                    className="mt-5 space-y-4"
                                 >
 
+                                    {/* PASSWORD */}
+
                                     <div>
+
                                         <Label
                                             htmlFor="password"
-                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
                                         >
                                             Password
                                         </Label>
@@ -235,32 +331,42 @@ export default function ConfirmPassword() {
                                                 )
                                             }
                                             disabled={processing}
-                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:bg-white"
+                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
                                             message={
                                                 errors.password
                                             }
+                                            className="mt-1.5"
                                         />
+
                                     </div>
 
                                     {/* SECURITY NOTICE */}
 
-                                    <div className="flex gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3.5">
+                                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
 
-                                        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+                                        <div className="flex gap-3">
 
-                                        <div>
-                                            <p className="text-xs font-semibold text-blue-900">
-                                                Secure confirmation
-                                            </p>
+                                            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
 
-                                            <p className="mt-1 text-[10px] leading-4 text-blue-700">
-                                                Your password is required to
-                                                access this protected area.
-                                            </p>
+                                            <div>
+
+                                                <p className="text-xs font-semibold text-blue-900">
+                                                    Secure confirmation
+                                                </p>
+
+                                                <p className="mt-0.5 text-[10px] leading-5 text-blue-700">
+                                                    Your password is required
+                                                    to access this protected
+                                                    area of CMMS.
+                                                </p>
+
+                                            </div>
+
                                         </div>
+
                                     </div>
 
                                     {/* BUTTON */}
@@ -268,8 +374,9 @@ export default function ConfirmPassword() {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="h-11 w-full rounded-xl bg-[#0b5cab] text-sm font-semibold shadow-lg shadow-blue-900/10 hover:bg-[#084b8d]"
+                                        className="h-11 w-full rounded-xl bg-blue-700 text-sm font-semibold shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
                                     >
+
                                         {processing ? (
                                             <>
                                                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -280,13 +387,14 @@ export default function ConfirmPassword() {
                                                 Confirm Password
                                             </>
                                         )}
+
                                     </Button>
 
                                 </form>
 
                                 {/* BACK */}
 
-                                <div className="mt-7 border-t border-slate-100 pt-6 text-center">
+                                <div className="mt-6 border-t border-slate-100 pt-5 text-center">
 
                                     <TextLink
                                         href={route('dashboard')}
@@ -301,22 +409,27 @@ export default function ConfirmPassword() {
 
                                 {/* FOOTER */}
 
-                                <div className="mt-7 text-center">
+                                <div className="mt-5 text-center">
 
-                                    <p className="text-[9px] uppercase tracking-[0.16em] text-slate-400">
-                                        Municipal Government of Estancia
+                                    <p className="text-[8px] uppercase tracking-[0.16em] text-slate-400">
+                                        Computerized Maintenance
+                                        Management System
                                     </p>
 
                                     <p className="mt-1 text-[9px] text-slate-400">
-                                        Province of Iloilo • Philippines
+                                        Municipality of Estancia • Iloilo
                                     </p>
 
                                 </div>
 
                             </div>
+
                         </section>
+
                     </div>
+
                 </main>
+
             </div>
         </>
     );
