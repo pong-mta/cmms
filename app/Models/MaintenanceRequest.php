@@ -4,49 +4,43 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\MaintenanceRecord;
-use App\Models\MaintenanceRequest;
 
-class Asset extends Model
+class MaintenanceRequest extends Model
 {
     protected $fillable = [
-        'asset_code',
-        'name',
-        'serial_number',
-        'description',
-        'asset_category_id',
+        'request_code',
+        'asset_id',
         'department_id',
+        'requested_by',
         'assigned_to',
-        'location',
-        'acquisition_date',
-        'acquisition_cost',
-        'supplier',
-        'warranty_start',
-        'warranty_end',
+        'title',
+        'description',
+        'priority',
         'status',
-        'condition',
-        'notes',
+        'requested_at',
+        'approved_at',
+        'started_at',
+        'completed_at',
+        'remarks',
     ];
 
     protected $casts = [
-        'acquisition_date' => 'date',
-        'acquisition_cost' => 'decimal:2',
-        'warranty_start' => 'date',
-        'warranty_end' => 'date',
+        'requested_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | CATEGORY
+    | ASSET
     |--------------------------------------------------------------------------
     */
 
-    public function category(): BelongsTo
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(
-            AssetCategory::class,
-            'asset_category_id'
+            Asset::class
         );
     }
 
@@ -65,41 +59,29 @@ class Asset extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | ASSIGNED USER
+    | REQUESTED BY
     |--------------------------------------------------------------------------
     */
 
-    public function assignedUser(): BelongsTo
+    public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
-            'assigned_to'
+            'requested_by'
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | MAINTENANCE RECORDS
+    | ASSIGNED TO
     |--------------------------------------------------------------------------
-    |
-    | These tables don't exist yet.
-    | We'll create them later.
-    |
     */
 
-    public function maintenanceRecords(): HasMany
+    public function assignedTo(): BelongsTo
     {
-        return $this->hasMany(
-            MaintenanceRecord::class,
-            'asset_id'
-        )->latest();
-    }
-
-    public function maintenanceRequests(): HasMany
-    {
-        return $this->hasMany(
-            MaintenanceRequest::class,
-            'asset_id'
-        )->latest();
+        return $this->belongsTo(
+            User::class,
+            'assigned_to'
+        );
     }
 }
