@@ -330,7 +330,7 @@ export default function VerifyOtp() {
                         </div>
 
                         <span className="text-xs font-semibold">
-                            eDTS
+                            CMMS
                         </span>
                     </div>
                 </header>

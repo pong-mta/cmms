@@ -1,9 +1,12 @@
 import { Head, useForm } from '@inertiajs/react';
 import {
     ArrowRight,
+    Building2,
+    CheckCircle2,
     LoaderCircle,
     LockKeyhole,
     ShieldCheck,
+    Wrench,
 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -49,9 +52,8 @@ export default function Login({
         | IMPORTANT
         |--------------------------------------------------------------------------
         |
-        | This uses Laravel's WEB login route.
-        |
-        | DO NOT use /api/login here.
+        | Keep using Laravel's WEB login route.
+        | Do not change this to /api/login.
         |
         */
 
@@ -64,159 +66,178 @@ export default function Login({
 
     return (
         <>
-            <Head title="Login | Municipality of Estancia" />
+            <Head title="Login | CMMS">
+                <meta
+                    name="description"
+                    content="Login to the Computerized Maintenance Management System of the Municipality of Estancia, Iloilo."
+                />
+            </Head>
 
-            <div className="h-screen overflow-hidden bg-slate-100">
+            <div className="h-screen w-full overflow-hidden bg-slate-100">
 
-                {/* ========================================================== */}
+                {/* ================================================== */}
                 {/* GOVERNMENT HEADER */}
-                {/* ========================================================== */}
+                {/* ================================================== */}
 
-                <header className="h-[72px] bg-[#0b1f3a] text-white">
+                <header className="h-[74px] border-b border-slate-200 bg-white">
+                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-5 sm:px-6">
 
-                    <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-5">
-
+                        {/* Government Branding */}
                         <div className="flex items-center gap-3">
 
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white p-1 shadow-md">
-
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
                                 <img
                                     src="/images/estancia-logo.png"
                                     alt="Municipality of Estancia"
                                     className="h-full w-full object-contain"
                                 />
-
                             </div>
 
                             <div>
-
-                                <p className="text-[8px] uppercase tracking-[0.2em] text-blue-200">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                     Republic of the Philippines
                                 </p>
 
-                                <h1 className="text-sm font-bold uppercase tracking-wide">
+                                <h1 className="text-sm font-bold uppercase tracking-wide text-slate-800 sm:text-base">
                                     Municipality of Estancia
                                 </h1>
 
-                                <p className="text-[10px] text-blue-200">
+                                <p className="text-[10px] text-slate-500">
                                     Province of Iloilo
                                 </p>
-
                             </div>
 
                         </div>
 
-                        <div className="hidden text-right sm:block">
+                        {/* CMMS Branding */}
+                        <div className="hidden items-center gap-3 sm:flex">
 
-                            <p className="text-xs font-semibold">
-                                eDTS
-                            </p>
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                <Wrench className="h-4 w-4" />
+                            </div>
 
-                            <p className="text-[9px] text-blue-200">
-                                Electronic Document Tracking System
-                            </p>
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-slate-800">
+                                    CMMS
+                                </p>
+
+                                <p className="text-[10px] text-slate-400">
+                                    Maintenance Management
+                                </p>
+                            </div>
 
                         </div>
 
                     </div>
-
                 </header>
 
-                {/* ========================================================== */}
+                {/* ================================================== */}
                 {/* MAIN */}
-                {/* ========================================================== */}
+                {/* ================================================== */}
 
-                <main className="flex h-[calc(100vh-72px)] items-center justify-center overflow-hidden px-4 py-4">
+                <main className="flex h-[calc(100vh-74px)] items-center justify-center overflow-hidden px-4 py-4 sm:px-6">
 
-                    <div className="grid h-full max-h-[700px] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
+                    <div className="grid max-h-full w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[1.05fr_0.95fr]">
 
                         {/* ================================================== */}
                         {/* LEFT PANEL */}
                         {/* ================================================== */}
 
-                        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#0b1f3a] via-[#123b69] to-[#0b5cab] p-9 text-white lg:flex lg:flex-col lg:justify-between">
+                        <section className="relative hidden overflow-hidden bg-slate-950 p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10">
 
-                            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10" />
+                            {/* Background Decoration */}
 
-                            <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full border border-white/10" />
+                            <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full border border-blue-400/10" />
 
-                            <div className="relative z-10">
+                            <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
 
-                                {/* LOGO */}
+                            <div className="absolute right-10 top-24 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl" />
 
-                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white p-2 shadow-xl">
+                            <div className="relative">
 
+                                {/* Logo */}
+
+                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl xl:h-20 xl:w-20">
                                     <img
                                         src="/images/estancia-logo.png"
                                         alt="Municipality of Estancia"
                                         className="h-full w-full object-contain"
                                     />
-
                                 </div>
 
-                                <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">
-                                    Municipal Government
+                                <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.25em] text-blue-400 xl:mt-10 xl:text-[10px]">
+                                    Municipal Operations
                                 </p>
 
-                                <h2 className="mt-2 text-4xl font-bold leading-tight">
-                                    Electronic Document
-
-                                    <span className="block text-blue-300">
-                                        Tracking System
+                                <h2 className="mt-2 text-3xl font-bold leading-tight tracking-tight xl:text-4xl">
+                                    Computerized
+                                    <span className="block text-blue-400">
+                                        Maintenance
+                                    </span>
+                                    <span className="block">
+                                        Management
                                     </span>
                                 </h2>
 
-                                <p className="mt-5 max-w-md text-sm leading-6 text-blue-100">
-                                    A centralized platform for managing,
-                                    routing, and tracking official
-                                    documents throughout the Municipality
-                                    of Estancia.
+                                <p className="mt-4 max-w-md text-xs leading-6 text-slate-300 xl:mt-6 xl:text-sm xl:leading-7">
+                                    A centralized platform for managing
+                                    municipal assets, equipment,
+                                    maintenance activities, work orders,
+                                    and service records.
                                 </p>
 
-                                {/* FEATURES */}
+                                {/* Features */}
 
-                                <div className="mt-8 space-y-3">
+                                <div className="mt-6 space-y-3 xl:mt-8 xl:space-y-4">
 
                                     <div className="flex items-center gap-3">
-
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-
-                                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
-
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-xs text-blue-100">
-                                            Secure municipal access
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Asset & Equipment Management
                                         </span>
-
                                     </div>
 
                                     <div className="flex items-center gap-3">
-
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-
-                                            <LockKeyhole className="h-4 w-4 text-blue-200" />
-
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-xs text-blue-100">
-                                            Protected account credentials
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Preventive Maintenance
                                         </span>
+                                    </div>
 
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">
+                                            Work Order Management
+                                        </span>
                                     </div>
 
                                 </div>
 
                             </div>
 
-                            <div className="relative z-10">
+                            {/* Bottom */}
 
-                                <p className="text-[10px] text-blue-300">
-                                    Municipality of Estancia
-                                </p>
+                            <div className="relative">
 
-                                <p className="mt-1 text-[10px] text-blue-400">
-                                    Province of Iloilo • Philippines
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+
+                                    <span>
+                                        Secure municipal access
+                                    </span>
+                                </div>
+
+                                <p className="mt-2 text-[9px] text-slate-500">
+                                    Municipality of Estancia • Iloilo
                                 </p>
 
                             </div>
@@ -227,39 +248,45 @@ export default function Login({
                         {/* LOGIN PANEL */}
                         {/* ================================================== */}
 
-                        <section className="flex min-h-0 items-center overflow-hidden px-6 py-7 sm:px-9 lg:px-10">
+                        <section className="flex min-h-0 items-center overflow-hidden p-6 sm:p-8 lg:p-9 xl:p-10">
 
                             <div className="w-full">
 
-                                {/* MOBILE LOGO */}
+                                {/* Mobile Logo */}
 
-                                <div className="mb-6 flex justify-center lg:hidden">
+                                <div className="mb-5 flex justify-center lg:hidden">
 
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-1 shadow-md ring-1 ring-slate-200">
-
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white p-1 shadow-md ring-1 ring-slate-200">
                                         <img
                                             src="/images/estancia-logo.png"
                                             alt="Municipality of Estancia"
                                             className="h-full w-full object-contain"
                                         />
-
                                     </div>
 
                                 </div>
 
                                 {/* TITLE */}
 
-                                <div className="mb-7 text-center lg:text-left">
+                                <div className="mb-6 text-center lg:text-left">
 
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-700">
-                                        eDTS Portal
-                                    </p>
+                                    <div className="mb-3 flex items-center justify-center gap-2 lg:justify-start">
 
-                                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                            <Building2 className="h-4 w-4" />
+                                        </div>
+
+                                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-700">
+                                            CMMS Portal
+                                        </p>
+
+                                    </div>
+
+                                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">
                                         Welcome back
                                     </h2>
 
-                                    <p className="mt-2 text-sm text-slate-500">
+                                    <p className="mt-1.5 text-sm text-slate-500">
                                         Sign in to your municipal account
                                     </p>
 
@@ -268,7 +295,7 @@ export default function Login({
                                 {/* STATUS */}
 
                                 {status && (
-                                    <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
+                                    <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
                                         {status}
                                     </div>
                                 )}
@@ -277,7 +304,7 @@ export default function Login({
 
                                 <form
                                     onSubmit={submit}
-                                    className="space-y-5"
+                                    className="space-y-4"
                                 >
 
                                     {/* PHONE */}
@@ -286,7 +313,7 @@ export default function Login({
 
                                         <Label
                                             htmlFor="phone"
-                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
                                         >
                                             Mobile Number
                                         </Label>
@@ -316,12 +343,12 @@ export default function Login({
                                             }
                                             disabled={processing}
                                             placeholder="09123456789"
-                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:bg-white"
+                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
                                             message={errors.phone}
-                                            className="mt-2"
+                                            className="mt-1.5"
                                         />
 
                                     </div>
@@ -330,7 +357,7 @@ export default function Login({
 
                                     <div>
 
-                                        <div className="mb-2 flex items-center justify-between">
+                                        <div className="mb-1.5 flex items-center justify-between">
 
                                             <Label
                                                 htmlFor="password"
@@ -366,12 +393,12 @@ export default function Login({
                                             }
                                             disabled={processing}
                                             placeholder="Enter your password"
-                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:bg-white"
+                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
                                             message={errors.password}
-                                            className="mt-2"
+                                            className="mt-1.5"
                                         />
 
                                     </div>
@@ -399,12 +426,12 @@ export default function Login({
 
                                     </label>
 
-                                    {/* LOGIN */}
+                                    {/* LOGIN BUTTON */}
 
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="group h-11 w-full rounded-xl bg-[#0b5cab] text-sm font-semibold shadow-lg shadow-blue-900/10 transition hover:bg-[#084b8d] hover:shadow-xl"
+                                        className="group h-11 w-full rounded-xl bg-blue-700 text-sm font-semibold shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 hover:shadow-blue-700/30"
                                     >
 
                                         {processing ? (
@@ -415,7 +442,7 @@ export default function Login({
                                             </>
                                         ) : (
                                             <>
-                                                Sign in to eDTS
+                                                Sign in to CMMS
 
                                                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                             </>
@@ -427,7 +454,7 @@ export default function Login({
 
                                 {/* REGISTER */}
 
-                                <div className="mt-7 border-t border-slate-100 pt-6 text-center">
+                                <div className="mt-6 border-t border-slate-100 pt-5 text-center">
 
                                     <p className="text-xs text-slate-500">
                                         Don't have a municipal account?
@@ -435,24 +462,22 @@ export default function Login({
 
                                     <TextLink
                                         href={route('register')}
-                                        className="mt-2 inline-block text-sm font-semibold text-blue-700 hover:text-blue-800"
+                                        className="mt-1.5 inline-block text-sm font-semibold text-blue-700 hover:text-blue-800"
                                     >
                                         Create an account
                                     </TextLink>
 
                                 </div>
 
-                                {/* FOOTER */}
+                                {/* SECURITY */}
 
-                                <div className="mt-7 text-center">
+                                <div className="mt-5 flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.14em] text-slate-400">
 
-                                    <p className="text-[9px] uppercase tracking-[0.16em] text-slate-400">
-                                        Municipal Government of Estancia
-                                    </p>
+                                    <LockKeyhole className="h-3 w-3" />
 
-                                    <p className="mt-1 text-[9px] text-slate-400">
-                                        Province of Iloilo • Philippines
-                                    </p>
+                                    <span>
+                                        Secure Municipal System
+                                    </span>
 
                                 </div>
 
