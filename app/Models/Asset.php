@@ -90,7 +90,8 @@ class Asset extends Model
     public function maintenanceRecords(): HasMany
     {
         return $this->hasMany(
-            MaintenanceRecord::class
-        );
+            MaintenanceRecord::class,
+            'asset_id'
+        )->latest();
     }
 }
