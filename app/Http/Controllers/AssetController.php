@@ -281,9 +281,7 @@ class AssetController extends Controller
         $asset->load([
             'category',
             'department',
-            'assignedTo',
             'maintenanceRecords.maintenanceType',
-            'maintenanceRecords.assignedTo',
         ]);
 
         return Inertia::render('assets/show', [
