@@ -7,16 +7,19 @@ use App\Models\Department;
 use App\Models\MaintenanceRecord;
 use App\Models\MaintenanceType;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MaintenanceRecordController extends Controller
 {
-    /**
-     * Display maintenance records.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
     public function index(): Response
     {
         $records = MaintenanceRecord::query()
@@ -60,9 +63,12 @@ class MaintenanceRecordController extends Controller
     }
 
 
-    /**
-     * Show maintenance record form.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
+
     public function create(): Response
     {
         $assets = Asset::query()
@@ -116,14 +122,24 @@ class MaintenanceRecordController extends Controller
     }
 
 
-    /**
-     * Store maintenance record.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
+
     public function store(
         Request $request
     ): RedirectResponse {
 
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
         $validated = $request->validate([
+
             'maintenance_code' => [
                 'required',
                 'string',
@@ -222,10 +238,14 @@ class MaintenanceRecordController extends Controller
             ],
         ]);
 
+
         /*
         |--------------------------------------------------------------------------
-        | CALCULATE TOTAL COST
+        | NORMALIZE COSTS
         |--------------------------------------------------------------------------
+        |
+        | Empty cost fields must become 0 instead of NULL.
+        |
         */
 
         $laborCost = (float) (
@@ -240,6 +260,29 @@ class MaintenanceRecordController extends Controller
             $validated['other_cost'] ?? 0
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | SAVE NORMALIZED COSTS
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['labor_cost'] =
+            $laborCost;
+
+        $validated['parts_cost'] =
+            $partsCost;
+
+        $validated['other_cost'] =
+            $otherCost;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CALCULATE TOTAL COST
+        |--------------------------------------------------------------------------
+        */
+
         $validated['total_cost'] =
             $laborCost +
             $partsCost +
@@ -248,19 +291,24 @@ class MaintenanceRecordController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE RECORD
+        | CREATE MAINTENANCE RECORD
         |--------------------------------------------------------------------------
         */
 
-        $record = MaintenanceRecord::create(
-            $validated
-        );
+        $record =
+            MaintenanceRecord::create(
+                $validated
+            );
 
 
         /*
         |--------------------------------------------------------------------------
         | UPDATE ASSET STATUS
         |--------------------------------------------------------------------------
+        |
+        | If maintenance actually starts, automatically put the asset
+        | into UNDER MAINTENANCE status.
+        |
         */
 
         $asset = Asset::find(
@@ -272,12 +320,49 @@ class MaintenanceRecordController extends Controller
             $validated['status'] ===
             'in_progress'
         ) {
+
             $asset->update([
                 'status' =>
                 'under_maintenance',
             ]);
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | COMPLETED MAINTENANCE
+        |--------------------------------------------------------------------------
+        |
+        | If the maintenance was already completed, make sure the asset
+        | is returned to ACTIVE unless it was already disposed/lost.
+        |
+        */
+
+        if (
+            $asset &&
+            $validated['status'] ===
+            'completed' &&
+            ! in_array(
+                $asset->status,
+                [
+                    'disposed',
+                    'lost',
+                ],
+                true
+            )
+        ) {
+
+            $asset->update([
+                'status' => 'active',
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
             ->route(
