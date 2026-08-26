@@ -2,9 +2,11 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import {
     Building2,
+    CheckCircle2,
     ChevronDown,
     LoaderCircle,
     ShieldCheck,
+    Wrench,
 } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
@@ -172,20 +174,26 @@ export default function Register() {
 
     return (
         <>
-            <Head title="Create Account | Municipality of Estancia" />
+            <Head title="Create Account | CMMS">
+                <meta
+                    name="description"
+                    content="Create an account for the Computerized Maintenance Management System of the Municipality of Estancia, Iloilo."
+                />
+            </Head>
 
-            <div className="h-screen w-full overflow-hidden bg-slate-100">
+            <div className="min-h-screen bg-slate-100">
 
                 {/* ================================================== */}
-                {/* TOP GOVERNMENT BAR */}
+                {/* HEADER */}
                 {/* ================================================== */}
 
-                <header className="h-[76px] bg-[#0b1f3a] text-white">
-                    <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6">
+                <header className="border-b border-slate-200 bg-white">
+                    <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6">
 
+                        {/* Government Branding */}
                         <div className="flex items-center gap-3">
 
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white p-1 shadow-md">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
                                 <img
                                     src="/images/estancia-logo.png"
                                     alt="Municipality of Estancia"
@@ -194,28 +202,36 @@ export default function Register() {
                             </div>
 
                             <div>
-                                <p className="text-[9px] uppercase tracking-[0.2em] text-blue-200">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                     Republic of the Philippines
                                 </p>
 
-                                <h1 className="text-sm font-bold uppercase tracking-wide sm:text-base">
+                                <h1 className="text-sm font-bold uppercase tracking-wide text-slate-800 sm:text-base">
                                     Municipality of Estancia
                                 </h1>
 
-                                <p className="text-[11px] text-blue-200">
+                                <p className="text-[10px] text-slate-500">
                                     Province of Iloilo
                                 </p>
                             </div>
                         </div>
 
-                        <div className="hidden text-right sm:block">
-                            <p className="text-xs font-semibold">
-                                Electronic Document
-                            </p>
+                        {/* CMMS Label */}
+                        <div className="hidden items-center gap-3 sm:flex">
 
-                            <p className="text-[10px] text-blue-200">
-                                Tracking System
-                            </p>
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                <Wrench className="h-4 w-4" />
+                            </div>
+
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-slate-800">
+                                    CMMS
+                                </p>
+
+                                <p className="text-[10px] text-slate-400">
+                                    Maintenance Management
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -224,22 +240,27 @@ export default function Register() {
                 {/* MAIN */}
                 {/* ================================================== */}
 
-                <main className="flex h-[calc(100vh-76px)] items-center justify-center overflow-hidden px-4 py-4 sm:px-6">
+                <main className="px-4 py-8 sm:px-6 lg:py-12">
 
-                    <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-300/50 lg:grid-cols-[0.85fr_1.15fr]">
+                    <div className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[0.9fr_1.1fr]">
 
                         {/* ================================================== */}
-                        {/* LEFT PANEL */}
+                        {/* LEFT INFORMATION PANEL */}
                         {/* ================================================== */}
 
-                        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#0b1f3a] via-[#123b69] to-[#0b5cab] p-8 text-white lg:flex lg:flex-col lg:justify-between">
+                        <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
 
-                            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/10" />
-                            <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full border border-white/10" />
+                            {/* Background Shapes */}
+                            <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full border border-blue-400/10" />
+
+                            <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
+
+                            <div className="absolute right-10 top-24 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl" />
 
                             <div className="relative">
 
-                                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white p-2 shadow-xl">
+                                {/* Logo */}
+                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-2xl">
                                     <img
                                         src="/images/estancia-logo.png"
                                         alt="Municipality of Estancia"
@@ -247,26 +268,67 @@ export default function Register() {
                                     />
                                 </div>
 
-                                <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">
-                                    Municipal Government
+                                <p className="mt-10 text-[10px] font-semibold uppercase tracking-[0.25em] text-blue-400">
+                                    Municipal Operations
                                 </p>
 
-                                <h2 className="mt-2 text-3xl font-bold leading-tight">
-                                    Electronic Document
-                                    <span className="block text-blue-300">
-                                        Tracking System
+                                <h2 className="mt-3 text-4xl font-bold leading-tight tracking-tight">
+                                    Computerized
+                                    <span className="block text-blue-400">
+                                        Maintenance
+                                    </span>
+                                    <span className="block">
+                                        Management
                                     </span>
                                 </h2>
 
-                                <p className="mt-5 max-w-sm text-sm leading-6 text-blue-100">
+                                <p className="mt-6 max-w-sm text-sm leading-7 text-slate-300">
                                     A centralized platform for managing
-                                    and tracking official documents
-                                    across the Municipality of Estancia.
+                                    municipal assets, equipment,
+                                    maintenance activities, work orders,
+                                    and service records.
                                 </p>
+
+                                {/* Features */}
+                                <div className="mt-10 space-y-4">
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-xs text-slate-300">
+                                            Asset & Equipment Management
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-xs text-slate-300">
+                                            Preventive Maintenance
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+                                        </div>
+
+                                        <span className="text-xs text-slate-300">
+                                            Work Order Management
+                                        </span>
+                                    </div>
+
+                                </div>
                             </div>
 
-                            <div className="relative">
-                                <div className="flex items-center gap-2 text-xs text-blue-200">
+                            {/* Bottom */}
+                            <div className="relative mt-12">
+
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
                                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
 
                                     <span>
@@ -274,50 +336,64 @@ export default function Register() {
                                     </span>
                                 </div>
 
-                                <p className="mt-3 text-[10px] text-blue-300">
+                                <p className="mt-3 text-[10px] text-slate-500">
                                     Municipality of Estancia • Iloilo
                                 </p>
+
                             </div>
+
                         </section>
 
                         {/* ================================================== */}
-                        {/* RIGHT FORM */}
+                        {/* RIGHT REGISTER FORM */}
                         {/* ================================================== */}
 
-                        <section className="p-5 sm:p-7 lg:p-8">
+                        <section className="p-6 sm:p-8 lg:p-10">
 
-                            <div className="mb-5">
+                            {/* Form Header */}
+                            <div className="mb-7">
 
                                 <div className="flex items-center gap-3">
 
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                                         <Building2 className="h-5 w-5" />
                                     </div>
 
                                     <div>
-                                        <h2 className="text-lg font-bold text-slate-900">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+                                            CMMS Account
+                                        </p>
+
+                                        <h2 className="text-xl font-bold tracking-tight text-slate-900">
                                             Create Account
                                         </h2>
-
-                                        <p className="text-xs text-slate-500">
-                                            Register your municipal account
-                                        </p>
                                     </div>
+
                                 </div>
 
-                                <div className="mt-4 h-px bg-slate-100" />
+                                <p className="mt-3 text-sm leading-6 text-slate-500">
+                                    Register your municipal account to
+                                    access the maintenance management
+                                    system.
+                                </p>
+
+                                <div className="mt-6 h-px bg-slate-100" />
                             </div>
 
                             <form
                                 onSubmit={submit}
-                                className="space-y-3.5"
+                                className="space-y-5"
                             >
 
                                 {/* ERROR */}
 
                                 {generalError && (
-                                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                                        {generalError}
+                                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                        <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+
+                                        <span>
+                                            {generalError}
+                                        </span>
                                     </div>
                                 )}
 
@@ -326,7 +402,7 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="name"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                        className="mb-2 block text-xs font-semibold text-slate-700"
                                     >
                                         Full Name
                                     </Label>
@@ -346,7 +422,7 @@ export default function Register() {
                                         }
                                         disabled={processing}
                                         placeholder="Juan Dela Cruz"
-                                        className="h-10 rounded-lg bg-slate-50 text-sm"
+                                        className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                     />
 
                                     <InputError
@@ -359,7 +435,7 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="phone"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                        className="mb-2 block text-xs font-semibold text-slate-700"
                                     >
                                         Mobile Number
                                     </Label>
@@ -382,7 +458,7 @@ export default function Register() {
                                         disabled={processing}
                                         placeholder="09123456789"
                                         maxLength={11}
-                                        className="h-10 rounded-lg bg-slate-50 text-sm"
+                                        className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                     />
 
                                     <InputError
@@ -395,18 +471,17 @@ export default function Register() {
                                 <div>
                                     <Label
                                         htmlFor="department_id"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                        className="mb-2 block text-xs font-semibold text-slate-700"
                                     >
                                         Department / Office
                                     </Label>
 
                                     <div className="relative">
+
                                         <select
                                             id="department_id"
                                             required
-                                            value={
-                                                data.department_id
-                                            }
+                                            value={data.department_id}
                                             onChange={(e) =>
                                                 setData({
                                                     ...data,
@@ -418,7 +493,7 @@ export default function Register() {
                                                 processing ||
                                                 loadingDepartments
                                             }
-                                            className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 pr-10 text-sm text-slate-700 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <option value="">
                                                 {loadingDepartments
@@ -444,7 +519,8 @@ export default function Register() {
                                             )}
                                         </select>
 
-                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
                                     </div>
 
                                     <InputError
@@ -456,12 +532,12 @@ export default function Register() {
 
                                 {/* PASSWORDS */}
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-4 sm:grid-cols-2">
 
                                     <div>
                                         <Label
                                             htmlFor="password"
-                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                            className="mb-2 block text-xs font-semibold text-slate-700"
                                         >
                                             Password
                                         </Label>
@@ -481,7 +557,7 @@ export default function Register() {
                                             }
                                             disabled={processing}
                                             placeholder="••••••••"
-                                            className="h-10 rounded-lg bg-slate-50 text-sm"
+                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
@@ -494,7 +570,7 @@ export default function Register() {
                                     <div>
                                         <Label
                                             htmlFor="password_confirmation"
-                                            className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                            className="mb-2 block text-xs font-semibold text-slate-700"
                                         >
                                             Confirm Password
                                         </Label>
@@ -516,7 +592,7 @@ export default function Register() {
                                             }
                                             disabled={processing}
                                             placeholder="••••••••"
-                                            className="h-10 rounded-lg bg-slate-50 text-sm"
+                                            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                                         />
 
                                         <InputError
@@ -525,17 +601,29 @@ export default function Register() {
                                             }
                                         />
                                     </div>
+
                                 </div>
 
                                 {/* OTP NOTICE */}
 
-                                <div className="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5">
-                                    <ShieldCheck className="h-5 w-5 shrink-0 text-blue-700" />
+                                <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3.5">
 
-                                    <p className="text-[11px] leading-4 text-blue-800">
-                                        Your mobile number will be verified
-                                        through OTP after registration.
-                                    </p>
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm">
+                                        <ShieldCheck className="h-4 w-4" />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-xs font-semibold text-blue-900">
+                                            Mobile verification required
+                                        </p>
+
+                                        <p className="mt-0.5 text-[11px] leading-5 text-blue-700">
+                                            Your mobile number will be
+                                            verified through OTP after
+                                            registration.
+                                        </p>
+                                    </div>
+
                                 </div>
 
                                 {/* BUTTON */}
@@ -547,7 +635,7 @@ export default function Register() {
                                         loadingDepartments ||
                                         departments.length === 0
                                     }
-                                    className="h-10 w-full rounded-lg bg-[#0b5cab] text-sm font-semibold shadow-sm hover:bg-[#084b8d]"
+                                    className="h-11 w-full rounded-xl bg-blue-700 text-sm font-semibold shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 hover:shadow-blue-700/30"
                                 >
                                     {processing ? (
                                         <>
@@ -555,7 +643,7 @@ export default function Register() {
                                             Creating account...
                                         </>
                                     ) : (
-                                        'Create Municipal Account'
+                                        'Create CMMS Account'
                                     )}
                                 </Button>
 
@@ -563,7 +651,8 @@ export default function Register() {
 
                             {/* LOGIN */}
 
-                            <div className="mt-5 text-center text-xs text-slate-500">
+                            <div className="mt-7 text-center text-sm text-slate-500">
+
                                 Already have an account?{' '}
 
                                 <TextLink
@@ -572,20 +661,34 @@ export default function Register() {
                                 >
                                     Sign in
                                 </TextLink>
+
+                            </div>
+
+                            {/* Footer Info */}
+
+                            <div className="mt-8 border-t border-slate-100 pt-5 text-center">
+                                <p className="text-[10px] leading-5 text-slate-400">
+                                    Computerized Maintenance Management System
+                                    <br />
+                                    Municipality of Estancia, Iloilo
+                                </p>
                             </div>
 
                         </section>
+
                     </div>
+
                 </main>
 
-                {/* ================================================== */}
-                {/* BOTTOM BAR */}
-                {/* ================================================== */}
+                {/* Bottom Footer */}
 
-                <footer className="fixed bottom-0 left-0 right-0 hidden h-7 items-center justify-center bg-white/80 text-[9px] text-slate-400 backdrop-blur sm:flex">
-                    © {new Date().getFullYear()} Municipal Government of Estancia,
-                    Iloilo • Electronic Document Tracking System
+                <footer className="border-t border-slate-200 bg-white py-4 text-center">
+                    <p className="text-[10px] text-slate-400">
+                        © {new Date().getFullYear()} Municipal Government of
+                        Estancia, Iloilo • CMMS
+                    </p>
                 </footer>
+
             </div>
         </>
     );
