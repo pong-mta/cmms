@@ -12,12 +12,17 @@ import {
     Edit,
     FileText,
     History,
-    MapPin,
     Package,
     User,
     Wrench,
 } from 'lucide-react';
 
+
+/*
+|--------------------------------------------------------------------------
+| TYPES
+|--------------------------------------------------------------------------
+*/
 
 interface Category {
     id: number;
@@ -25,11 +30,13 @@ interface Category {
     code: string;
 }
 
+
 interface Department {
     id: number;
     name: string;
     code: string;
 }
+
 
 interface AssignedUser {
     id: number;
@@ -37,20 +44,69 @@ interface AssignedUser {
     phone?: string;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| MAINTENANCE TYPES
+|--------------------------------------------------------------------------
+*/
+
+interface MaintenanceType {
+    id: number;
+    name: string;
+    code: string;
+}
+
+
+interface MaintenanceRecord {
+    id: number;
+
+    maintenance_code: string;
+
+    maintenance_type?: MaintenanceType | null;
+
+    scheduled_date?: string | null;
+
+    completed_at?: string | null;
+
+    total_cost?: string | number | null;
+
+    status:
+        | 'pending'
+        | 'scheduled'
+        | 'in_progress'
+        | 'completed'
+        | 'cancelled';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ASSET
+|--------------------------------------------------------------------------
+*/
+
 interface Asset {
     id: number;
+
     asset_code: string;
+
     name: string;
+
     serial_number?: string | null;
+
     description?: string | null;
 
     location?: string | null;
 
     acquisition_date?: string | null;
+
     acquisition_cost?: string | number | null;
+
     supplier?: string | null;
 
     warranty_start?: string | null;
+
     warranty_end?: string | null;
 
     status:
@@ -70,17 +126,29 @@ interface Asset {
     notes?: string | null;
 
     category?: Category | null;
+
     department?: Department | null;
+
     assigned_user?: AssignedUser | null;
 
+    maintenanceRecords?: MaintenanceRecord[];
+
     created_at: string;
+
     updated_at: string;
 }
+
 
 interface ShowAssetProps {
     asset: Asset;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| BREADCRUMBS
+|--------------------------------------------------------------------------
+*/
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -93,6 +161,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+
+/*
+|--------------------------------------------------------------------------
+| STATUS LABEL
+|--------------------------------------------------------------------------
+*/
 
 function statusLabel(
     status: Asset['status'],
@@ -107,6 +181,12 @@ function statusLabel(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| CONDITION LABEL
+|--------------------------------------------------------------------------
+*/
+
 function conditionLabel(
     condition: Asset['condition'],
 ) {
@@ -117,10 +197,17 @@ function conditionLabel(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| STATUS CLASS
+|--------------------------------------------------------------------------
+*/
+
 function statusClass(
     status: Asset['status'],
 ) {
     switch (status) {
+
         case 'active':
             return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
 
@@ -142,10 +229,17 @@ function statusClass(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| CONDITION CLASS
+|--------------------------------------------------------------------------
+*/
+
 function conditionClass(
     condition: Asset['condition'],
 ) {
     switch (condition) {
+
         case 'excellent':
             return 'text-emerald-700';
 
@@ -167,9 +261,67 @@ function conditionClass(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| MAINTENANCE STATUS CLASS
+|--------------------------------------------------------------------------
+*/
+
+function maintenanceStatusClass(
+    status: MaintenanceRecord['status'],
+) {
+    switch (status) {
+
+        case 'completed':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'in_progress':
+            return 'bg-amber-50 text-amber-700 ring-amber-200';
+
+        case 'scheduled':
+            return 'bg-blue-50 text-blue-700 ring-blue-200';
+
+        case 'cancelled':
+            return 'bg-red-50 text-red-700 ring-red-200';
+
+        case 'pending':
+            return 'bg-slate-100 text-slate-600 ring-slate-200';
+
+        default:
+            return 'bg-slate-100 text-slate-600 ring-slate-200';
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| MAINTENANCE STATUS LABEL
+|--------------------------------------------------------------------------
+*/
+
+function maintenanceStatusLabel(
+    status: MaintenanceRecord['status'],
+) {
+    return status
+        .replaceAll('_', ' ')
+        .replace(
+            /\b\w/g,
+            (letter) =>
+                letter.toUpperCase(),
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DATE
+|--------------------------------------------------------------------------
+*/
+
 function formatDate(
     value?: string | null,
 ) {
+
     if (!value) {
         return '—';
     }
@@ -180,16 +332,52 @@ function formatDate(
         'en-PH',
         {
             year: 'numeric',
-            month: 'long',
+            month: 'short',
             day: 'numeric',
         },
     );
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| DATE + TIME
+|--------------------------------------------------------------------------
+*/
+
+function formatDateTime(
+    value?: string | null,
+) {
+
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(
+        value,
+    ).toLocaleString(
+        'en-PH',
+        {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        },
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CURRENCY
+|--------------------------------------------------------------------------
+*/
+
 function formatCurrency(
     value?: string | number | null,
 ) {
+
     if (
         value === null ||
         value === undefined ||
@@ -210,9 +398,21 @@ function formatCurrency(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| PAGE
+|--------------------------------------------------------------------------
+*/
+
 export default function ShowAsset({
     asset,
 }: ShowAssetProps) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | BREADCRUMBS
+    |--------------------------------------------------------------------------
+    */
 
     const breadcrumbsWithAsset: BreadcrumbItem[] = [
         {
@@ -226,12 +426,34 @@ export default function ShowAsset({
     ];
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | WARRANTY
+    |--------------------------------------------------------------------------
+    */
+
     const warrantyActive =
         asset.warranty_end &&
         new Date(
             asset.warranty_end,
         ) >= new Date();
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | MAINTENANCE RECORDS
+    |--------------------------------------------------------------------------
+    */
+
+    const maintenanceRecords =
+        asset.maintenanceRecords ?? [];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RENDER
+    |--------------------------------------------------------------------------
+    */
 
     return (
         <AppLayout
@@ -281,17 +503,21 @@ export default function ShowAsset({
                                     {asset.name}
                                 </h1>
 
+
                                 <span
                                     className={`hidden rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset sm:inline-flex ${statusClass(
                                         asset.status,
                                     )}`}
                                 >
+
                                     {statusLabel(
                                         asset.status,
                                     )}
+
                                 </span>
 
                             </div>
+
 
                             <p className="mt-0.5 text-xs font-semibold text-blue-700">
                                 {asset.asset_code}
@@ -345,9 +571,11 @@ export default function ShowAsset({
                             asset.status,
                         )}`}
                     >
+
                         {statusLabel(
                             asset.status,
                         )}
+
                     </span>
 
                 </div>
@@ -452,12 +680,14 @@ export default function ShowAsset({
                                     }
                                 />
 
+
                                 <DetailItem
                                     label="Serial Number"
                                     value={
                                         asset.serial_number
                                     }
                                 />
+
 
                                 <DetailItem
                                     label="Category"
@@ -468,12 +698,14 @@ export default function ShowAsset({
                                     }
                                 />
 
+
                                 <DetailItem
                                     label="Location"
                                     value={
                                         asset.location
                                     }
                                 />
+
 
                                 <DetailItem
                                     label="Department"
@@ -483,6 +715,7 @@ export default function ShowAsset({
                                             : null
                                     }
                                 />
+
 
                                 <DetailItem
                                     label="Responsible Person"
@@ -538,12 +771,14 @@ export default function ShowAsset({
                                     )}
                                 />
 
+
                                 <DetailItem
                                     label="Acquisition Cost"
                                     value={formatCurrency(
                                         asset.acquisition_cost,
                                     )}
                                 />
+
 
                                 <DetailItem
                                     label="Supplier"
@@ -577,6 +812,7 @@ export default function ShowAsset({
                                         asset.warranty_start,
                                     )}
                                 />
+
 
                                 <DetailItem
                                     label="Warranty End"
@@ -685,6 +921,7 @@ export default function ShowAsset({
 
                                 </div>
 
+
                                 <div>
 
                                     <h2 className="text-sm font-bold text-slate-900">
@@ -708,14 +945,17 @@ export default function ShowAsset({
                                         Status
                                     </span>
 
+
                                     <span
                                         className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${statusClass(
                                             asset.status,
                                         )}`}
                                     >
+
                                         {statusLabel(
                                             asset.status,
                                         )}
+
                                     </span>
 
                                 </div>
@@ -727,14 +967,17 @@ export default function ShowAsset({
                                         Condition
                                     </span>
 
+
                                     <span
                                         className={`text-xs font-bold ${conditionClass(
                                             asset.condition,
                                         )}`}
                                     >
+
                                         {conditionLabel(
                                             asset.condition,
                                         )}
+
                                     </span>
 
                                 </div>
@@ -745,7 +988,7 @@ export default function ShowAsset({
 
 
                         {/* ================================================== */}
-                        {/* MAINTENANCE */}
+                        {/* MAINTENANCE HISTORY */}
                         {/* ================================================== */}
 
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -759,6 +1002,7 @@ export default function ShowAsset({
                                         <History className="h-5 w-5" />
 
                                     </div>
+
 
                                     <div>
 
@@ -777,25 +1021,153 @@ export default function ShowAsset({
                             </div>
 
 
-                            <div className="flex min-h-[220px] flex-col items-center justify-center px-5 text-center">
+                            {maintenanceRecords.length > 0 ? (
 
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                                <div className="divide-y divide-slate-100">
 
-                                    <Wrench className="h-6 w-6" />
+                                    {maintenanceRecords.map(
+                                        (
+                                            maintenance,
+                                        ) => (
+
+                                            <div
+                                                key={
+                                                    maintenance.id
+                                                }
+                                                className="p-5 transition hover:bg-slate-50"
+                                            >
+
+                                                <div className="flex items-start justify-between gap-3">
+
+                                                    <div className="flex min-w-0 items-start gap-3">
+
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+
+                                                            <Wrench className="h-4 w-4" />
+
+                                                        </div>
+
+
+                                                        <div className="min-w-0">
+
+                                                            <p className="truncate text-xs font-bold text-slate-800">
+                                                                {
+                                                                    maintenance.maintenance_code
+                                                                }
+                                                            </p>
+
+
+                                                            <p className="mt-1 text-[10px] text-slate-500">
+
+                                                                {maintenance
+                                                                    .maintenance_type
+                                                                    ?.name ??
+                                                                    'Maintenance'}
+
+                                                            </p>
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    <span
+                                                        className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-semibold ring-1 ring-inset ${maintenanceStatusClass(
+                                                            maintenance.status,
+                                                        )}`}
+                                                    >
+
+                                                        {maintenanceStatusLabel(
+                                                            maintenance.status,
+                                                        )}
+
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div className="mt-3 flex items-center justify-between gap-3">
+
+                                                    <div className="flex items-center gap-4">
+
+                                                        <div>
+
+                                                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                                Date
+                                                            </p>
+
+                                                            <p className="mt-0.5 text-[10px] font-medium text-slate-600">
+
+                                                                {formatDate(
+                                                                    maintenance.completed_at ??
+                                                                        maintenance.scheduled_date,
+                                                                )}
+
+                                                            </p>
+
+                                                        </div>
+
+
+                                                        <div>
+
+                                                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                                Cost
+                                                            </p>
+
+                                                            <p className="mt-0.5 text-[10px] font-semibold text-slate-700">
+
+                                                                {formatCurrency(
+                                                                    maintenance.total_cost,
+                                                                )}
+
+                                                            </p>
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    <Link
+                                                        href={`/maintenance/${maintenance.id}`}
+                                                        className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
+                                                    >
+                                                        View
+                                                    </Link>
+
+                                                </div>
+
+                                            </div>
+
+                                        ),
+                                    )}
 
                                 </div>
 
-                                <p className="mt-3 text-xs font-semibold text-slate-700">
-                                    No maintenance records
-                                </p>
+                            ) : (
 
-                                <p className="mt-1 max-w-xs text-[10px] leading-5 text-slate-400">
-                                    Maintenance history will appear
-                                    here once service activities
-                                    are recorded.
-                                </p>
+                                <div className="flex min-h-[220px] flex-col items-center justify-center px-5 text-center">
 
-                            </div>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+
+                                        <Wrench className="h-6 w-6" />
+
+                                    </div>
+
+
+                                    <p className="mt-3 text-xs font-semibold text-slate-700">
+                                        No maintenance records
+                                    </p>
+
+
+                                    <p className="mt-1 max-w-xs text-[10px] leading-5 text-slate-400">
+                                        Maintenance history will appear
+                                        here once service activities
+                                        are recorded.
+                                    </p>
+
+                                </div>
+
+                            )}
 
                         </section>
 
@@ -818,12 +1190,14 @@ export default function ShowAsset({
                                     value={`#${asset.id}`}
                                 />
 
+
                                 <RecordItem
                                     label="Created"
                                     value={formatDateTime(
                                         asset.created_at,
                                     )}
                                 />
+
 
                                 <RecordItem
                                     label="Last Updated"
@@ -874,11 +1248,13 @@ function OverviewCard({
                     {icon}
                 </div>
 
+
                 <div className="min-w-0">
 
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         {label}
                     </p>
+
 
                     <p
                         className={`mt-1 truncate text-xs font-bold ${valueClass}`}
@@ -924,11 +1300,13 @@ function DetailSection({
                         {icon}
                     </div>
 
+
                     <div>
 
                         <h2 className="text-sm font-bold text-slate-900">
                             {title}
                         </h2>
+
 
                         <p className="mt-0.5 text-[10px] text-slate-500">
                             {description}
@@ -973,6 +1351,7 @@ function DetailItem({
                 {label}
             </p>
 
+
             <p className="mt-1.5 text-sm font-medium text-slate-700">
                 {value || '—'}
             </p>
@@ -1003,39 +1382,11 @@ function RecordItem({
                 {label}
             </span>
 
+
             <span className="text-right text-[10px] font-semibold text-slate-600">
                 {value}
             </span>
 
         </div>
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| DATE + TIME
-|--------------------------------------------------------------------------
-*/
-
-function formatDateTime(
-    value?: string | null,
-) {
-
-    if (!value) {
-        return '—';
-    }
-
-    return new Date(
-        value,
-    ).toLocaleString(
-        'en-PH',
-        {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-        },
     );
 }
