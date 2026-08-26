@@ -48,11 +48,11 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class);
     }
-    public function documents(): HasMany
+    public function assignedAssets(): HasMany
     {
         return $this->hasMany(
-            Document::class,
-            'created_by'
+            Asset::class,
+            'assigned_to'
         );
     }
 }

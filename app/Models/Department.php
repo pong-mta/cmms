@@ -18,11 +18,10 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
-    public function documents(): HasMany
+    public function assets(): HasMany
     {
         return $this->hasMany(
-            Document::class,
-            'department_id'
+            Asset::class
         );
     }
 }
