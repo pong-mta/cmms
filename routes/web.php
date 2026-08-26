@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\MaintenanceRecordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -61,6 +62,23 @@ Route::middleware(['auth'])->group(function () {
         AssetController::class,
         'update',
     ])->name('assets.update');
+
+
+    //MAINTENANCE
+    Route::get('/maintenance', [
+        MaintenanceRecordController::class,
+        'index',
+    ])->name('maintenance.index');
+
+    Route::get('/maintenance/create', [
+        MaintenanceRecordController::class,
+        'create',
+    ])->name('maintenance.create');
+
+    Route::post('/maintenance', [
+        MaintenanceRecordController::class,
+        'store',
+    ])->name('maintenance.store');
 });
 
 require __DIR__ . '/settings.php';

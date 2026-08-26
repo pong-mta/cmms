@@ -55,4 +55,22 @@ class User extends Authenticatable
             'assigned_to'
         );
     }
+
+
+
+    public function requestedMaintenance(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRecord::class,
+            'requested_by'
+        );
+    }
+
+    public function assignedMaintenance(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRecord::class,
+            'assigned_to'
+        );
+    }
 }
