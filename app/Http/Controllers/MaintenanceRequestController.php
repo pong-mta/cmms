@@ -206,4 +206,57 @@ class MaintenanceRequestController extends Controller
                 'Maintenance request submitted successfully.'
             );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| SHOW
+|--------------------------------------------------------------------------
+*/
+
+    public function show(
+        MaintenanceRequest $maintenanceRequest
+    ): Response {
+        $maintenanceRequest->load([
+            'asset',
+            'department',
+            'requestedBy',
+            'assignedTo',
+        ]);
+
+        return Inertia::render(
+            'maintenance-requests/show',
+            [
+                'request' => $maintenanceRequest,
+            ]
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| START REVIEW
+|--------------------------------------------------------------------------
+*/
+
+    public function review(
+        MaintenanceRequest $maintenanceRequest
+    ) {
+        if (
+            $maintenanceRequest->status !==
+            'submitted'
+        ) {
+            return back()->with(
+                'error',
+                'This request cannot be moved to review.'
+            );
+        }
+
+        $maintenanceRequest->update([
+            'status' => 'reviewing',
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request is now under review.'
+        );
+    }
 }
