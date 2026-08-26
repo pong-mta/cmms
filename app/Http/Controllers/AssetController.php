@@ -288,4 +288,160 @@ class AssetController extends Controller
             'asset' => $asset,
         ]);
     }
+
+    /**
+     * Show the form for editing an asset.
+     */
+    public function edit(Asset $asset): Response
+    {
+        $categories = AssetCategory::query()
+            ->where('status', true)
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'code',
+            ]);
+
+        $departments = Department::query()
+            ->where('status', true)
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'code',
+            ]);
+
+        $users = User::query()
+            ->with('department')
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'department_id',
+            ]);
+
+        $asset->load([
+            'category',
+            'department',
+            'assignedUser',
+        ]);
+
+        return Inertia::render('assets/edit', [
+            'asset' => $asset,
+            'categories' => $categories,
+            'departments' => $departments,
+            'users' => $users,
+        ]);
+    }
+
+
+    /**
+     * Update an existing asset.
+     */
+    public function update(
+        Request $request,
+        Asset $asset
+    ): RedirectResponse {
+
+        $validated = $request->validate([
+            'asset_code' => [
+                'required',
+                'string',
+                'max:100',
+                'unique:assets,asset_code,' . $asset->id,
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'serial_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:assets,serial_number,' . $asset->id,
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'asset_category_id' => [
+                'required',
+                'exists:asset_categories,id',
+            ],
+
+            'department_id' => [
+                'nullable',
+                'exists:departments,id',
+            ],
+
+            'assigned_to' => [
+                'nullable',
+                'exists:users,id',
+            ],
+
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'acquisition_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'acquisition_cost' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'supplier' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'warranty_start' => [
+                'nullable',
+                'date',
+            ],
+
+            'warranty_end' => [
+                'nullable',
+                'date',
+                'after_or_equal:warranty_start',
+            ],
+
+            'status' => [
+                'required',
+                'in:active,under_maintenance,out_of_service,disposed,lost',
+            ],
+
+            'condition' => [
+                'required',
+                'in:excellent,good,fair,poor,critical',
+            ],
+
+            'notes' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
+        $asset->update($validated);
+
+        return redirect()
+            ->route('assets.show', $asset)
+            ->with(
+                'success',
+                'Asset updated successfully.'
+            );
+    }
 }

@@ -52,6 +52,15 @@ Route::middleware(['auth'])->group(function () {
         AssetController::class,
         'show',
     ])->name('assets.show');
+    Route::get('/assets/{asset}/edit', [
+        AssetController::class,
+        'edit',
+    ])->name('assets.edit');
+
+    Route::put('/assets/{asset}', [
+        AssetController::class,
+        'update',
+    ])->name('assets.update');
 });
 
 require __DIR__ . '/settings.php';
