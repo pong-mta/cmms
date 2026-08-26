@@ -24,7 +24,7 @@
 /storage/*.key
 /storage/pail
 
-/vendor
+vendor
 
 auth.json
 
