@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\MaintenanceRecordController;
+use App\Http\Controllers\MaintenanceRequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -86,18 +87,16 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+    //Maintenance Request
+    Route::get('/maintenance-requests', [
+        MaintenanceRequestController::class,
+        'index',
+    ])->name('maintenance-requests.index');
 
-    Route::get('/debug-asset/{asset}', function (\App\Models\Asset $asset) {
-
-        return response()->json([
-            'asset_id' => $asset->id,
-            'asset_code' => $asset->asset_code,
-            'maintenance_count' => $asset->maintenanceRecords()->count(),
-            'maintenance_records' => $asset->maintenanceRecords()
-                ->with('maintenanceType')
-                ->get(),
-        ]);
-    })->name('debug.asset');
+    Route::get('/maintenance-requests/create', [
+        MaintenanceRequestController::class,
+        'create',
+    ])->name('maintenance-requests.create');
 });
 
 require __DIR__ . '/settings.php';
