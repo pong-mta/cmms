@@ -79,6 +79,34 @@ interface MaintenanceRecord {
         | 'cancelled';
 }
 
+interface MaintenanceRequest {
+    id: number;
+
+    request_code: string;
+
+    title: string;
+
+    description?: string | null;
+
+    priority: string;
+
+    status: string;
+
+    requested_at?: string | null;
+
+    completed_at?: string | null;
+
+    requested_by?: {
+        id: number;
+        name: string;
+    } | null;
+
+    completed_by?: {
+        id: number;
+        name: string;
+    } | null;
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -132,6 +160,8 @@ interface Asset {
     assigned_user?: AssignedUser | null;
 
     maintenance_records?: MaintenanceRecord[];
+
+    maintenance_requests?: MaintenanceRequest[];
 
     created_at: string;
 
@@ -447,6 +477,9 @@ export default function ShowAsset({
 
     const maintenanceRecords =
     asset.maintenance_records ?? [];
+
+    const maintenanceRequests =
+    asset.maintenance_requests ?? [];
 
 
     /*
@@ -1163,6 +1196,187 @@ export default function ShowAsset({
                                         Maintenance history will appear
                                         here once service activities
                                         are recorded.
+                                    </p>
+
+                                </div>
+
+                            )}
+
+                        </section>
+
+                        {/* ================================================== */}
+                        {/* MAINTENANCE REQUEST HISTORY */}
+                        {/* ================================================== */}
+
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                            <div className="border-b border-slate-100 px-5 py-4">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                        <Wrench className="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Maintenance Requests
+                                        </h2>
+
+                                        <p className="text-[10px] text-slate-500">
+                                            Maintenance requests associated with this asset
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            {maintenanceRequests.length > 0 ? (
+
+                                <div className="divide-y divide-slate-100">
+
+                                    {maintenanceRequests.map(
+                                        (maintenanceRequest) => (
+
+                                            <div
+                                                key={
+                                                    maintenanceRequest.id
+                                                }
+                                                className="p-5 transition hover:bg-slate-50"
+                                            >
+
+                                                <div className="flex items-start justify-between gap-3">
+
+                                                    <div className="min-w-0">
+
+                                                        <p className="text-xs font-bold text-slate-800">
+                                                            {
+                                                                maintenanceRequest.request_code
+                                                            }
+                                                        </p>
+
+                                                        <p className="mt-1 text-sm font-semibold text-slate-700">
+                                                            {
+                                                                maintenanceRequest.title
+                                                            }
+                                                        </p>
+
+                                                    </div>
+
+                                                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold capitalize text-slate-600">
+                                                        {
+                                                            maintenanceRequest.status
+                                                                .replaceAll(
+                                                                    '_',
+                                                                    ' ',
+                                                                )
+                                                        }
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Priority
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-semibold capitalize text-slate-700">
+                                                            {
+                                                                maintenanceRequest.priority
+                                                            }
+                                                        </p>
+
+                                                    </div>
+
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Requested
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-medium text-slate-600">
+                                                            {formatDate(
+                                                                maintenanceRequest.requested_at,
+                                                            )}
+                                                        </p>
+
+                                                    </div>
+
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Completed
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-medium text-slate-600">
+                                                            {formatDate(
+                                                                maintenanceRequest.completed_at,
+                                                            )}
+                                                        </p>
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div className="mt-4 flex items-center justify-between gap-3">
+
+                                                    <div className="text-[10px] text-slate-500">
+
+                                                        Requested by:{' '}
+
+                                                        <span className="font-semibold text-slate-700">
+                                                            {
+                                                                maintenanceRequest
+                                                                    .requested_by
+                                                                    ?.name ??
+                                                                '—'
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+
+                                                    <Link
+                                                        href={`/maintenance-requests/${maintenanceRequest.id}`}
+                                                        className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
+                                                    >
+                                                        View Request
+                                                    </Link>
+
+                                                </div>
+
+                                            </div>
+
+                                        ),
+                                    )}
+
+                                </div>
+
+                            ) : (
+
+                                <div className="flex min-h-[180px] flex-col items-center justify-center px-5 text-center">
+
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                                        <Wrench className="h-6 w-6" />
+                                    </div>
+
+                                    <p className="mt-3 text-xs font-semibold text-slate-700">
+                                        No maintenance requests
+                                    </p>
+
+                                    <p className="mt-1 max-w-xs text-[10px] leading-5 text-slate-400">
+                                        Maintenance requests for this asset will appear here.
                                     </p>
 
                                 </div>
