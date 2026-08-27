@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\MaintenanceRequest;
 
 class PreventiveMaintenanceSchedule extends Model
 {
@@ -58,6 +60,14 @@ class PreventiveMaintenanceSchedule extends Model
         return $this->belongsTo(
             User::class,
             'assigned_to'
+        );
+    }
+
+    public function maintenanceRequests(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRequest::class,
+            'preventive_maintenance_schedule_id'
         );
     }
 }

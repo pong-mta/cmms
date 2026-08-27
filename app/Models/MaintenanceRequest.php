@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
+use App\Models\PreventiveMaintenanceSchedule;
 
 class MaintenanceRequest extends Model
 {
@@ -71,6 +72,8 @@ class MaintenanceRequest extends Model
         'mayor_reviewed_by',
         'mayor_reviewed_at',
         'mayor_remarks',
+
+        'preventive_maintenance_schedule_id',
     ];
 
     protected $casts = [
@@ -253,6 +256,13 @@ class MaintenanceRequest extends Model
     {
         return $this->hasMany(
             MaintenanceWorkLog::class
+        );
+    }
+
+    public function preventiveMaintenanceSchedule(): BelongsTo
+    {
+        return $this->belongsTo(
+            PreventiveMaintenanceSchedule::class
         );
     }
 }
