@@ -1109,21 +1109,31 @@ class MaintenanceRequestController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | ASSIGN TECHNICIAN
-    |--------------------------------------------------------------------------
-    |
-    | ready_for_work
-    |       ↓
-    | assigned
-    |
-    */
+|--------------------------------------------------------------------------
+| ASSIGN WORKER
+|--------------------------------------------------------------------------
+|
+| ready_for_work
+|       ↓
+| assigned
+|
+| Supports:
+| - LGU Employee
+| - External Contractor
+|
+*/
 
     public function assign(
         Request $request,
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK AUTHORIZATION
+    |--------------------------------------------------------------------------
+    */
 
         $canAssign = $user
             ->roles()
@@ -1143,59 +1153,223 @@ class MaintenanceRequestController extends Controller
             );
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
         if (
             $maintenanceRequest->status !==
             'ready_for_work'
         ) {
             return back()->with(
                 'error',
-                'Only budget-approved requests ready for work can be assigned.'
+                'Only requests that are Ready for Work can be assigned.'
             );
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE ASSIGNMENT TYPE
+    |--------------------------------------------------------------------------
+    */
+
         $validated = $request->validate([
-            'assigned_to' => [
+            'assignment_type' => [
                 'required',
+                'in:lgu_employee,external_contractor',
+            ],
+
+            'assigned_to' => [
+                'nullable',
                 'exists:users,id',
+            ],
+
+            'external_contractor' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'external_worker_name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'external_worker_contact' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'assignment_remarks' => [
+                'nullable',
+                'string',
+                'max:2000',
             ],
         ]);
 
-        $technician = User::findOrFail(
-            $validated['assigned_to']
-        );
-
-        $isTechnician = $technician
-            ->roles()
-            ->where(
-                'name',
-                'technician'
-            )
-            ->exists();
-
-        if (!$isTechnician) {
-            return back()->with(
-                'error',
-                'The selected user is not a Maintenance Technician.'
-            );
-        }
+        /*
+    |--------------------------------------------------------------------------
+    | LGU EMPLOYEE
+    |--------------------------------------------------------------------------
+    */
 
         if (
-            $technician->department_id !==
-            $maintenanceRequest->department_id
+            $validated['assignment_type'] ===
+            'lgu_employee'
         ) {
-            return back()->with(
-                'error',
-                'The technician must belong to the same department as the maintenance request.'
+
+            if (
+                empty($validated['assigned_to'])
+            ) {
+                return back()->with(
+                    'error',
+                    'Please select an LGU technician.'
+                );
+            }
+
+            $technician = User::findOrFail(
+                $validated['assigned_to']
             );
+
+            /*
+        |--------------------------------------------------------------------------
+        | CHECK TECHNICIAN ROLE
+        |--------------------------------------------------------------------------
+        */
+
+            $isTechnician = $technician
+                ->roles()
+                ->where(
+                    'name',
+                    'technician'
+                )
+                ->exists();
+
+            if (!$isTechnician) {
+                return back()->with(
+                    'error',
+                    'The selected user is not a Maintenance Technician.'
+                );
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | CHECK DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+            if (
+                $technician->department_id !==
+                $maintenanceRequest->department_id
+            ) {
+                return back()->with(
+                    'error',
+                    'The technician must belong to the same department as the maintenance request.'
+                );
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | SAVE LGU ASSIGNMENT
+        |--------------------------------------------------------------------------
+        */
+
+            $maintenanceRequest->update([
+                'assignment_type' =>
+                'lgu_employee',
+
+                'assigned_to' =>
+                $technician->id,
+
+                'external_contractor' =>
+                null,
+
+                'external_worker_name' =>
+                null,
+
+                'external_worker_contact' =>
+                null,
+
+                'assignment_remarks' =>
+                $validated['assignment_remarks']
+                    ?? null,
+
+                'assigned_at' =>
+                now(),
+
+                'status' =>
+                'assigned',
+            ]);
         }
 
-        $maintenanceRequest->update([
-            'assigned_to' =>
-            $technician->id,
+        /*
+    |--------------------------------------------------------------------------
+    | EXTERNAL CONTRACTOR
+    |--------------------------------------------------------------------------
+    */ else {
 
-            'status' =>
-            'assigned',
-        ]);
+            if (
+                empty($validated['external_contractor'])
+            ) {
+                return back()->with(
+                    'error',
+                    'Please enter the contractor or company name.'
+                );
+            }
+
+            if (
+                empty($validated['external_worker_name'])
+            ) {
+                return back()->with(
+                    'error',
+                    'Please enter the external worker name.'
+                );
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | SAVE EXTERNAL ASSIGNMENT
+        |--------------------------------------------------------------------------
+        */
+
+            $maintenanceRequest->update([
+                'assignment_type' =>
+                'external_contractor',
+
+                'assigned_to' =>
+                null,
+
+                'external_contractor' =>
+                $validated['external_contractor'],
+
+                'external_worker_name' =>
+                $validated['external_worker_name'],
+
+                'external_worker_contact' =>
+                $validated['external_worker_contact']
+                    ?? null,
+
+                'assignment_remarks' =>
+                $validated['assignment_remarks']
+                    ?? null,
+
+                'assigned_at' =>
+                now(),
+
+                'status' =>
+                'assigned',
+            ]);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | SUCCESS
+    |--------------------------------------------------------------------------
+    */
 
         return back()->with(
             'success',
