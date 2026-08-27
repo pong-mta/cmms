@@ -1770,6 +1770,7 @@ export default function ShowMaintenanceRequest({
                                         'in_progress',
                                         'completed',
                                     ].includes(request.status)}
+                                    date={request.assigned_at}
                                 />
 
 
@@ -2799,6 +2800,92 @@ export default function ShowMaintenanceRequest({
 
                             </div>
 
+                        )}
+
+                        {/* ================================================== */}
+                        {/* ASSIGNED */}
+                        {/* ================================================== */}
+
+                        {request.status === 'assigned' && (
+                            <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+
+                                <div className="flex items-center gap-2">
+
+                                    <CheckCircle2 className="h-4 w-4 text-indigo-600" />
+
+                                    <p className="text-xs font-semibold text-indigo-900">
+                                        Work Assigned
+                                    </p>
+
+                                </div>
+
+                                <p className="mt-2 text-[10px] leading-5 text-indigo-800">
+                                    This maintenance request has been assigned
+                                    and is ready for work to begin.
+                                </p>
+
+                                {request.assignment_type ===
+                                    'external_contractor' ? (
+
+                                    <div className="mt-3 rounded-lg border border-indigo-100 bg-white p-3">
+
+                                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                            External Contractor
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-800">
+                                            {request.external_contractor}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-500">
+                                            {request.external_worker_name}
+                                        </p>
+
+                                        {request.external_worker_contact && (
+                                            <p className="mt-1 text-[10px] text-slate-400">
+                                                {request.external_worker_contact}
+                                            </p>
+                                        )}
+
+                                    </div>
+
+                                ) : request.assigned_to ? (
+
+                                    <div className="mt-3 rounded-lg border border-indigo-100 bg-white p-3">
+
+                                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                            LGU Technician
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-800">
+                                            {request.assigned_to.name}
+                                        </p>
+
+                                    </div>
+
+                                ) : null}
+
+                                {request.assignment_remarks && (
+                                    <div className="mt-3">
+
+                                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                            Assignment Remarks
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-slate-600">
+                                            {request.assignment_remarks}
+                                        </p>
+
+                                    </div>
+                                )}
+
+                                {request.assigned_at && (
+                                    <p className="mt-3 text-[10px] text-slate-400">
+                                        Assigned {formatDateTime(request.assigned_at)}
+                                    </p>
+                                )}
+
+                            </div>
                         )}
 
 
