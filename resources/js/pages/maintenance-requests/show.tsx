@@ -103,6 +103,7 @@ interface MaintenanceRequest {
         | 'budget_approved'
         | 'ready_for_work'
         | 'for_accounting_review'
+        | 'for_mayor_approval'
         | 'assigned'
         | 'in_progress'
         | 'completed'
@@ -1380,6 +1381,8 @@ export default function ShowMaintenanceRequest({
                                     active={[
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1387,12 +1390,51 @@ export default function ShowMaintenanceRequest({
                                     ].includes(request.status)}
                                     completed={[
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
                                         'completed',
                                     ].includes(request.status)}
                                     date={request.budget_reviewed_at}
+                                />
+
+                                <WorkflowStep
+                                    label="Accounting Review"
+                                    active={[
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'for_mayor_approval',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.accounting_reviewed_at}
+                                />
+
+                                <WorkflowStep
+                                    label="Mayor Approval"
+                                    active={[
+                                        'for_mayor_approval',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
                                 />
 
 
@@ -2286,6 +2328,13 @@ export default function ShowMaintenanceRequest({
                                     label="Budget Reviewed By"
                                     user={
                                         request.budget_reviewed_by
+                                    }
+                                />
+
+                                <PersonItem
+                                    label="Accounting Reviewed By"
+                                    user={
+                                        request.accounting_reviewed_by
                                     }
                                 />
 
