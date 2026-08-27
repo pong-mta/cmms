@@ -379,6 +379,16 @@ Route::middleware(['auth'])->group(function () {
         MaintenanceRecordController::class,
         'show',
     ])->name('maintenance.show');
+
+    Route::post(
+        '/preventive-maintenance/{schedule}/create-request',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'createMaintenanceRequest',
+        ]
+    )->name(
+        'preventive-maintenance.create-request'
+    );
 });
 
 require __DIR__ . '/settings.php';

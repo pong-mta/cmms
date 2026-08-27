@@ -9,6 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\MaintenanceRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PreventiveMaintenanceScheduleController extends Controller
 {
@@ -19,34 +22,25 @@ class PreventiveMaintenanceScheduleController extends Controller
 |--------------------------------------------------------------------------
 */
 
-    // public function index(): Response
-    // {
-    //     $schedules = PreventiveMaintenanceSchedule::query()
-    //         ->with([
-    //             'asset:id,asset_code,name,department_id',
-    //             'asset.department:id,name,code',
-    //             'assignedTo:id,name',
-    //         ])
-    //         ->orderBy('next_due_date')
-    //         ->get();
-
-    //     return Inertia::render(
-    //         'maintenance/preventive',
-    //         [
-    //             'schedules' => $schedules,
-    //         ]
-    //     );
-    // }
-
     public function index(): Response
     {
+        $schedules = PreventiveMaintenanceSchedule::query()
+            ->with([
+                'asset:id,asset_code,name,department_id',
+                'asset.department:id,name,code',
+                'assignedTo:id,name',
+            ])
+            ->orderBy('next_due_date')
+            ->get();
+
         return Inertia::render(
             'maintenance/preventive',
             [
-                'schedules' => [],
+                'schedules' => $schedules,
             ]
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -174,5 +168,144 @@ class PreventiveMaintenanceScheduleController extends Controller
                 'success',
                 'Preventive maintenance schedule created successfully.'
             );
+    }
+
+
+    public function createMaintenanceRequest(
+        Request $request,
+        PreventiveMaintenanceSchedule $schedule
+    ): RedirectResponse {
+
+        $schedule->load([
+            'asset',
+        ]);
+
+        $asset = $schedule->asset;
+
+        if (!$asset) {
+            return back()->with(
+                'error',
+                'The asset assigned to this preventive maintenance schedule no longer exists.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Prevent duplicate request for the same PM occurrence
+    |--------------------------------------------------------------------------
+    */
+
+        $existingRequest = MaintenanceRequest::query()
+            ->where(
+                'preventive_maintenance_schedule_id',
+                $schedule->id
+            )
+            ->whereIn(
+                'status',
+                [
+                    'submitted',
+                    'assessed',
+                    'head_approved',
+                    'gso_approved',
+                    'budget_approved',
+                    'accounting_approved',
+                    'mayor_approved',
+                    'assigned',
+                    'in_progress',
+                ]
+            )
+            ->first();
+
+        if ($existingRequest) {
+            return back()->with(
+                'error',
+                'A maintenance request already exists for this preventive maintenance schedule.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Generate request code
+    |--------------------------------------------------------------------------
+    */
+
+        $year = now()->year;
+
+        $lastRequest = MaintenanceRequest::query()
+            ->whereYear(
+                'created_at',
+                $year
+            )
+            ->orderByDesc('id')
+            ->first();
+
+        $sequence = 1;
+
+        if ($lastRequest) {
+            preg_match(
+                '/(\d+)$/',
+                $lastRequest->request_code,
+                $matches
+            );
+
+            if (!empty($matches[1])) {
+                $sequence = ((int) $matches[1]) + 1;
+            }
+        }
+
+        $requestCode = sprintf(
+            'MRQ-%d-%04d',
+            $year,
+            $sequence
+        );
+
+        /*
+    |--------------------------------------------------------------------------
+    | Create Maintenance Request
+    |--------------------------------------------------------------------------
+    */
+
+        MaintenanceRequest::create([
+            'request_code' =>
+            $requestCode,
+
+            'asset_id' =>
+            $asset->id,
+
+            'department_id' =>
+            $asset->department_id,
+
+            'requested_by' =>
+            $request->user()->id,
+
+            'title' =>
+            $schedule->title,
+
+            'description' =>
+            $schedule->description,
+
+            'priority' =>
+            'medium',
+
+            'status' =>
+            'submitted',
+
+            'requested_at' =>
+            now(),
+
+            'remarks' =>
+            'Generated from Preventive Maintenance Schedule #' .
+                $schedule->id,
+
+            'preventive_maintenance_schedule_id' =>
+            $schedule->id,
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request ' .
+                $requestCode .
+                ' created successfully.'
+        );
     }
 }
