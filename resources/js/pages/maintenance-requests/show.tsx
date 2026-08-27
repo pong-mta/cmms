@@ -30,7 +30,6 @@ interface Asset {
     name: string;
 }
 
-
 interface Department {
     id: number;
     name: string;
@@ -44,13 +43,11 @@ interface Technician {
     department_id: number;
 }
 
-
 interface UserInfo {
     id: number;
     name: string;
     phone?: string;
 }
-
 
 interface MaintenanceRequest {
     id: number;
@@ -63,7 +60,13 @@ interface MaintenanceRequest {
 
     requested_by?: UserInfo | null;
 
+    assessed_by?: UserInfo | null;
+
     assigned_to?: UserInfo | null;
+
+    head_reviewed_by?: UserInfo | null;
+
+    budget_reviewed_by?: UserInfo | null;
 
     title: string;
 
@@ -77,8 +80,12 @@ interface MaintenanceRequest {
 
     status:
         | 'submitted'
-        | 'reviewing'
-        | 'approved'
+        | 'assessment'
+        | 'for_head_review'
+        | 'head_approved'
+        | 'for_budget_review'
+        | 'budget_approved'
+        | 'ready_for_work'
         | 'assigned'
         | 'in_progress'
         | 'completed'
@@ -86,6 +93,32 @@ interface MaintenanceRequest {
         | 'cancelled';
 
     requested_at?: string | null;
+
+    assessed_at?: string | null;
+
+    assessment?: string | null;
+
+    work_scope?: string | null;
+
+    estimated_labor_cost?: number | string | null;
+
+    estimated_parts_cost?: number | string | null;
+
+    estimated_other_cost?: number | string | null;
+
+    estimated_total_cost?: number | string | null;
+
+    head_reviewed_at?: string | null;
+
+    head_remarks?: string | null;
+
+    budget_reviewed_at?: string | null;
+
+    budget_remarks?: string | null;
+
+    funding_source?: string | null;
+
+    budget_amount?: number | string | null;
 
     approved_at?: string | null;
 
@@ -99,7 +132,6 @@ interface MaintenanceRequest {
 
     updated_at: string;
 }
-
 
 interface Props {
     request: MaintenanceRequest;
@@ -125,20 +157,30 @@ function statusLabel(
         );
 }
 
-
 function statusClass(
     status: MaintenanceRequest['status'],
 ) {
     switch (status) {
-
         case 'submitted':
             return 'bg-blue-50 text-blue-700 ring-blue-200';
 
-        case 'reviewing':
+        case 'assessment':
+            return 'bg-amber-50 text-amber-700 ring-amber-200';
+
+        case 'for_head_review':
             return 'bg-purple-50 text-purple-700 ring-purple-200';
 
-        case 'approved':
+        case 'head_approved':
             return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'for_budget_review':
+            return 'bg-violet-50 text-violet-700 ring-violet-200';
+
+        case 'budget_approved':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'ready_for_work':
+            return 'bg-cyan-50 text-cyan-700 ring-cyan-200';
 
         case 'assigned':
             return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
@@ -176,12 +218,10 @@ function priorityLabel(
     );
 }
 
-
 function priorityClass(
     priority: MaintenanceRequest['priority'],
 ) {
     switch (priority) {
-
         case 'critical':
             return 'bg-red-50 text-red-700 ring-red-200';
 
@@ -265,22 +305,46 @@ export default function ShowMaintenanceRequest({
     technicians,
 }: Props) {
 
-    const [showRejectModal, setShowRejectModal] =
-    useState(false);
+    const [
+        showRejectModal,
+        setShowRejectModal,
+    ] = useState(false);
 
-    const [rejectReason, setRejectReason] =
-        useState('');
-    const [selectedTechnician, setSelectedTechnician] =
-    useState('');
+    const [
+        rejectReason,
+        setRejectReason,
+    ] = useState('');
 
-    const [assessment, setAssessment] = useState('');
-    const [workScope, setWorkScope] = useState('');
-    const [estimatedLaborCost, setEstimatedLaborCost] =
-        useState('');
-    const [estimatedPartsCost, setEstimatedPartsCost] =
-        useState('');
-    const [estimatedOtherCost, setEstimatedOtherCost] =
-        useState('');
+    const [
+        selectedTechnician,
+        setSelectedTechnician,
+    ] = useState('');
+
+    const [
+        assessment,
+        setAssessment,
+    ] = useState('');
+
+    const [
+        workScope,
+        setWorkScope,
+    ] = useState('');
+
+    const [
+        estimatedLaborCost,
+        setEstimatedLaborCost,
+    ] = useState('');
+
+    const [
+        estimatedPartsCost,
+        setEstimatedPartsCost,
+    ] = useState('');
+
+    const [
+        estimatedOtherCost,
+        setEstimatedOtherCost,
+    ] = useState('');
+
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -319,16 +383,12 @@ export default function ShowMaintenanceRequest({
                             href="/maintenance-requests"
                             className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-800"
                         >
-
                             <ArrowLeft className="h-4 w-4" />
-
                         </Link>
 
 
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
                             <ClipboardList className="h-5 w-5" />
-
                         </div>
 
 
@@ -346,11 +406,9 @@ export default function ShowMaintenanceRequest({
                                         request.status,
                                     )}`}
                                 >
-
                                     {statusLabel(
                                         request.status,
                                     )}
-
                                 </span>
 
                             </div>
@@ -369,11 +427,9 @@ export default function ShowMaintenanceRequest({
                         href="/maintenance-requests"
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
                     >
-
                         <ArrowLeft className="h-4 w-4" />
 
                         Back to Requests
-
                     </Link>
 
                 </div>
@@ -404,9 +460,7 @@ export default function ShowMaintenanceRequest({
                                 <div className="flex items-center gap-3">
 
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
                                         <ClipboardList className="h-5 w-5" />
-
                                     </div>
 
 
@@ -429,7 +483,6 @@ export default function ShowMaintenanceRequest({
 
                             <div className="p-5 sm:p-6">
 
-
                                 <h2 className="text-lg font-bold text-slate-900">
                                     {request.title}
                                 </h2>
@@ -442,12 +495,10 @@ export default function ShowMaintenanceRequest({
                                             request.priority,
                                         )}`}
                                     >
-
                                         {priorityLabel(
                                             request.priority,
                                         )}{' '}
                                         Priority
-
                                     </span>
 
 
@@ -456,11 +507,9 @@ export default function ShowMaintenanceRequest({
                                             request.status,
                                         )}`}
                                     >
-
                                         {statusLabel(
                                             request.status,
                                         )}
-
                                     </span>
 
                                 </div>
@@ -513,9 +562,7 @@ export default function ShowMaintenanceRequest({
                                 <div className="flex items-center gap-3">
 
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-
                                         <Wrench className="h-5 w-5" />
-
                                     </div>
 
 
@@ -548,26 +595,18 @@ export default function ShowMaintenanceRequest({
                                         <div className="flex items-center gap-3">
 
                                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
                                                 <Wrench className="h-5 w-5" />
-
                                             </div>
 
 
                                             <div>
 
                                                 <p className="text-xs font-bold text-slate-800">
-                                                    {
-                                                        request.asset
-                                                            .asset_code
-                                                    }
+                                                    {request.asset.asset_code}
                                                 </p>
 
                                                 <p className="mt-1 text-[10px] text-slate-500">
-                                                    {
-                                                        request.asset
-                                                            .name
-                                                    }
+                                                    {request.asset.name}
                                                 </p>
 
                                             </div>
@@ -593,7 +632,329 @@ export default function ShowMaintenanceRequest({
 
                         </section>
 
-                        
+
+                        {/* ================================================== */}
+                        {/* SUPERVISOR ASSESSMENT RESULT */}
+                        {/* ================================================== */}
+
+                        {request.assessment && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                            <ClipboardCheck className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Supervisor Assessment
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Technical assessment and estimated costing.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div>
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Assessment
+                                        </p>
+
+                                        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                            {request.assessment}
+                                        </p>
+
+                                    </div>
+
+
+                                    {request.work_scope && (
+
+                                        <div className="mt-6 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Work Scope
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.work_scope}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+
+                                    <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+                                        <CostItem
+                                            label="Labor"
+                                            value={request.estimated_labor_cost}
+                                        />
+
+                                        <CostItem
+                                            label="Parts"
+                                            value={request.estimated_parts_cost}
+                                        />
+
+                                        <CostItem
+                                            label="Other"
+                                            value={request.estimated_other_cost}
+                                        />
+
+                                    </div>
+
+
+                                    <div className="mt-4 rounded-xl bg-slate-50 p-4">
+
+                                        <div className="flex items-center justify-between">
+
+                                            <span className="text-xs font-semibold text-slate-600">
+                                                Estimated Total
+                                            </span>
+
+                                            <span className="text-lg font-bold text-slate-900">
+                                                ₱
+                                                {Number(
+                                                    request.estimated_total_cost ?? 0,
+                                                ).toLocaleString(
+                                                    'en-PH',
+                                                    {
+                                                        minimumFractionDigits: 2,
+                                                    },
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {request.assessed_by && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] text-slate-400">
+                                                Assessed by
+                                            </p>
+
+                                            <p className="mt-1 text-xs font-semibold text-slate-700">
+                                                {request.assessed_by.name}
+                                            </p>
+
+                                            <p className="mt-1 text-[10px] text-slate-400">
+                                                {formatDateTime(
+                                                    request.assessed_at,
+                                                )}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* HEAD REVIEW RESULT */}
+                        {/* ================================================== */}
+
+                        {request.head_reviewed_by && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-700">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Department Head Review
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Review decision and remarks.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="rounded-xl bg-slate-50 p-4">
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Reviewed By
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.head_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.head_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
+
+
+                                    {request.head_remarks && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Head Remarks
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.head_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* BUDGET RESULT */}
+                        {/* ================================================== */}
+
+                        {request.budget_reviewed_by && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                                            <ClipboardCheck className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Budget Review
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Budget and funding information.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                                        <InfoItem
+                                            label="Funding Source"
+                                            value={
+                                                request.funding_source ??
+                                                '—'
+                                            }
+                                        />
+
+                                        <InfoItem
+                                            label="Budget Amount"
+                                            value={
+                                                request.budget_amount !==
+                                                null &&
+                                                request.budget_amount !==
+                                                undefined
+                                                    ? `₱${Number(
+                                                          request.budget_amount,
+                                                      ).toLocaleString(
+                                                          'en-PH',
+                                                          {
+                                                              minimumFractionDigits: 2,
+                                                          },
+                                                      )}`
+                                                    : '—'
+                                            }
+                                        />
+
+                                    </div>
+
+
+                                    {request.budget_remarks && (
+
+                                        <div className="mt-5 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Budget Remarks
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.budget_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                    <div className="mt-4">
+
+                                        <p className="text-[10px] text-slate-400">
+                                            Reviewed by
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.budget_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.budget_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                        )}
 
 
                         {/* ================================================== */}
@@ -607,11 +968,8 @@ export default function ShowMaintenanceRequest({
                                 <div className="flex items-center gap-3">
 
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-
                                         <CheckCircle2 className="h-5 w-5" />
-
                                     </div>
-
 
                                     <div>
 
@@ -634,118 +992,136 @@ export default function ShowMaintenanceRequest({
 
                                 <WorkflowStep
                                     label="Submitted"
-                                    active={
-                                        true
-                                    }
-                                    completed={
-                                        [
-                                            'reviewing',
-                                            'approved',
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
-                                    date={
-                                        request.requested_at
-                                    }
+                                    active={true}
+                                    completed={[
+                                        'assessment',
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.requested_at}
                                 />
 
 
                                 <WorkflowStep
-                                    label="Reviewing"
-                                    active={
-                                        [
-                                            'reviewing',
-                                            'approved',
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
-                                    completed={
-                                        [
-                                            'approved',
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
+                                    label="Supervisor Assessment"
+                                    active={[
+                                        'assessment',
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.assessed_at}
                                 />
 
 
                                 <WorkflowStep
-                                    label="Approved"
-                                    active={
-                                        [
-                                            'approved',
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
-                                    completed={
-                                        [
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
-                                    date={
-                                        request.approved_at
-                                    }
+                                    label="Department Head Review"
+                                    active={[
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'head_approved',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.head_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Budget Review"
+                                    active={[
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.budget_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Ready for Work"
+                                    active={[
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
                                 />
 
 
                                 <WorkflowStep
                                     label="Assigned"
-                                    active={
-                                        [
-                                            'assigned',
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
-                                    completed={
-                                        [
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
+                                    active={[
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
                                 />
 
 
                                 <WorkflowStep
                                     label="In Progress"
-                                    active={
-                                        [
-                                            'in_progress',
-                                            'completed',
-                                        ].includes(
-                                            request.status,
-                                        )
-                                    }
+                                    active={[
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
                                     completed={
                                         request.status ===
                                         'completed'
                                     }
-                                    date={
-                                        request.started_at
-                                    }
+                                    date={request.started_at}
                                 />
 
 
@@ -759,9 +1135,7 @@ export default function ShowMaintenanceRequest({
                                         request.status ===
                                         'completed'
                                     }
-                                    date={
-                                        request.completed_at
-                                    }
+                                    date={request.completed_at}
                                     last
                                 />
 
@@ -788,9 +1162,7 @@ export default function ShowMaintenanceRequest({
                             <div className="flex items-center gap-3">
 
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
                                     <Clock3 className="h-5 w-5" />
-
                                 </div>
 
 
@@ -818,57 +1190,101 @@ export default function ShowMaintenanceRequest({
                                             request.status,
                                         )}`}
                                     >
-                                        {statusLabel(request.status)}
+                                        {statusLabel(
+                                            request.status,
+                                        )}
                                     </span>
 
                                 </div>
 
 
-                                {request.status === 'submitted' && (
+                                {/* ================================================== */}
+                                {/* DEPARTMENT HEAD ACTIONS */}
+                                {/* ================================================== */}
 
-                                    <Link
-                                        href={`/maintenance-requests/${request.id}/review`}
-                                        method="post"
-                                        as="button"
-                                        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-xs font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800"
-                                    >
+                                {request.status === 'for_head_review' && (
 
-                                        <Clock3 className="h-4 w-4" />
+                                    <div className="mt-4 space-y-2">
 
-                                        Start Review
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (
+                                                    !window.confirm(
+                                                        'Approve this maintenance request and send it to the Budget Office?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
 
-                                    </Link>
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/head-approve`,
+                                                );
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                        >
+
+                                            <CheckCircle2 className="h-4 w-4" />
+
+                                            Approve & Send to Budget
+
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to the Supervisor?',
+                                                    );
+
+                                                if (
+                                                    !remarks?.trim()
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/head-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
+
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+
+                                            <ArrowLeft className="h-4 w-4" />
+
+                                            Return to Supervisor
+
+                                        </button>
+
+                                    </div>
 
                                 )}
 
-                                {request.status === 'reviewing' && (
 
-                                    <Link
-                                        href={`/maintenance-requests/${request.id}/approve`}
-                                        method="post"
-                                        as="button"
-                                        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
-                                    >
-                                        <CheckCircle2 className="h-4 w-4" />
+                                {/* ================================================== */}
+                                {/* BUDGET OFFICE */}
+                                {/* ================================================== */}
 
-                                        Approve Request
-                                    </Link>
+                                {request.status === 'for_budget_review' && (
 
-                                )}
+                                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
 
-                                {request.status === 'reviewing' && (
+                                        <p className="text-xs font-semibold text-violet-800">
+                                            Awaiting Budget Office review
+                                        </p>
 
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowRejectModal(true)
-                                        }
-                                        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-                                    >
-                                        <AlertTriangle className="h-4 w-4" />
+                                        <p className="mt-1 text-[10px] leading-5 text-violet-700">
+                                            This request has been approved by the Department Head and is now waiting for budget review.
+                                        </p>
 
-                                        Reject Request
-                                    </button>
+                                    </div>
 
                                 )}
 
@@ -886,9 +1302,7 @@ export default function ShowMaintenanceRequest({
                             <div className="flex items-center gap-3">
 
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
                                     <User className="h-5 w-5" />
-
                                 </div>
 
 
@@ -918,6 +1332,30 @@ export default function ShowMaintenanceRequest({
 
 
                                 <PersonItem
+                                    label="Assessed By"
+                                    user={
+                                        request.assessed_by
+                                    }
+                                />
+
+
+                                <PersonItem
+                                    label="Head Reviewed By"
+                                    user={
+                                        request.head_reviewed_by
+                                    }
+                                />
+
+
+                                <PersonItem
+                                    label="Budget Reviewed By"
+                                    user={
+                                        request.budget_reviewed_by
+                                    }
+                                />
+
+
+                                <PersonItem
                                     label="Assigned To"
                                     user={
                                         request.assigned_to
@@ -928,7 +1366,14 @@ export default function ShowMaintenanceRequest({
 
                         </section>
 
-                        {request.status === 'submitted' && (
+
+                        {/* ================================================== */}
+                        {/* SUPERVISOR ASSESSMENT FORM */}
+                        {/* ================================================== */}
+
+                        {(request.status === 'submitted' ||
+                            request.status === 'assessment') && (
+
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
                                 <div className="flex items-center gap-3">
@@ -937,7 +1382,9 @@ export default function ShowMaintenanceRequest({
                                         <ClipboardCheck className="h-5 w-5" />
                                     </div>
 
+
                                     <div>
+
                                         <h2 className="text-sm font-bold text-slate-900">
                                             Supervisor Assessment
                                         </h2>
@@ -945,6 +1392,7 @@ export default function ShowMaintenanceRequest({
                                         <p className="text-[10px] text-slate-500">
                                             Assess the request and prepare the estimated costing.
                                         </p>
+
                                     </div>
 
                                 </div>
@@ -1116,6 +1564,7 @@ export default function ShowMaintenanceRequest({
                                             !workScope.trim()
                                         }
                                         onClick={() => {
+
                                             router.post(
                                                 `/maintenance-requests/${request.id}/assess`,
                                                 {
@@ -1133,6 +1582,7 @@ export default function ShowMaintenanceRequest({
                                                         0,
                                                 },
                                             );
+
                                         }}
                                         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -1146,9 +1596,16 @@ export default function ShowMaintenanceRequest({
                                 </div>
 
                             </section>
+
                         )}
 
-                        {request.status === 'approved' && (
+
+                        {/* ================================================== */}
+                        {/* ASSIGN TECHNICIAN */}
+                        {/* ================================================== */}
+
+                        {request.status === 'ready_for_work' && (
+
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
                                 <div className="flex items-center gap-3">
@@ -1157,7 +1614,9 @@ export default function ShowMaintenanceRequest({
                                         <User className="h-5 w-5" />
                                     </div>
 
+
                                     <div>
+
                                         <h2 className="text-sm font-bold text-slate-900">
                                             Assign Technician
                                         </h2>
@@ -1165,6 +1624,7 @@ export default function ShowMaintenanceRequest({
                                         <p className="text-[10px] text-slate-500">
                                             Select a technician for this maintenance request.
                                         </p>
+
                                     </div>
 
                                 </div>
@@ -1182,7 +1642,9 @@ export default function ShowMaintenanceRequest({
 
                                     <select
                                         id="assigned_to"
-                                        value={selectedTechnician}
+                                        value={
+                                            selectedTechnician
+                                        }
                                         onChange={(event) =>
                                             setSelectedTechnician(
                                                 event.target.value,
@@ -1214,6 +1676,7 @@ export default function ShowMaintenanceRequest({
 
 
                                     {technicians.length === 0 && (
+
                                         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
 
                                             <p className="text-[10px] font-semibold text-amber-800">
@@ -1221,6 +1684,7 @@ export default function ShowMaintenanceRequest({
                                             </p>
 
                                         </div>
+
                                     )}
 
 
@@ -1231,6 +1695,7 @@ export default function ShowMaintenanceRequest({
                                             technicians.length === 0
                                         }
                                         onClick={() => {
+
                                             router.post(
                                                 `/maintenance-requests/${request.id}/assign`,
                                                 {
@@ -1238,6 +1703,7 @@ export default function ShowMaintenanceRequest({
                                                         selectedTechnician,
                                                 },
                                             );
+
                                         }}
                                         className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -1251,6 +1717,7 @@ export default function ShowMaintenanceRequest({
                                 </div>
 
                             </section>
+
                         )}
 
 
@@ -1263,9 +1730,7 @@ export default function ShowMaintenanceRequest({
                             <div className="flex items-center gap-3">
 
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-
                                     <Building2 className="h-5 w-5" />
-
                                 </div>
 
 
@@ -1287,26 +1752,15 @@ export default function ShowMaintenanceRequest({
                             <div className="mt-5">
 
                                 <p className="text-sm font-semibold text-slate-800">
-
-                                    {request
-                                        .department
-                                        ?.name ??
+                                    {request.department?.name ??
                                         'No department assigned'}
-
                                 </p>
 
 
-                                {request.department
-                                    ?.code && (
+                                {request.department?.code && (
 
                                     <p className="mt-1 text-[10px] font-semibold text-slate-400">
-
-                                        {
-                                            request
-                                                .department
-                                                .code
-                                        }
-
+                                        {request.department.code}
                                     </p>
 
                                 )}
@@ -1325,9 +1779,7 @@ export default function ShowMaintenanceRequest({
                             <div className="flex items-center gap-3">
 
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-
                                     <CalendarDays className="h-5 w-5" />
-
                                 </div>
 
 
@@ -1358,9 +1810,25 @@ export default function ShowMaintenanceRequest({
 
 
                                 <DateItem
-                                    label="Approved"
+                                    label="Assessed"
                                     value={
-                                        request.approved_at
+                                        request.assessed_at
+                                    }
+                                />
+
+
+                                <DateItem
+                                    label="Head Reviewed"
+                                    value={
+                                        request.head_reviewed_at
+                                    }
+                                />
+
+
+                                <DateItem
+                                    label="Budget Reviewed"
+                                    value={
+                                        request.budget_reviewed_at
                                     }
                                 />
 
@@ -1390,6 +1858,11 @@ export default function ShowMaintenanceRequest({
 
             </div>
 
+
+            {/* ========================================================== */}
+            {/* OLD REJECT MODAL                                           */}
+            {/* ========================================================== */}
+
             {showRejectModal && (
 
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1399,9 +1872,7 @@ export default function ShowMaintenanceRequest({
                         <div className="flex items-center gap-3">
 
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
-
                                 <AlertTriangle className="h-5 w-5" />
-
                             </div>
 
                             <div>
@@ -1450,11 +1921,13 @@ export default function ShowMaintenanceRequest({
                             <button
                                 type="button"
                                 onClick={() => {
+
                                     setShowRejectModal(
                                         false,
                                     );
 
                                     setRejectReason('');
+
                                 }}
                                 className="h-10 flex-1 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50"
                             >
@@ -1462,25 +1935,32 @@ export default function ShowMaintenanceRequest({
                             </button>
 
 
-                            <Link
-                                href={`/maintenance-requests/${request.id}/reject`}
-                                method="post"
-                                data={{
-                                    reason: rejectReason,
-                                }}
-                                as="button"
+                            <button
+                                type="button"
                                 disabled={
                                     !rejectReason.trim()
                                 }
-                                onClick={() =>
+                                onClick={() => {
+
+                                    router.post(
+                                        `/maintenance-requests/${request.id}/cancel`,
+                                        {
+                                            remarks:
+                                                rejectReason,
+                                        },
+                                    );
+
                                     setShowRejectModal(
                                         false,
-                                    )
-                                }
+                                    );
+
+                                    setRejectReason('');
+
+                                }}
                                 className="h-10 flex-1 rounded-xl bg-red-600 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Reject Request
-                            </Link>
+                            </button>
 
                         </div>
 
@@ -1516,6 +1996,7 @@ function WorkflowStep({
 }) {
 
     return (
+
         <div className="flex gap-3">
 
             <div className="flex flex-col items-center">
@@ -1580,6 +2061,7 @@ function WorkflowStep({
             </div>
 
         </div>
+
     );
 }
 
@@ -1599,6 +2081,7 @@ function PersonItem({
 }) {
 
     return (
+
         <div>
 
             <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
@@ -1623,6 +2106,79 @@ function PersonItem({
             )}
 
         </div>
+
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| COST ITEM
+|--------------------------------------------------------------------------
+*/
+
+function CostItem({
+    label,
+    value,
+}: {
+    label: string;
+    value?: number | string | null;
+}) {
+
+    return (
+
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                {label}
+            </p>
+
+            <p className="mt-1 text-sm font-bold text-slate-800">
+                ₱
+                {Number(
+                    value ?? 0,
+                ).toLocaleString(
+                    'en-PH',
+                    {
+                        minimumFractionDigits: 2,
+                    },
+                )}
+            </p>
+
+        </div>
+
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| INFO ITEM
+|--------------------------------------------------------------------------
+*/
+
+function InfoItem({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+
+    return (
+
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                {label}
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-slate-800">
+                {value}
+            </p>
+
+        </div>
+
     );
 }
 
@@ -1642,6 +2198,7 @@ function DateItem({
 }) {
 
     return (
+
         <div className="flex items-center justify-between gap-4">
 
             <span className="text-[10px] font-medium text-slate-400">
@@ -1650,13 +2207,16 @@ function DateItem({
 
 
             <span className="text-right text-[10px] font-semibold text-slate-600">
+
                 {value
                     ? formatDateTime(
                           value,
                       )
                     : '—'}
+
             </span>
 
         </div>
+
     );
 }
