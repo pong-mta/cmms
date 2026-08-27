@@ -1626,11 +1626,33 @@ export default function ShowMaintenanceRequest({
                                                 (item, index) => (
                                                     <div
                                                         key={index}
-                                                        className="rounded-xl border border-slate-200 bg-slate-50/50 p-3"
+                                                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                                                     >
-                                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[120px_1fr_90px_100px_130px_40px]">
+                                                        <div className="mb-3 flex items-center justify-between">
+                                                            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                                                                Cost Item {index + 1}
+                                                            </span>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeCostItem(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    costItems.length ===
+                                                                    1
+                                                                }
+                                                                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                                            >
+                                                                × Remove
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_minmax(0,1fr)]">
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                     Type
                                                                 </label>
 
@@ -1649,7 +1671,7 @@ export default function ShowMaintenanceRequest({
                                                                                 .value,
                                                                         )
                                                                     }
-                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-medium outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                                                 >
                                                                     <option value="labor">
                                                                         Labor
@@ -1664,7 +1686,7 @@ export default function ShowMaintenanceRequest({
                                                             </div>
 
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                     Description
                                                                 </label>
 
@@ -1684,13 +1706,15 @@ export default function ShowMaintenanceRequest({
                                                                                 .value,
                                                                         )
                                                                     }
-                                                                    placeholder="e.g. Replacement bearing"
-                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                    placeholder="e.g. Engine oil, replacement bearing, technician labor"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                                                 />
                                                             </div>
+                                                        </div>
 
+                                                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                     Quantity
                                                                 </label>
 
@@ -1712,12 +1736,12 @@ export default function ShowMaintenanceRequest({
                                                                                 .value,
                                                                         )
                                                                     }
-                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                                                 />
                                                             </div>
 
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                     Unit
                                                                 </label>
 
@@ -1737,61 +1761,73 @@ export default function ShowMaintenanceRequest({
                                                                                 .value,
                                                                         )
                                                                     }
-                                                                    placeholder="pc"
-                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                    placeholder="pc, liter, job"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                                                 />
                                                             </div>
 
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                     Unit Cost
                                                                 </label>
 
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    step="0.01"
-                                                                    value={
-                                                                        item.unit_cost
-                                                                    }
-                                                                    onChange={(
-                                                                        event,
-                                                                    ) =>
-                                                                        updateCostItem(
-                                                                            index,
-                                                                            'unit_cost',
-                                                                            event
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    placeholder="0.00"
-                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                                                />
+                                                                <div className="relative">
+                                                                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                                        ₱
+                                                                    </span>
+
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        value={
+                                                                            item.unit_cost
+                                                                        }
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            updateCostItem(
+                                                                                index,
+                                                                                'unit_cost',
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="0.00"
+                                                                        className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-7 pr-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-3 flex flex-col gap-2 rounded-lg bg-slate-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div className="text-[10px] text-slate-400">
+                                                                Quantity × Unit Cost
                                                             </div>
 
-                                                            <div className="flex items-end justify-end">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        removeCostItem(
-                                                                            index,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        costItems.length ===
-                                                                        1
-                                                                    }
-                                                                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
-                                                                    title="Remove item"
-                                                                >
-                                                                    ×
-                                                                </button>
+                                                            <div className="text-sm font-bold text-slate-800">
+                                                                Item Total: ₱
+                                                                {(
+                                                                    Number(
+                                                                        item.quantity ||
+                                                                            0,
+                                                                    ) *
+                                                                    Number(
+                                                                        item.unit_cost ||
+                                                                            0,
+                                                                    )
+                                                                ).toLocaleString(
+                                                                    'en-PH',
+                                                                    {
+                                                                        minimumFractionDigits: 2,
+                                                                    },
+                                                                )}
                                                             </div>
                                                         </div>
 
                                                         <div className="mt-3">
-                                                            <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                            <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
                                                                 Item Remarks
                                                             </label>
 
@@ -1813,29 +1849,8 @@ export default function ShowMaintenanceRequest({
                                                                     )
                                                                 }
                                                                 placeholder="Optional"
-                                                                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                                             />
-                                                        </div>
-
-                                                        <div className="mt-3 flex justify-end">
-                                                            <span className="text-xs font-bold text-slate-800">
-                                                                Item Total: ₱
-                                                                {(
-                                                                    Number(
-                                                                        item.quantity ||
-                                                                            0,
-                                                                    ) *
-                                                                    Number(
-                                                                        item.unit_cost ||
-                                                                            0,
-                                                                    )
-                                                                ).toLocaleString(
-                                                                    'en-PH',
-                                                                    {
-                                                                        minimumFractionDigits: 2,
-                                                                    },
-                                                                )}
-                                                            </span>
                                                         </div>
                                                     </div>
                                                 ),
