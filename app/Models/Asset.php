@@ -102,4 +102,18 @@ class Asset extends Model
             'asset_id'
         )->latest();
     }
+
+    /*
+|--------------------------------------------------------------------------
+| PREVENTIVE MAINTENANCE
+|--------------------------------------------------------------------------
+*/
+
+    public function preventiveMaintenanceSchedules(): HasMany
+    {
+        return $this->hasMany(
+            PreventiveMaintenanceSchedule::class,
+            'asset_id'
+        )->latest('next_due_date');
+    }
 }
