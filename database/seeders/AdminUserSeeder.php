@@ -298,7 +298,7 @@ class AdminUserSeeder extends Seeder
 
         $mayor = User::updateOrCreate(
             [
-                'phone' => '09156014669',
+                'phone' => '09156014670',
             ],
             [
                 'name' => 'Municipal Mayor',
