@@ -322,11 +322,35 @@ Route::middleware(['auth'])->group(function () {
     );
 
 
-    /*
-|--------------------------------------------------------------------------
-| PREVENTIVE MAINTENANCE
-|--------------------------------------------------------------------------
-*/
+    // MAINTENANCE
+
+    Route::get('/maintenance', [
+        MaintenanceRecordController::class,
+        'index',
+    ])->name('maintenance.index');
+
+    Route::get('/maintenance/create', [
+        MaintenanceRecordController::class,
+        'create',
+    ])->name('maintenance.create');
+
+    Route::post('/maintenance', [
+        MaintenanceRecordController::class,
+        'store',
+    ])->name('maintenance.store');
+
+
+    // PREVENTIVE MAINTENANCE
+
+    Route::get(
+        '/maintenance/preventive',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'index',
+        ]
+    )->name(
+        'maintenance.preventive'
+    );
 
     Route::post(
         '/assets/{asset}/preventive-maintenance',
@@ -337,6 +361,7 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'assets.preventive-maintenance.store'
     );
+
     Route::get(
         '/assets/{asset}/preventive-maintenance/create',
         [
@@ -346,15 +371,14 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'assets.preventive-maintenance.create'
     );
-    Route::get(
-        '/maintenance/preventive',
-        [
-            PreventiveMaintenanceScheduleController::class,
-            'index',
-        ]
-    )->name(
-        'maintenance.preventive'
-    );
+
+
+    // DYNAMIC MAINTENANCE RECORD ROUTE MUST COME AFTER
+
+    Route::get('/maintenance/{maintenanceRecord}', [
+        MaintenanceRecordController::class,
+        'show',
+    ])->name('maintenance.show');
 });
 
 require __DIR__ . '/settings.php';
