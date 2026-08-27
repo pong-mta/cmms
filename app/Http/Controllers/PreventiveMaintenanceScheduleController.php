@@ -130,9 +130,14 @@ class PreventiveMaintenanceScheduleController extends Controller
             ]
         );
 
-        return back()->with(
-            'success',
-            'Preventive maintenance schedule created successfully.'
-        );
+        return redirect()
+            ->route(
+                'assets.show',
+                $asset
+            )
+            ->with(
+                'success',
+                'Preventive maintenance schedule created successfully.'
+            );
     }
 }
