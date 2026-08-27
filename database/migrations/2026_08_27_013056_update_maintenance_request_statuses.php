@@ -7,7 +7,41 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Convert existing statuses first.
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 1
+        | Add the new statuses while keeping the old statuses temporarily.
+        |--------------------------------------------------------------------------
+        */
+
+        DB::statement("
+            ALTER TABLE maintenance_requests
+            MODIFY status ENUM(
+                'submitted',
+                'reviewing',
+                'approved',
+                'assessment',
+                'for_head_review',
+                'head_approved',
+                'for_budget_review',
+                'budget_approved',
+                'ready_for_work',
+                'assigned',
+                'in_progress',
+                'completed',
+                'rejected',
+                'cancelled'
+            ) NOT NULL DEFAULT 'submitted'
+        ");
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 2
+        | Convert existing old statuses.
+        |--------------------------------------------------------------------------
+        */
+
         DB::statement("
             UPDATE maintenance_requests
             SET status = 'assessment'
@@ -20,7 +54,14 @@ return new class extends Migration
             WHERE status = 'approved'
         ");
 
-        // Change the status enum.
+
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 3
+        | Remove the old statuses.
+        |--------------------------------------------------------------------------
+        */
+
         DB::statement("
             ALTER TABLE maintenance_requests
             MODIFY status ENUM(
@@ -42,6 +83,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Restore old statuses
+        |--------------------------------------------------------------------------
+        */
+
         DB::statement("
             ALTER TABLE maintenance_requests
             MODIFY status ENUM(
