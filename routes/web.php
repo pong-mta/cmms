@@ -346,6 +346,15 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'assets.preventive-maintenance.create'
     );
+    Route::get(
+        '/maintenance/preventive',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'index',
+        ]
+    )->name(
+        'maintenance.preventive'
+    );
 });
 
 require __DIR__ . '/settings.php';

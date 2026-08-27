@@ -14,6 +14,31 @@ class PreventiveMaintenanceScheduleController extends Controller
 {
 
     /*
+|--------------------------------------------------------------------------
+| INDEX
+|--------------------------------------------------------------------------
+*/
+
+    public function index(): Response
+    {
+        $schedules = PreventiveMaintenanceSchedule::query()
+            ->with([
+                'asset:id,asset_code,name,department_id',
+                'asset.department:id,name,code',
+                'assignedTo:id,name',
+            ])
+            ->orderBy('next_due_date')
+            ->get();
+
+        return Inertia::render(
+            'maintenance/preventive',
+            [
+                'schedules' => $schedules,
+            ]
+        );
+    }
+
+    /*
     |--------------------------------------------------------------------------
     | CREATE
     |--------------------------------------------------------------------------
