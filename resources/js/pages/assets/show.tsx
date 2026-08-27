@@ -97,6 +97,23 @@ interface MaintenanceRequestCostItem {
     remarks?: string | null;
 }
 
+interface MaintenanceWorkLog {
+    id: number;
+
+    work_performed: string;
+
+    materials_used?: string | null;
+
+    remarks?: string | null;
+
+    performed_by?: {
+        id: number;
+        name: string;
+    } | null;
+
+    created_at?: string | null;
+}
+
 interface MaintenanceRequest {
     id: number;
 
@@ -125,6 +142,7 @@ interface MaintenanceRequest {
     } | null;
 
     cost_items?: MaintenanceRequestCostItem[];
+    work_logs?: MaintenanceWorkLog[];
 }
 
 
@@ -1377,6 +1395,72 @@ export default function ShowAsset({
                                                     </div>
 
                                                 </div>
+
+                                                {maintenanceRequest.work_logs &&
+                                                    maintenanceRequest.work_logs.length > 0 && (
+
+                                                        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+
+                                                            <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-600">
+                                                                Work Completion
+                                                            </p>
+
+                                                            {maintenanceRequest.work_logs.map(
+                                                                (log) => (
+
+                                                                    <div
+                                                                        key={log.id}
+                                                                        className="mt-3 space-y-3"
+                                                                    >
+
+                                                                        <div>
+                                                                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                                                Work Performed
+                                                                            </p>
+
+                                                                            <p className="mt-1 text-xs leading-5 text-slate-700">
+                                                                                {log.work_performed}
+                                                                            </p>
+                                                                        </div>
+
+
+                                                                        {log.materials_used && (
+                                                                            <div>
+
+                                                                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                                                    Materials Used
+                                                                                </p>
+
+                                                                                <p className="mt-1 text-xs leading-5 text-slate-700">
+                                                                                    {log.materials_used}
+                                                                                </p>
+
+                                                                            </div>
+                                                                        )}
+
+
+                                                                        {log.remarks && (
+                                                                            <div>
+
+                                                                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                                                    Completion Remarks
+                                                                                </p>
+
+                                                                                <p className="mt-1 text-xs leading-5 text-slate-700">
+                                                                                    {log.remarks}
+                                                                                </p>
+
+                                                                            </div>
+                                                                        )}
+
+                                                                    </div>
+
+                                                                ),
+                                                            )}
+
+                                                        </div>
+
+                                                    )}
 
 
                                                 <div className="mt-4 flex items-end justify-between gap-3">

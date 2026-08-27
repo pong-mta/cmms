@@ -315,6 +315,7 @@ class AssetController extends Controller
             'maintenanceRequests.requestedBy',
             'maintenanceRequests.completedBy',
             'maintenanceRequests.costItems',
+            'maintenanceRequests.workLogs.performedBy',
         ]);
 
         return Inertia::render('assets/show', [
