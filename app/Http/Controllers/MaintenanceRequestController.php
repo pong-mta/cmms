@@ -252,6 +252,12 @@ class MaintenanceRequestController extends Controller
                 'department_id',
             ]);
 
+        $user = auth()->user();
+
+        $userRoles = $user
+            ? $user->roles()->pluck('name')->values()->all()
+            : [];
+
         return Inertia::render(
             'maintenance-requests/show',
             [
@@ -260,6 +266,9 @@ class MaintenanceRequestController extends Controller
 
                 'technicians' =>
                 $technicians,
+
+                'userRoles' =>
+                $userRoles,
             ]
         );
     }

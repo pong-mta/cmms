@@ -149,6 +149,7 @@ interface MaintenanceRequest {
 interface Props {
     request: MaintenanceRequest;
     technicians: Technician[];
+    userRoles: string[];
 }
 
 
@@ -316,7 +317,14 @@ function formatDateTime(
 export default function ShowMaintenanceRequest({
     request,
     technicians,
+    userRoles,
 }: Props) {
+
+    const isDepartmentHead =
+        userRoles.includes('department_head');
+
+    const isBudgetOfficer =
+        userRoles.includes('budget_officer');
 
     const [
         showRejectModal,
@@ -1360,7 +1368,8 @@ export default function ShowMaintenanceRequest({
                                 {/* DEPARTMENT HEAD ACTIONS */}
                                 {/* ================================================== */}
 
-                                {request.status === 'for_head_review' && (
+                                {request.status === 'for_head_review' &&
+                                    isDepartmentHead && (
 
                                     <div className="mt-4 space-y-2">
 
@@ -1423,6 +1432,19 @@ export default function ShowMaintenanceRequest({
 
                                     </div>
 
+                                )}
+
+                                {request.status === 'for_head_review' &&
+                                    !isDepartmentHead && (
+                                    <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                                        <p className="text-xs font-semibold text-purple-800">
+                                            Waiting for Department Head review
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-purple-700">
+                                            The assessment and costing have been submitted. No action is required from you at this stage.
+                                        </p>
+                                    </div>
                                 )}
 
 
