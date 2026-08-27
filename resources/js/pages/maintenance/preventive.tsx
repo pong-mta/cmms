@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+
 
 import {
     CalendarClock,
@@ -426,34 +426,43 @@ export default function PreventiveMaintenance({
                                             </div>
 
 
-                                            <div className="mt-4 flex justify-end">
+                                           <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
 
                                                 <Link
                                                     href={`/assets/${schedule.asset_id}`}
-                                                    className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
+                                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700"
                                                 >
                                                     View Asset
                                                 </Link>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (
-                                                            !confirm(
-                                                                'Create a maintenance request for this preventive maintenance schedule?'
-                                                            )
-                                                        ) {
-                                                            return;
-                                                        }
+                                                {schedule.has_active_request ? (
+                                                    <Link
+                                                        href={`/maintenance-requests/${schedule.active_request_id}`}
+                                                        className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                    >
+                                                        View Maintenance Request
+                                                    </Link>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (
+                                                                !confirm(
+                                                                    'Create a maintenance request for this preventive maintenance schedule?'
+                                                                )
+                                                            ) {
+                                                                return;
+                                                            }
 
-                                                        router.post(
-                                                            `/preventive-maintenance/${schedule.id}/create-request`
-                                                        );
-                                                    }}
-                                                    className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
-                                                >
-                                                    Create Maintenance Request
-                                                </button>
+                                                            router.post(
+                                                                `/preventive-maintenance/${schedule.id}/create-request`
+                                                            );
+                                                        }}
+                                                        className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+                                                    >
+                                                        Create Maintenance Request
+                                                    </button>
+                                                )}
 
                                             </div>
 

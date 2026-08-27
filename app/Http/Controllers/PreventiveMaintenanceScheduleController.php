@@ -30,8 +30,62 @@ class PreventiveMaintenanceScheduleController extends Controller
                 'asset.department:id,name,code',
                 'assignedTo:id,name',
             ])
+            ->with([
+                'maintenanceRequests' => function ($query) {
+                    $query
+                        ->whereIn('status', [
+                            'submitted',
+                            'assessed',
+                            'head_approved',
+                            'gso_approved',
+                            'budget_approved',
+                            'accounting_approved',
+                            'mayor_approved',
+                            'assigned',
+                            'in_progress',
+                        ])
+                        ->latest('id');
+                },
+            ])
             ->orderBy('next_due_date')
-            ->get();
+            ->get()
+            ->map(function ($schedule) {
+                $activeRequest = $schedule->maintenanceRequests->first();
+
+                return [
+                    'id' => $schedule->id,
+
+                    'asset_id' => $schedule->asset_id,
+
+                    'title' => $schedule->title,
+
+                    'description' => $schedule->description,
+
+                    'frequency_type' => $schedule->frequency_type,
+
+                    'frequency_value' => $schedule->frequency_value,
+
+                    'start_date' => $schedule->start_date,
+
+                    'next_due_date' => $schedule->next_due_date,
+
+                    'last_completed_at' => $schedule->last_completed_at,
+
+                    'status' => $schedule->status,
+
+                    'notes' => $schedule->notes,
+
+                    'asset' => $schedule->asset,
+
+                    'assigned_to' => $schedule->assignedTo,
+
+                    'has_active_request' =>
+                    $activeRequest !== null,
+
+                    'active_request_id' =>
+                    $activeRequest?->id,
+                ];
+            });
 
         return Inertia::render(
             'maintenance/preventive',
