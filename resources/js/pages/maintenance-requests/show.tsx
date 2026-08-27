@@ -62,6 +62,24 @@ interface RequestCostItem {
     remarks?: string | null;
 }
 
+interface MaintenanceWorkLog {
+    id: number;
+
+    maintenance_request_id: number;
+
+    performed_by?: UserInfo | null;
+
+    work_performed: string;
+
+    materials_used?: string | null;
+
+    remarks?: string | null;
+
+    created_at: string;
+
+    updated_at: string;
+}
+
 interface MaintenanceRequest {
     id: number;
 
@@ -147,6 +165,8 @@ interface MaintenanceRequest {
     estimated_total_cost?: number | string | null;
 
     cost_items?: RequestCostItem[];
+
+    work_logs?: MaintenanceWorkLog[];
 
     head_reviewed_at?: string | null;
 
@@ -4101,6 +4121,102 @@ export default function ShowMaintenanceRequest({
                             </div>
 
                         </section>
+
+                        {/* ================================================== */}
+                        {/* WORK COMPLETION */}
+                        {/* ================================================== */}
+
+                        {request.status === 'completed' &&
+                            request.work_logs &&
+                            request.work_logs.length > 0 && (
+
+                                <section className="mt-5 rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Work Completion
+                                            </h2>
+
+                                            <p className="text-[10px] text-slate-500">
+                                                Actual maintenance work performed
+                                            </p>
+                                        </div>
+
+                                    </div>
+
+                                    <div className="mt-5 space-y-5">
+
+                                        {request.work_logs.map((log) => (
+
+                                            <div
+                                                key={log.id}
+                                                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                            >
+
+                                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                    Work Performed
+                                                </p>
+
+                                                <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                                                    {log.work_performed}
+                                                </p>
+
+
+                                                {log.materials_used && (
+                                                    <div className="mt-4">
+
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                            Parts / Materials Used
+                                                        </p>
+
+                                                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                                                            {log.materials_used}
+                                                        </p>
+
+                                                    </div>
+                                                )}
+
+
+                                                {log.remarks && (
+                                                    <div className="mt-4">
+
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                            Completion Remarks
+                                                        </p>
+
+                                                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                                                            {log.remarks}
+                                                        </p>
+
+                                                    </div>
+                                                )}
+
+
+                                                {log.performed_by && (
+                                                    <div className="mt-4 border-t border-slate-200 pt-4">
+
+                                                        <PersonItem
+                                                            label="Recorded By"
+                                                            user={log.performed_by}
+                                                        />
+
+                                                    </div>
+                                                )}
+
+                                            </div>
+
+                                        ))}
+
+                                    </div>
+
+                                </section>
+                            )}
 
                     </div>
 
