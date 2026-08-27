@@ -1278,9 +1278,15 @@ export default function ShowMaintenanceRequest({
 
                             <div className="p-5 sm:p-6">
 
+                                {/* ================================================== */}
+                                {/* SUBMITTED */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Submitted"
-                                    active={true}
+                                    active={
+                                        request.status === 'submitted'
+                                    }
                                     completed={[
                                         'assessment',
                                         'for_head_review',
@@ -1288,6 +1294,8 @@ export default function ShowMaintenanceRequest({
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1296,6 +1304,10 @@ export default function ShowMaintenanceRequest({
                                     date={request.requested_at}
                                 />
 
+
+                                {/* ================================================== */}
+                                {/* SUPERVISOR ASSESSMENT */}
+                                {/* ================================================== */}
 
                                 <WorkflowStep
                                     label="Supervisor Assessment"
@@ -1306,6 +1318,8 @@ export default function ShowMaintenanceRequest({
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1317,6 +1331,8 @@ export default function ShowMaintenanceRequest({
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1326,6 +1342,10 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* DEPARTMENT HEAD */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Department Head Review"
                                     active={[
@@ -1334,6 +1354,8 @@ export default function ShowMaintenanceRequest({
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1344,6 +1366,8 @@ export default function ShowMaintenanceRequest({
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1353,12 +1377,18 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* GSO */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="GSO Validation"
                                     active={[
                                         'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1367,6 +1397,8 @@ export default function ShowMaintenanceRequest({
                                     completed={[
                                         'for_budget_review',
                                         'budget_approved',
+                                        'for_accounting_review',
+                                        'for_mayor_approval',
                                         'ready_for_work',
                                         'assigned',
                                         'in_progress',
@@ -1375,6 +1407,10 @@ export default function ShowMaintenanceRequest({
                                     date={request.gso_reviewed_at}
                                 />
 
+
+                                {/* ================================================== */}
+                                {/* BUDGET */}
+                                {/* ================================================== */}
 
                                 <WorkflowStep
                                     label="Budget Review"
@@ -1400,6 +1436,11 @@ export default function ShowMaintenanceRequest({
                                     date={request.budget_reviewed_at}
                                 />
 
+
+                                {/* ================================================== */}
+                                {/* ACCOUNTING */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Accounting Review"
                                     active={[
@@ -1420,6 +1461,11 @@ export default function ShowMaintenanceRequest({
                                     date={request.accounting_reviewed_at}
                                 />
 
+
+                                {/* ================================================== */}
+                                {/* MAYOR */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Mayor Approval"
                                     active={[
@@ -1438,6 +1484,10 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* READY FOR WORK */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Ready for Work"
                                     active={[
@@ -1454,6 +1504,10 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* ASSIGNED */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Assigned"
                                     active={[
@@ -1468,6 +1522,10 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* IN PROGRESS */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="In Progress"
                                     active={[
@@ -1475,22 +1533,23 @@ export default function ShowMaintenanceRequest({
                                         'completed',
                                     ].includes(request.status)}
                                     completed={
-                                        request.status ===
-                                        'completed'
+                                        request.status === 'completed'
                                     }
                                     date={request.started_at}
                                 />
 
 
+                                {/* ================================================== */}
+                                {/* COMPLETED */}
+                                {/* ================================================== */}
+
                                 <WorkflowStep
                                     label="Completed"
                                     active={
-                                        request.status ===
-                                        'completed'
+                                        request.status === 'completed'
                                     }
                                     completed={
-                                        request.status ===
-                                        'completed'
+                                        request.status === 'completed'
                                     }
                                     date={request.completed_at}
                                     last
