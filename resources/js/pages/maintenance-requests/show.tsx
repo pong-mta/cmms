@@ -1760,7 +1760,95 @@ export default function ShowMaintenanceRequest({
 
                                             {/* BUDGET AMOUNT */}
 
+                                            {/* ESTIMATED COST */}
+
+                                            <div className="rounded-xl border border-violet-200 bg-white p-4">
+
+                                                <div className="mb-3">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-violet-900">
+                                                        Supervisor Estimated Cost
+                                                    </p>
+
+                                                    <p className="mt-1 text-[10px] text-slate-500">
+                                                        Review the estimated cost prepared during the technical assessment.
+                                                    </p>
+                                                </div>
+
+                                                <div className="space-y-2">
+
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-slate-500">
+                                                            Labor
+                                                        </span>
+
+                                                        <span className="text-xs font-semibold text-slate-700">
+                                                            ₱
+                                                            {Number(
+                                                                request.estimated_labor_cost ?? 0,
+                                                            ).toLocaleString('en-PH', {
+                                                                minimumFractionDigits: 2,
+                                                            })}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-slate-500">
+                                                            Parts
+                                                        </span>
+
+                                                        <span className="text-xs font-semibold text-slate-700">
+                                                            ₱
+                                                            {Number(
+                                                                request.estimated_parts_cost ?? 0,
+                                                            ).toLocaleString('en-PH', {
+                                                                minimumFractionDigits: 2,
+                                                            })}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-slate-500">
+                                                            Other
+                                                        </span>
+
+                                                        <span className="text-xs font-semibold text-slate-700">
+                                                            ₱
+                                                            {Number(
+                                                                request.estimated_other_cost ?? 0,
+                                                            ).toLocaleString('en-PH', {
+                                                                minimumFractionDigits: 2,
+                                                            })}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="border-t border-slate-100 pt-2">
+
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-bold text-slate-700">
+                                                                Estimated Total
+                                                            </span>
+
+                                                            <span className="text-sm font-bold text-violet-700">
+                                                                ₱
+                                                                {Number(
+                                                                    request.estimated_total_cost ?? 0,
+                                                                ).toLocaleString('en-PH', {
+                                                                    minimumFractionDigits: 2,
+                                                                })}
+                                                            </span>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            {/* APPROVED BUDGET AMOUNT */}
+
                                             <div>
+
                                                 <label
                                                     htmlFor="budget_amount"
                                                     className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
@@ -1775,13 +1863,22 @@ export default function ShowMaintenanceRequest({
                                                     step="0.01"
                                                     value={budgetAmount}
                                                     onChange={(event) =>
-                                                        setBudgetAmount(
-                                                            event.target.value,
-                                                        )
+                                                        setBudgetAmount(event.target.value)
                                                     }
-                                                    placeholder="0.00"
+                                                    placeholder="Enter approved amount"
                                                     className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                                                 />
+
+                                                {budgetAmount &&
+                                                    Number(budgetAmount) !==
+                                                        Number(request.estimated_total_cost ?? 0) && (
+
+                                                    <p className="mt-2 text-[10px] font-medium text-amber-600">
+                                                        ⚠ Approved amount differs from the supervisor's estimated total.
+                                                    </p>
+
+                                                )}
+
                                             </div>
 
                                             {/* REMARKS */}
