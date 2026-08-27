@@ -339,7 +339,7 @@ class PreventiveMaintenanceScheduleController extends Controller
             $schedule->description,
 
             'priority' =>
-            'medium',
+            'normal',
 
             'status' =>
             'submitted',
