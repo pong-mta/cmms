@@ -908,15 +908,14 @@ class MaintenanceRequestController extends Controller
             $validated['remarks'] ?? null,
 
             'status' =>
-            'ready_for_work',
+            'for_accounting_review',
         ]);
 
         return back()->with(
             'success',
-            'Budget approved. Maintenance request is ready for work.'
+            'Budget approved. Maintenance request sent to Accounting for review.'
         );
     }
-
     /*
     |--------------------------------------------------------------------------
     | BUDGET RETURN
