@@ -84,6 +84,7 @@ interface MaintenanceRequest {
 
     accounting_reviewed_by?: UserInfo | null;
 
+
     title: string;
 
     description: string;
@@ -146,6 +147,8 @@ interface MaintenanceRequest {
     accounting_remarks?: string | null;
 
     mayor_reviewed_at?: string | null;
+    mayor_reviewed_by?: UserInfo | null;
+    mayor_remarks?: string | null;
 
     funding_source?: string | null;
 
@@ -2743,6 +2746,13 @@ export default function ShowMaintenanceRequest({
                                     label="Accounting Reviewed By"
                                     user={
                                         request.accounting_reviewed_by
+                                    }
+                                />
+
+                                <PersonItem
+                                    label="Mayor Reviewed By"
+                                    user={
+                                        request.mayor_reviewed_by
                                     }
                                 />
 
