@@ -2886,12 +2886,42 @@ export default function ShowMaintenanceRequest({
                                 />
 
 
-                                <PersonItem
-                                    label="Assigned To"
-                                    user={
-                                        request.assigned_to
-                                    }
-                                />
+                                {request.assignment_type === 'external_contractor' ? (
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Assigned To
+                                        </p>
+
+                                        <p className="text-sm font-semibold text-slate-900">
+                                            {request.external_contractor}
+                                        </p>
+
+                                        <p className="text-xs text-slate-500">
+                                            {request.external_worker_name}
+                                        </p>
+
+                                        {request.external_worker_contact && (
+                                            <p className="text-xs text-slate-400">
+                                                {request.external_worker_contact}
+                                            </p>
+                                        )}
+
+                                        <p className="mt-1 text-[10px] font-medium text-indigo-500">
+                                            External Contractor
+                                        </p>
+
+                                        {request.assigned_at && (
+                                            <p className="text-[10px] text-slate-400">
+                                                Assigned {formatDate(request.assigned_at)}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <PersonItem
+                                        label="Assigned To"
+                                        user={request.assigned_to}
+                                    />
+                                )}
 
                             </div>
 
