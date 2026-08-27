@@ -204,6 +204,35 @@ interface Asset {
     created_at: string;
 
     updated_at: string;
+
+    preventive_maintenance_schedules?: PreventiveMaintenanceSchedule[];
+}
+
+interface PreventiveMaintenanceSchedule {
+    id: number;
+
+    title: string;
+
+    description?: string | null;
+
+    frequency_type: string;
+
+    frequency_value: number;
+
+    start_date: string;
+
+    next_due_date: string;
+
+    last_completed_at?: string | null;
+
+    status: string;
+
+    assigned_to?: {
+        id: number;
+        name: string;
+    } | null;
+
+    notes?: string | null;
 }
 
 
@@ -518,6 +547,9 @@ export default function ShowAsset({
 
     const maintenanceRequests =
     asset.maintenance_requests ?? [];
+
+    const preventiveMaintenanceSchedules =
+    asset.preventive_maintenance_schedules ?? [];
 
     const totalMaintenanceCost =
     maintenanceRequests.reduce(
@@ -1344,6 +1376,184 @@ export default function ShowAsset({
 
                                     <p className="mt-1 max-w-xs text-[10px] leading-5 text-slate-400">
                                         Maintenance requests for this asset will appear here.
+                                    </p>
+
+                                </div>
+
+                            )}
+
+                        </section>
+
+                        {/* ================================================== */}
+                        {/* PREVENTIVE MAINTENANCE */}
+                        {/* ================================================== */}
+
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                            <div className="border-b border-slate-100 px-5 py-4">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                        <CalendarDays className="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Preventive Maintenance
+                                        </h2>
+
+                                        <p className="text-[10px] text-slate-500">
+                                            Scheduled maintenance for this asset
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            {preventiveMaintenanceSchedules.length > 0 ? (
+
+                                <div className="divide-y divide-slate-100">
+
+                                    {preventiveMaintenanceSchedules.map(
+                                        (schedule) => (
+
+                                            <div
+                                                key={schedule.id}
+                                                className="p-5"
+                                            >
+
+                                                <div className="flex items-start justify-between gap-3">
+
+                                                    <div className="min-w-0">
+
+                                                        <p className="text-sm font-bold text-slate-800">
+                                                            {schedule.title}
+                                                        </p>
+
+                                                        {schedule.description && (
+                                                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                                                                {schedule.description}
+                                                            </p>
+                                                        )}
+
+                                                    </div>
+
+
+                                                    <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-semibold capitalize text-blue-700">
+                                                        {
+                                                            schedule.status
+                                                                .replaceAll(
+                                                                    '_',
+                                                                    ' ',
+                                                                )
+                                                        }
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Frequency
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-semibold capitalize text-slate-700">
+                                                            Every{' '}
+
+                                                            {
+                                                                schedule.frequency_value
+                                                            }{' '}
+
+                                                            {
+                                                                schedule.frequency_type
+                                                            }
+                                                        </p>
+
+                                                    </div>
+
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Next Due
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                                            {
+                                                                formatDate(
+                                                                    schedule.next_due_date,
+                                                                )
+                                                            }
+                                                        </p>
+
+                                                    </div>
+
+
+                                                    <div>
+
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                            Assigned To
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                                            {
+                                                                schedule
+                                                                    .assigned_to
+                                                                    ?.name ??
+                                                                '—'
+                                                            }
+                                                        </p>
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                {schedule.last_completed_at && (
+                                                    <div className="mt-4 text-[10px] text-slate-500">
+
+                                                        Last completed:{' '}
+
+                                                        <span className="font-semibold text-slate-700">
+                                                            {
+                                                                formatDate(
+                                                                    schedule.last_completed_at,
+                                                                )
+                                                            }
+                                                        </span>
+
+                                                    </div>
+                                                )}
+
+                                            </div>
+
+                                        ),
+                                    )}
+
+                                </div>
+
+                            ) : (
+
+                                <div className="flex min-h-[180px] flex-col items-center justify-center px-5 text-center">
+
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                                        <CalendarDays className="h-6 w-6" />
+                                    </div>
+
+                                    <p className="mt-3 text-xs font-semibold text-slate-700">
+                                        No preventive maintenance schedules
+                                    </p>
+
+                                    <p className="mt-1 max-w-xs text-[10px] leading-5 text-slate-400">
+                                        Scheduled maintenance for this asset will appear here.
                                     </p>
 
                                 </div>
