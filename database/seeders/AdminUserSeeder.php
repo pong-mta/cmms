@@ -71,6 +71,7 @@ class AdminUserSeeder extends Seeder
             'system_admin',
             'department_head',
             'maintenance_supervisor',
+            'gso',
             'technician',
             'staff',
             'budget_officer',
@@ -167,6 +168,28 @@ class AdminUserSeeder extends Seeder
 
         $supervisor->roles()->syncWithoutDetaching([
             $roles['maintenance_supervisor'],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | GSO
+        |--------------------------------------------------------------------------
+        */
+
+        $gso = User::updateOrCreate(
+            [
+                'phone' => '09156014668',
+            ],
+            [
+                'name' => 'General Services Officer',
+                'phone_verified' => true,
+                'department_id' => $maintenanceDepartment->id,
+                'password' => $password,
+            ]
+        );
+
+        $gso->roles()->syncWithoutDetaching([
+            $roles['gso'],
         ]);
 
 
