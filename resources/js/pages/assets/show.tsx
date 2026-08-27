@@ -1410,6 +1410,15 @@ export default function ShowAsset({
 
                                     </div>
 
+                                     <Link
+                                        href={`/assets/${asset.id}/preventive-maintenance/create`}
+                                        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl bg-blue-700 px-3 text-[10px] font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                                    >
+                                        <CalendarDays className="h-3.5 w-3.5" />
+
+                                        Add Schedule
+                                    </Link>
+
                                 </div>
 
                             </div>
