@@ -1345,15 +1345,6 @@ export default function ShowAsset({
                                                         </span>
 
                                                     </div>
-
-
-                                                    <Link
-                                                        href={`/maintenance-requests/${maintenanceRequest.id}`}
-                                                        className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
-                                                    >
-                                                        View Request
-                                                    </Link>
-
                                                     <div className="mt-1 text-[10px] text-slate-500">
 
                                                         Completed by:{' '}
@@ -1368,6 +1359,16 @@ export default function ShowAsset({
                                                         </span>
 
                                                     </div>
+
+
+                                                    <Link
+                                                        href={`/maintenance-requests/${maintenanceRequest.id}`}
+                                                        className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
+                                                    >
+                                                        View Request
+                                                    </Link>
+
+                                                    
 
                                                 </div>
 
