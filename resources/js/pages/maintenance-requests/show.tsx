@@ -1367,6 +1367,93 @@ export default function ShowMaintenanceRequest({
 
 
                         {/* ================================================== */}
+                        {/* MAYOR APPROVAL */}
+                        {/* ================================================== */}
+
+                        {request.mayor_reviewed_at && (
+
+                            <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
+
+                                <div className="border-b border-emerald-100 bg-emerald-50/40 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Mayor Approval
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Final authorization and approval.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+
+                                        <div className="rounded-xl bg-slate-50 p-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Approved By
+                                            </p>
+
+                                            <p className="mt-2 text-sm font-bold text-slate-900">
+                                                {request.mayor_reviewed_by?.name ?? '—'}
+                                            </p>
+
+                                        </div>
+
+                                        <div className="rounded-xl bg-slate-50 p-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Approved Date
+                                            </p>
+
+                                            <p className="mt-2 text-sm font-bold text-slate-900">
+                                                {formatDate(
+                                                    request.mayor_reviewed_at
+                                                )}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    {request.mayor_remarks && (
+
+                                        <div className="mt-5 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Mayor Remarks
+                                            </p>
+
+                                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                                                {request.mayor_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
                         {/* WORKFLOW */}
                         {/* ================================================== */}
 
