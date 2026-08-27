@@ -1386,11 +1386,7 @@ class MaintenanceRequestController extends Controller
 |     ↓
 | in_progress
 |
-| LGU Employee:
-|     Assigned technician can start work.
-|
-| External Contractor:
-|     Maintenance Supervisor can start work.
+| Only the Maintenance Supervisor can start work.
 |
 */
 
@@ -1398,6 +1394,27 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | SUPERVISOR ONLY
+    |--------------------------------------------------------------------------
+    */
+
+        $isSupervisor = $user
+            ->roles()
+            ->where(
+                'name',
+                'maintenance_supervisor'
+            )
+            ->exists();
+
+        if (!$isSupervisor) {
+            abort(
+                403,
+                'Only the Maintenance Supervisor can start work.'
+            );
+        }
 
         /*
     |--------------------------------------------------------------------------
@@ -1417,100 +1434,14 @@ class MaintenanceRequestController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | LGU EMPLOYEE
-    |--------------------------------------------------------------------------
-    */
-
-        if (
-            $maintenanceRequest->assignment_type ===
-            'lgu_employee'
-        ) {
-
-            $isTechnician = $user
-                ->roles()
-                ->where(
-                    'name',
-                    'technician'
-                )
-                ->exists();
-
-            if (!$isTechnician) {
-                abort(
-                    403,
-                    'Only a Maintenance Technician can start this work.'
-                );
-            }
-
-            if (
-                $maintenanceRequest->assigned_to !==
-                $user->id
-            ) {
-                abort(
-                    403,
-                    'This maintenance request is not assigned to you.'
-                );
-            }
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | EXTERNAL CONTRACTOR
-    |--------------------------------------------------------------------------
-    */ elseif (
-            $maintenanceRequest->assignment_type ===
-            'external_contractor'
-        ) {
-
-            $isSupervisor = $user
-                ->roles()
-                ->whereIn(
-                    'name',
-                    [
-                        'maintenance_supervisor',
-                        'system_admin',
-                    ]
-                )
-                ->exists();
-
-            if (!$isSupervisor) {
-                abort(
-                    403,
-                    'Only the Maintenance Supervisor can start work for an external contractor.'
-                );
-            }
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | UNKNOWN ASSIGNMENT TYPE
-    |--------------------------------------------------------------------------
-    */ else {
-
-            return back()->with(
-                'error',
-                'This maintenance request has an invalid assignment type.'
-            );
-        }
-
-        /*
-    |--------------------------------------------------------------------------
     | START WORK
     |--------------------------------------------------------------------------
     */
 
         $maintenanceRequest->update([
-            'status' =>
-            'in_progress',
-
-            'started_at' =>
-            now(),
+            'status' => 'in_progress',
+            'started_at' => now(),
         ]);
-
-        /*
-    |--------------------------------------------------------------------------
-    | SUCCESS
-    |--------------------------------------------------------------------------
-    */
 
         return back()->with(
             'success',
