@@ -1720,18 +1720,42 @@ export default function ShowMaintenanceRequest({
                                                     Funding Source
                                                 </label>
 
-                                                <input
+                                                <select
                                                     id="funding_source"
-                                                    type="text"
                                                     value={budgetFundingSource}
                                                     onChange={(event) =>
-                                                        setBudgetFundingSource(
-                                                            event.target.value,
-                                                        )
+                                                        setBudgetFundingSource(event.target.value)
                                                     }
-                                                    placeholder="e.g. General Fund"
                                                     className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                                                />
+                                                >
+                                                    <option value="">
+                                                        Select funding source
+                                                    </option>
+
+                                                    <option value="General Fund">
+                                                        General Fund
+                                                    </option>
+
+                                                    <option value="Special Education Fund (SEF)">
+                                                        Special Education Fund (SEF)
+                                                    </option>
+
+                                                    <option value="20% Development Fund">
+                                                        20% Development Fund
+                                                    </option>
+
+                                                    <option value="Local Economic Enterprise">
+                                                        Local Economic Enterprise
+                                                    </option>
+
+                                                    <option value="Trust Fund">
+                                                        Trust Fund
+                                                    </option>
+
+                                                    <option value="Other">
+                                                        Other
+                                                    </option>
+                                                </select>
                                             </div>
 
                                             {/* BUDGET AMOUNT */}
