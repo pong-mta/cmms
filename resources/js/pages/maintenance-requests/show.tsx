@@ -77,6 +77,8 @@ interface MaintenanceRequest {
 
     head_reviewed_by?: UserInfo | null;
 
+    gso_reviewed_by?: UserInfo | null;
+
     budget_reviewed_by?: UserInfo | null;
 
     title: string;
@@ -94,6 +96,7 @@ interface MaintenanceRequest {
         | 'assessment'
         | 'for_head_review'
         | 'head_approved'
+        | 'for_gso_review'
         | 'for_budget_review'
         | 'budget_approved'
         | 'ready_for_work'
@@ -124,6 +127,10 @@ interface MaintenanceRequest {
     head_reviewed_at?: string | null;
 
     head_remarks?: string | null;
+
+    gso_reviewed_at?: string | null;
+
+    gso_remarks?: string | null;
 
     budget_reviewed_at?: string | null;
 
@@ -186,6 +193,9 @@ function statusClass(
 
         case 'head_approved':
             return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'for_gso_review':
+            return 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200';
 
         case 'for_budget_review':
             return 'bg-violet-50 text-violet-700 ring-violet-200';
@@ -325,6 +335,9 @@ export default function ShowMaintenanceRequest({
 
     const isBudgetOfficer =
         userRoles.includes('budget_officer');
+
+    const isGso =
+        userRoles.includes('gso');
 
     const [
         showRejectModal,
@@ -1016,6 +1029,83 @@ export default function ShowMaintenanceRequest({
 
 
                         {/* ================================================== */}
+                        {/* GSO VALIDATION RESULT */}
+                        {/* ================================================== */}
+
+                        {request.gso_reviewed_by && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-fuchsia-50 text-fuchsia-700">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                GSO Validation
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                General Services Office validation and remarks.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="rounded-xl bg-slate-50 p-4">
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Validated By
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.gso_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.gso_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
+
+
+                                    {request.gso_remarks && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                GSO Remarks
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.gso_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
                         {/* BUDGET RESULT */}
                         {/* ================================================== */}
 
@@ -1163,6 +1253,7 @@ export default function ShowMaintenanceRequest({
                                         'assessment',
                                         'for_head_review',
                                         'head_approved',
+                                        'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
                                         'ready_for_work',
@@ -1180,6 +1271,7 @@ export default function ShowMaintenanceRequest({
                                         'assessment',
                                         'for_head_review',
                                         'head_approved',
+                                        'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
                                         'ready_for_work',
@@ -1190,6 +1282,7 @@ export default function ShowMaintenanceRequest({
                                     completed={[
                                         'for_head_review',
                                         'head_approved',
+                                        'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
                                         'ready_for_work',
@@ -1206,6 +1299,7 @@ export default function ShowMaintenanceRequest({
                                     active={[
                                         'for_head_review',
                                         'head_approved',
+                                        'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
                                         'ready_for_work',
@@ -1215,6 +1309,7 @@ export default function ShowMaintenanceRequest({
                                     ].includes(request.status)}
                                     completed={[
                                         'head_approved',
+                                        'for_gso_review',
                                         'for_budget_review',
                                         'budget_approved',
                                         'ready_for_work',
@@ -1223,6 +1318,29 @@ export default function ShowMaintenanceRequest({
                                         'completed',
                                     ].includes(request.status)}
                                     date={request.head_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="GSO Validation"
+                                    active={[
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.gso_reviewed_at}
                                 />
 
 
@@ -1378,7 +1496,7 @@ export default function ShowMaintenanceRequest({
                                             onClick={() => {
                                                 if (
                                                     !window.confirm(
-                                                        'Approve this maintenance request and send it to the Budget Office?',
+                                                        'Approve this maintenance request and send it to the General Services Office?',
                                                     )
                                                 ) {
                                                     return;
@@ -1393,7 +1511,7 @@ export default function ShowMaintenanceRequest({
 
                                             <CheckCircle2 className="h-4 w-4" />
 
-                                            Approve & Send to Budget
+                                            Approve & Send to GSO
 
                                         </button>
 
@@ -1449,6 +1567,91 @@ export default function ShowMaintenanceRequest({
 
 
                                 {/* ================================================== */}
+                                {/* GENERAL SERVICES OFFICE */}
+                                {/* ================================================== */}
+
+                                {request.status === 'for_gso_review' &&
+                                    isGso && (
+
+                                    <div className="mt-4 space-y-2">
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+
+                                                if (
+                                                    !window.confirm(
+                                                        'Validate this maintenance request and send it to the Budget Office?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/gso-approve`,
+                                                );
+
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                        >
+                                            <CheckCircle2 className="h-4 w-4" />
+
+                                            Validate & Send to Budget
+
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to the Supervisor?',
+                                                    );
+
+                                                if (
+                                                    !remarks?.trim()
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/gso-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
+
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+
+                                            Return to Supervisor
+
+                                        </button>
+
+                                    </div>
+
+                                )}
+
+
+                                {request.status === 'for_gso_review' &&
+                                    !isGso && (
+                                    <div className="mt-4 rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+                                        <p className="text-xs font-semibold text-fuchsia-800">
+                                            Waiting for GSO validation
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-fuchsia-700">
+                                            The Department Head has approved this request. It is now waiting for General Services Office validation.
+                                        </p>
+                                    </div>
+                                )}
+
+
+                                {/* ================================================== */}
                                 {/* BUDGET OFFICE */}
                                 {/* ================================================== */}
 
@@ -1461,7 +1664,7 @@ export default function ShowMaintenanceRequest({
                                         </p>
 
                                         <p className="mt-1 text-[10px] leading-5 text-violet-700">
-                                            This request has been approved by the Department Head and is now waiting for budget review.
+                                            This request has been approved by the Department Head and validated by GSO. It is now waiting for budget review.
                                         </p>
 
                                     </div>
@@ -1523,6 +1726,14 @@ export default function ShowMaintenanceRequest({
                                     label="Head Reviewed By"
                                     user={
                                         request.head_reviewed_by
+                                    }
+                                />
+
+
+                                <PersonItem
+                                    label="GSO Validated By"
+                                    user={
+                                        request.gso_reviewed_by
                                     }
                                 />
 
@@ -2193,6 +2404,14 @@ export default function ShowMaintenanceRequest({
 
 
                                 <DateItem
+                                    label="GSO Validated"
+                                    value={
+                                        request.gso_reviewed_at
+                                    }
+                                />
+
+
+                                <DateItem
                                     label="Budget Reviewed"
                                     value={
                                         request.budget_reviewed_at
@@ -2543,45 +2762,6 @@ function InfoItem({
             <p className="mt-1 text-sm font-semibold text-slate-800">
                 {value}
             </p>
-
-        </div>
-
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| DATE ITEM
-|--------------------------------------------------------------------------
-*/
-
-function DateItem({
-    label,
-    value,
-}: {
-    label: string;
-    value?: string | null;
-}) {
-
-    return (
-
-        <div className="flex items-center justify-between gap-4">
-
-            <span className="text-[10px] font-medium text-slate-400">
-                {label}
-            </span>
-
-
-            <span className="text-right text-[10px] font-semibold text-slate-600">
-
-                {value
-                    ? formatDateTime(
-                          value,
-                      )
-                    : '—'}
-
-            </span>
 
         </div>
 
