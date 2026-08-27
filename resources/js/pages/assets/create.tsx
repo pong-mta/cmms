@@ -201,12 +201,9 @@ export default function CreateAsset({
                     {/* IDENTIFICATION */}
                     {/* ================================================== */}
 
-                    <FormSection
-                        icon={
-                            <Archive className="h-5 w-5" />
-                        }
-                        title="Asset Identification"
-                        description="Basic information used to identify and track the asset."
+                    <SimpleSection
+                        title="Asset Information"
+                        description="Basic information about the municipal asset."
                     >
 
                         <div className="grid gap-5 md:grid-cols-2">
@@ -383,7 +380,7 @@ export default function CreateAsset({
 
                         </div>
 
-                    </FormSection>
+                    </SimpleSection>
 
 
                     {/* ================================================== */}
@@ -996,6 +993,41 @@ export default function CreateAsset({
             </div>
 
         </AppLayout>
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SIMPLE SECTION
+|--------------------------------------------------------------------------
+*/
+
+function SimpleSection({
+    title,
+    description,
+    children,
+}: {
+    title: string;
+    description: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="px-5 py-4 sm:px-6">
+                <h2 className="text-sm font-bold text-slate-900">
+                    {title}
+                </h2>
+
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                    {description}
+                </p>
+            </div>
+
+            <div className="border-t border-slate-100 p-5 sm:p-6">
+                {children}
+            </div>
+        </section>
     );
 }
 
