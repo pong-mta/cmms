@@ -810,6 +810,21 @@ export default function ShowMaintenanceRequest({
 
                                 )}
 
+                                {request.status === 'reviewing' && (
+
+                                    <Link
+                                        href={`/maintenance-requests/${request.id}/approve`}
+                                        method="post"
+                                        as="button"
+                                        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                    >
+                                        <CheckCircle2 className="h-4 w-4" />
+
+                                        Approve Request
+                                    </Link>
+
+                                )}
+
                             </div>
 
                         </section>

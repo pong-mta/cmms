@@ -114,6 +114,15 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'maintenance-requests.review'
     );
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/approve',
+        [
+            MaintenanceRequestController::class,
+            'approve',
+        ]
+    )->name(
+        'maintenance-requests.approve'
+    );
 });
 
 require __DIR__ . '/settings.php';

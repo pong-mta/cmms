@@ -238,6 +238,48 @@ class MaintenanceRequestController extends Controller
     public function review(
         MaintenanceRequest $maintenanceRequest
     ) {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isDepartmentHead = $user
+            ->roles()
+            ->where('name', 'department_head')
+            ->exists();
+
+        if (!$isDepartmentHead) {
+            abort(403, 'Only a Department Head can review maintenance requests.');
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            !$user->department_id ||
+            $user->department_id !==
+            $maintenanceRequest->department_id
+        ) {
+            abort(
+                403,
+                'You can only review requests from your department.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
         if (
             $maintenanceRequest->status !==
             'submitted'
@@ -248,13 +290,110 @@ class MaintenanceRequestController extends Controller
             );
         }
 
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
         $maintenanceRequest->update([
             'status' => 'reviewing',
         ]);
 
+
+        /*
+    |--------------------------------------------------------------------------
+    | REDIRECT
+    |--------------------------------------------------------------------------
+    */
+
         return back()->with(
             'success',
             'Maintenance request is now under review.'
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| APPROVE
+|--------------------------------------------------------------------------
+*/
+
+    public function approve(
+        MaintenanceRequest $maintenanceRequest
+    ) {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isDepartmentHead = $user
+            ->roles()
+            ->where('name', 'department_head')
+            ->exists();
+
+        if (!$isDepartmentHead) {
+            abort(
+                403,
+                'Only a Department Head can approve maintenance requests.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            !$user->department_id ||
+            $user->department_id !==
+            $maintenanceRequest->department_id
+        ) {
+            abort(
+                403,
+                'You can only approve requests from your department.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'reviewing'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests under review can be approved.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | APPROVE
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
+
+
+        return back()->with(
+            'success',
+            'Maintenance request approved successfully.'
         );
     }
 }
