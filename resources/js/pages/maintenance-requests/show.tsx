@@ -2898,7 +2898,7 @@ export default function ShowMaintenanceRequest({
                                         }
 
                                         router.post(
-                                            `/maintenance-requests/${request.id}/start-work`,
+                                            `/maintenance-requests/${request.id}/start`,
                                         );
                                     }}
                                     className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
