@@ -242,4 +242,17 @@ class MaintenanceRequest extends Model
             'completed_by'
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| WORK LOGS
+|--------------------------------------------------------------------------
+*/
+
+    public function workLogs(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceWorkLog::class
+        );
+    }
 }
