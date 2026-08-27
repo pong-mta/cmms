@@ -1,20 +1,26 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Change maintenance request status workflow
-        |--------------------------------------------------------------------------
-        */
+        // Convert existing statuses first.
+        DB::statement("
+            UPDATE maintenance_requests
+            SET status = 'assessment'
+            WHERE status = 'reviewing'
+        ");
 
+        DB::statement("
+            UPDATE maintenance_requests
+            SET status = 'head_approved'
+            WHERE status = 'approved'
+        ");
+
+        // Change the status enum.
         DB::statement("
             ALTER TABLE maintenance_requests
             MODIFY status ENUM(
@@ -36,12 +42,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Restore previous status workflow
-        |--------------------------------------------------------------------------
-        */
-
         DB::statement("
             ALTER TABLE maintenance_requests
             MODIFY status ENUM(
