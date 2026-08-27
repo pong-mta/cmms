@@ -1354,6 +1354,21 @@ export default function ShowAsset({
                                                         View Request
                                                     </Link>
 
+                                                    <div className="mt-1 text-[10px] text-slate-500">
+
+                                                        Completed by:{' '}
+
+                                                        <span className="font-semibold text-slate-700">
+                                                            {
+                                                                maintenanceRequest
+                                                                    .completed_by
+                                                                    ?.name ??
+                                                                '—'
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
                                                 </div>
 
                                             </div>
