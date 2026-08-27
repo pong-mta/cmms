@@ -108,12 +108,6 @@ class AssetController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            'asset_code' => [
-                'required',
-                'string',
-                'max:100',
-                'unique:assets,asset_code',
-            ],
 
             'name' => [
                 'required',
@@ -260,6 +254,42 @@ class AssetController extends Controller
                 'string',
             ],
         ]);
+
+        $category = AssetCategory::findOrFail(
+            $validated['asset_category_id']
+        );
+
+        $prefix = strtoupper(
+            $category->code
+        );
+
+        $year = now()->year;
+
+        $lastAsset = Asset::query()
+            ->where('asset_category_id', $category->id)
+            ->where('asset_code', 'like', "{$prefix}-{$year}-%")
+            ->orderByDesc('id')
+            ->first();
+
+        $nextNumber = 1;
+
+        if ($lastAsset) {
+            $parts = explode(
+                '-',
+                $lastAsset->asset_code
+            );
+
+            $lastNumber = (int) end($parts);
+
+            $nextNumber = $lastNumber + 1;
+        }
+
+        $validated['asset_code'] = sprintf(
+            '%s-%d-%04d',
+            $prefix,
+            $year,
+            $nextNumber
+        );
 
 
         Asset::create($validated);
