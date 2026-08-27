@@ -184,19 +184,12 @@ class MaintenanceRequest extends Model
     }
 
     /*
-|--------------------------------------------------------------------------
-| COST ITEMS
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | COST ITEMS
+    |--------------------------------------------------------------------------
+    */
 
-    public function costItems(): HasMany
-    {
-        return $this->hasMany(
-            MaintenanceRequestCostItem::class
-        );
-    }
-
-    public function gsoReviewedBy()
+    public function gsoReviewedBy(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
@@ -204,7 +197,7 @@ class MaintenanceRequest extends Model
         );
     }
 
-    public function accountingReviewer()
+    public function accountingReviewedBy(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
@@ -212,12 +205,18 @@ class MaintenanceRequest extends Model
         );
     }
 
-
-    public function mayorReviewedBy()
+    public function mayorReviewedBy(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
             'mayor_reviewed_by'
+        );
+    }
+
+    public function costItems(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRequestCostItem::class
         );
     }
 }
