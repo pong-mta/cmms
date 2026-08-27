@@ -15,6 +15,7 @@ import {
     Wrench,
     ClipboardCheck,
     Send,
+    FileCheck2,
 } from 'lucide-react';
 
 
@@ -1241,6 +1242,116 @@ export default function ShowMaintenanceRequest({
                                             {formatDateTime(
                                                 request.budget_reviewed_at,
                                             )}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+                        {/* ================================================== */}
+                        {/* ACCOUNTING REVIEW */}
+                        {/* ================================================== */}
+
+                        {request.accounting_reviewed_at && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                                            <FileCheck2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Accounting Review
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Accounting verification and financial review.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    {/* ACCOUNTING INFORMATION */}
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+
+                                        <div className="rounded-xl bg-slate-50 p-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Accounting Reference No.
+                                            </p>
+
+                                            <p className="mt-2 text-sm font-bold text-slate-900">
+                                                {request.accounting_reference_no ?? '—'}
+                                            </p>
+
+                                        </div>
+
+
+                                        <div className="rounded-xl bg-slate-50 p-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Reviewed By
+                                            </p>
+
+                                            <p className="mt-2 text-sm font-bold text-slate-900">
+                                                {request.accounting_reviewed_by?.name ?? '—'}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* REMARKS */}
+
+                                    {request.accounting_remarks && (
+
+                                        <div className="mt-5 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Accounting Remarks
+                                            </p>
+
+                                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                                                {request.accounting_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+
+                                    {/* REVIEWED DATE */}
+
+                                    <div className="mt-5 border-t border-slate-100 pt-5">
+
+                                        <p className="text-[10px] text-slate-400">
+                                            Reviewed by
+                                        </p>
+
+                                        <p className="mt-1 text-sm font-semibold text-slate-900">
+                                            {request.accounting_reviewed_by?.name ?? '—'}
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-slate-400">
+                                            {formatDate(request.accounting_reviewed_at)}
                                         </p>
 
                                     </div>
