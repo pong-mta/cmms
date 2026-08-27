@@ -8,6 +8,8 @@ use App\Models\MaintenanceRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
+
 
 class MaintenanceRequestController extends Controller
 {
@@ -211,6 +213,12 @@ class MaintenanceRequestController extends Controller
 |--------------------------------------------------------------------------
 */
 
+    /*
+|--------------------------------------------------------------------------
+| SHOW
+|--------------------------------------------------------------------------
+*/
+
     public function show(
         MaintenanceRequest $maintenanceRequest
     ): Response {
@@ -221,10 +229,30 @@ class MaintenanceRequestController extends Controller
             'assignedTo',
         ]);
 
+        $technicians = User::query()
+            ->where(
+                'department_id',
+                $maintenanceRequest->department_id
+            )
+            ->whereHas('roles', function ($query) {
+                $query->where(
+                    'name',
+                    'technician'
+                );
+            })
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'phone',
+                'department_id',
+            ]);
+
         return Inertia::render(
             'maintenance-requests/show',
             [
                 'request' => $maintenanceRequest,
+                'technicians' => $technicians,
             ]
         );
     }
@@ -495,6 +523,135 @@ class MaintenanceRequestController extends Controller
         return back()->with(
             'success',
             'Maintenance request rejected.'
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| ASSIGN TECHNICIAN
+|--------------------------------------------------------------------------
+*/
+
+    public function assign(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ) {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $canAssign = $user
+            ->roles()
+            ->whereIn('name', [
+                'maintenance_supervisor',
+                'system_admin',
+            ])
+            ->exists();
+
+        if (!$canAssign) {
+            abort(
+                403,
+                'Only a Maintenance Supervisor or System Administrator can assign maintenance requests.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'approved'
+        ) {
+            return back()->with(
+                'error',
+                'Only approved maintenance requests can be assigned.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE TECHNICIAN
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'assigned_to' => [
+                'required',
+                'exists:users,id',
+            ],
+        ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VERIFY TECHNICIAN ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $technician = User::findOrFail(
+            $validated['assigned_to']
+        );
+
+        $isTechnician = $technician
+            ->roles()
+            ->where('name', 'technician')
+            ->exists();
+
+        if (!$isTechnician) {
+            return back()->with(
+                'error',
+                'The selected user is not a Maintenance Technician.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VERIFY DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $technician->department_id !==
+            $maintenanceRequest->department_id
+        ) {
+            return back()->with(
+                'error',
+                'The technician must belong to the same department as the maintenance request.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | ASSIGN
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'assigned_to' => $technician->id,
+            'status' => 'assigned',
+        ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | REDIRECT
+    |--------------------------------------------------------------------------
+    */
+
+        return back()->with(
+            'success',
+            'Maintenance request assigned successfully.'
         );
     }
 }

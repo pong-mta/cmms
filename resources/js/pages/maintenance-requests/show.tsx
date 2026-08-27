@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 import {
@@ -33,6 +33,13 @@ interface Department {
     id: number;
     name: string;
     code: string;
+}
+
+interface Technician {
+    id: number;
+    name: string;
+    phone?: string;
+    department_id: number;
 }
 
 
@@ -94,6 +101,7 @@ interface MaintenanceRequest {
 
 interface Props {
     request: MaintenanceRequest;
+    technicians: Technician[];
 }
 
 
@@ -252,6 +260,7 @@ function formatDateTime(
 
 export default function ShowMaintenanceRequest({
     request,
+    technicians,
 }: Props) {
 
     const [showRejectModal, setShowRejectModal] =
@@ -259,6 +268,8 @@ export default function ShowMaintenanceRequest({
 
     const [rejectReason, setRejectReason] =
         useState('');
+    const [selectedTechnician, setSelectedTechnician] =
+    useState('');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -570,6 +581,8 @@ export default function ShowMaintenanceRequest({
                             </div>
 
                         </section>
+
+                        
 
 
                         {/* ================================================== */}
@@ -903,6 +916,111 @@ export default function ShowMaintenanceRequest({
                             </div>
 
                         </section>
+
+                        {request.status === 'approved' && (
+                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                                        <User className="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Assign Technician
+                                        </h2>
+
+                                        <p className="text-[10px] text-slate-500">
+                                            Select a technician for this maintenance request.
+                                        </p>
+                                    </div>
+
+                                </div>
+
+
+                                <div className="mt-5">
+
+                                    <label
+                                        htmlFor="assigned_to"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                    >
+                                        Technician
+                                    </label>
+
+
+                                    <select
+                                        id="assigned_to"
+                                        value={selectedTechnician}
+                                        onChange={(event) =>
+                                            setSelectedTechnician(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    >
+
+                                        <option value="">
+                                            Select technician
+                                        </option>
+
+
+                                        {technicians.map(
+                                            (technician) => (
+                                                <option
+                                                    key={technician.id}
+                                                    value={technician.id}
+                                                >
+                                                    {technician.name}
+                                                    {technician.phone
+                                                        ? ` — ${technician.phone}`
+                                                        : ''}
+                                                </option>
+                                            ),
+                                        )}
+
+                                    </select>
+
+
+                                    {technicians.length === 0 && (
+                                        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+
+                                            <p className="text-[10px] font-semibold text-amber-800">
+                                                No technicians are currently assigned to this department.
+                                            </p>
+
+                                        </div>
+                                    )}
+
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            !selectedTechnician ||
+                                            technicians.length === 0
+                                        }
+                                        onClick={() => {
+                                            router.post(
+                                                `/maintenance-requests/${request.id}/assign`,
+                                                {
+                                                    assigned_to:
+                                                        selectedTechnician,
+                                                },
+                                            );
+                                        }}
+                                        className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <User className="h-4 w-4" />
+
+                                        Assign Technician
+
+                                    </button>
+
+                                </div>
+
+                            </section>
+                        )}
 
 
                         {/* ================================================== */}
