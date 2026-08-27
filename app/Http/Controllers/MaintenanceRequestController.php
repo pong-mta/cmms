@@ -919,6 +919,123 @@ class MaintenanceRequestController extends Controller
             'Budget approved. Maintenance request sent to Accounting for review.'
         );
     }
+
+
+    public function accountingApprove(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        $isAccountingOfficer = $user
+            ->roles()
+            ->where('name', 'accounting_officer')
+            ->exists();
+
+        if (!$isAccountingOfficer) {
+            abort(
+                403,
+                'Only an Accounting Office Officer can approve accounting review.'
+            );
+        }
+
+        if (
+            $maintenanceRequest->status !==
+            'for_accounting_review'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for Accounting review can be approved.'
+            );
+        }
+
+        $validated = $request->validate([
+            'accounting_reference_no' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'accounting_remarks' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $maintenanceRequest->update([
+            'accounting_reviewed_by' =>
+            $user->id,
+
+            'accounting_reviewed_at' =>
+            now(),
+
+            'accounting_reference_no' =>
+            $validated['accounting_reference_no'],
+
+            'accounting_remarks' =>
+            $validated['accounting_remarks'] ?? null,
+
+            'status' =>
+            'for_mayor_approval',
+        ]);
+
+        return back()->with(
+            'success',
+            'Accounting review approved. Maintenance request is now waiting for Mayor approval.'
+        );
+    }
+
+    public function accountingReturn(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        $isAccountingOfficer = $user
+            ->roles()
+            ->where('name', 'accounting_officer')
+            ->exists();
+
+        if (!$isAccountingOfficer) {
+            abort(
+                403,
+                'Only an Accounting Office Officer can return the request.'
+            );
+        }
+
+        if (
+            $maintenanceRequest->status !==
+            'for_accounting_review'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for Accounting review can be returned.'
+            );
+        }
+
+        $validated = $request->validate([
+            'accounting_remarks' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $maintenanceRequest->update([
+            'accounting_remarks' =>
+            $validated['accounting_remarks'],
+
+            'status' =>
+            'for_budget_review',
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request returned to Budget Office for review.'
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | BUDGET RETURN

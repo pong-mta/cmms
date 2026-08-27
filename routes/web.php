@@ -206,6 +206,32 @@ Route::middleware(['auth'])->group(function () {
         'maintenance-requests.budget-return'
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | ACCOUNTING OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/accounting-approve',
+        [
+            MaintenanceRequestController::class,
+            'accountingApprove',
+        ]
+    )->name(
+        'maintenance-requests.accounting-approve'
+    );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/accounting-return',
+        [
+            MaintenanceRequestController::class,
+            'accountingReturn',
+        ]
+    )->name(
+        'maintenance-requests.accounting-return'
+    );
+
 
     /*
     |--------------------------------------------------------------------------

@@ -81,6 +81,8 @@ interface MaintenanceRequest {
 
     budget_reviewed_by?: UserInfo | null;
 
+    accounting_reviewed_by?: UserInfo | null;
+
     title: string;
 
     description: string;
@@ -100,6 +102,7 @@ interface MaintenanceRequest {
         | 'for_budget_review'
         | 'budget_approved'
         | 'ready_for_work'
+        | 'for_accounting_review'
         | 'assigned'
         | 'in_progress'
         | 'completed'
@@ -135,6 +138,10 @@ interface MaintenanceRequest {
     budget_reviewed_at?: string | null;
 
     budget_remarks?: string | null;
+
+    accounting_reviewed_at?: string | null;
+    accounting_reference_no?: string | null;
+    accounting_remarks?: string | null;
 
     funding_source?: string | null;
 
@@ -202,6 +209,9 @@ function statusClass(
 
         case 'budget_approved':
             return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'for_accounting_review':
+            return 'bg-slate-50 text-slate-700 ring-slate-200';
 
         case 'ready_for_work':
             return 'bg-cyan-50 text-cyan-700 ring-cyan-200';
@@ -336,6 +346,9 @@ export default function ShowMaintenanceRequest({
     const isBudgetOfficer =
         userRoles.includes('budget_officer');
 
+    const isAccountingOfficer =
+        userRoles.includes('accounting_officer');
+
     const isGso =
         userRoles.includes('gso');
 
@@ -447,6 +460,12 @@ export default function ShowMaintenanceRequest({
         useState('');
 
     const [budgetRemarks, setBudgetRemarks] =
+        useState('');
+    
+    const [accountingReferenceNo, setAccountingReferenceNo] =
+        useState('');
+
+    const [accountingRemarks, setAccountingRemarks] =
         useState('');
 
     const removeCostItem = (index: number) => {
@@ -1972,6 +1991,233 @@ export default function ShowMaintenanceRequest({
                             </div>
 
                         </section>
+
+                        {/* ================================================== */}
+                        {/* ACCOUNTING OFFICE */}
+                        {/* ================================================== */}
+
+                        {request.status === 'for_accounting_review' &&
+                            isAccountingOfficer && (
+
+                            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                                <div className="mb-4">
+
+                                    <p className="text-xs font-semibold text-slate-800">
+                                        Accounting Office Review
+                                    </p>
+
+                                    <p className="mt-1 text-[10px] leading-5 text-slate-600">
+                                        Review the approved funding and budget information
+                                        before forwarding this request for final approval.
+                                    </p>
+
+                                </div>
+
+                                {/* APPROVED BUDGET */}
+
+                                <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+
+                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Approved Budget
+                                    </p>
+
+                                    <div className="space-y-2">
+
+                                        <div className="flex items-center justify-between">
+
+                                            <span className="text-xs text-slate-500">
+                                                Funding Source
+                                            </span>
+
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                {request.funding_source ?? '—'}
+                                            </span>
+
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                Approved Amount
+                                            </span>
+
+                                            <span className="text-sm font-bold text-slate-900">
+                                                ₱
+                                                {Number(
+                                                    request.budget_amount ?? 0,
+                                                ).toLocaleString('en-PH', {
+                                                    minimumFractionDigits: 2,
+                                                })}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                {/* ACCOUNTING FORM */}
+
+                                <form
+                                    onSubmit={(event) => {
+
+                                        event.preventDefault();
+
+                                        if (!accountingReferenceNo.trim()) {
+                                            return;
+                                        }
+
+                                        if (
+                                            !window.confirm(
+                                                'Approve this accounting review and send the maintenance request for final approval?',
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
+                                        router.post(
+                                            `/maintenance-requests/${request.id}/accounting-approve`,
+                                            {
+                                                accounting_reference_no:
+                                                    accountingReferenceNo,
+
+                                                accounting_remarks:
+                                                    accountingRemarks || null,
+                                            },
+                                        );
+
+                                    }}
+                                    className="space-y-3"
+                                >
+
+                                    {/* REFERENCE NUMBER */}
+
+                                    <div>
+
+                                        <label
+                                            htmlFor="accounting_reference_no"
+                                            className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-700"
+                                        >
+                                            Accounting Reference No.
+                                        </label>
+
+                                        <input
+                                            id="accounting_reference_no"
+                                            type="text"
+                                            value={accountingReferenceNo}
+                                            onChange={(event) =>
+                                                setAccountingReferenceNo(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Enter accounting reference number"
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                        />
+
+                                    </div>
+
+                                    {/* REMARKS */}
+
+                                    <div>
+
+                                        <label
+                                            htmlFor="accounting_remarks"
+                                            className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-700"
+                                        >
+                                            Accounting Remarks
+                                        </label>
+
+                                        <textarea
+                                            id="accounting_remarks"
+                                            rows={3}
+                                            value={accountingRemarks}
+                                            onChange={(event) =>
+                                                setAccountingRemarks(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Accounting review remarks..."
+                                            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                        />
+
+                                    </div>
+
+                                    {/* APPROVE */}
+
+                                    <button
+                                        type="submit"
+                                        disabled={!accountingReferenceNo.trim()}
+                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 text-xs font-semibold text-white shadow-lg shadow-slate-800/20 transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <CheckCircle2 className="h-4 w-4" />
+
+                                        Approve & Send for Final Approval
+
+                                    </button>
+
+                                </form>
+
+                                {/* RETURN TO BUDGET */}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+
+                                        const remarks =
+                                            window.prompt(
+                                                'Why are you returning this request to the Budget Office?',
+                                            );
+
+                                        if (!remarks?.trim()) {
+                                            return;
+                                        }
+
+                                        router.post(
+                                            `/maintenance-requests/${request.id}/accounting-return`,
+                                            {
+                                                accounting_remarks:
+                                                    remarks,
+                                            },
+                                        );
+
+                                    }}
+                                    className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                >
+
+                                    <ArrowLeft className="h-4 w-4" />
+
+                                    Return to Budget
+
+                                </button>
+
+                            </div>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* WAITING FOR ACCOUNTING */}
+                        {/* ================================================== */}
+
+                        {request.status === 'for_accounting_review' &&
+                            !isAccountingOfficer && (
+
+                            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                                <p className="text-xs font-semibold text-slate-800">
+                                    Awaiting Accounting Office review
+                                </p>
+
+                                <p className="mt-1 text-[10px] leading-5 text-slate-600">
+                                    Budget approval has been completed. This request is now
+                                    waiting for Accounting Office review.
+                                </p>
+
+                            </div>
+
+                        )}
 
 
                         {/* ================================================== */}
