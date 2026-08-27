@@ -524,7 +524,15 @@ export default function ShowMaintenanceRequest({
 
     const [mayorRemarks, setMayorRemarks] =
         useState('');
+    const [
+        workPerformed,
+        setWorkPerformed,
+    ] = useState('');
 
+    const [
+        materialsUsed,
+        setMaterialsUsed,
+    ] = useState('');
     const [
         completionRemarks,
         setCompletionRemarks,
@@ -2951,6 +2959,50 @@ export default function ShowMaintenanceRequest({
                                     <div className="mt-4">
 
                                         <label
+                                            htmlFor="work_performed"
+                                            className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-amber-900"
+                                        >
+                                            Actual Work Performed
+                                        </label>
+
+                                        <textarea
+                                            id="work_performed"
+                                            value={workPerformed}
+                                            onChange={(event) =>
+                                                setWorkPerformed(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={5}
+                                            placeholder="Describe the actual work performed..."
+                                            className="w-full resize-none rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                        />
+
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label
+                                            htmlFor="materials_used"
+                                            className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-amber-900"
+                                        >
+                                            Parts / Materials Used
+                                        </label>
+
+                                        <textarea
+                                            id="materials_used"
+                                            value={materialsUsed}
+                                            onChange={(event) =>
+                                                setMaterialsUsed(event.target.value)
+                                            }
+                                            rows={4}
+                                            placeholder="List parts or materials used..."
+                                            className="w-full resize-none rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                        />
+                                    </div>
+
+                                    <div className="mt-4">
+
+                                        <label
                                             htmlFor="completion_remarks"
                                             className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-amber-900"
                                         >
@@ -2973,6 +3025,7 @@ export default function ShowMaintenanceRequest({
 
                                     <button
                                         type="button"
+                                        disabled={!workPerformed.trim()}
                                         onClick={() => {
 
                                             if (
@@ -2986,9 +3039,14 @@ export default function ShowMaintenanceRequest({
                                             router.post(
                                                 `/maintenance-requests/${request.id}/complete`,
                                                 {
+                                                    work_performed:
+                                                        workPerformed.trim(),
+
+                                                    materials_used:
+                                                        materialsUsed.trim() || null,
+
                                                     remarks:
-                                                        completionRemarks ||
-                                                        null,
+                                                        completionRemarks.trim() || null,
                                                 },
                                             );
 

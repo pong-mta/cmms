@@ -232,6 +232,7 @@ class MaintenanceRequestController extends Controller
             'accountingReviewedBy',
             'mayorReviewedBy',
             'completedBy',
+            'workLogs.performedBy',
             'costItems',
         ]);
 
