@@ -732,6 +732,114 @@ class MaintenanceRequestController extends Controller
     |
     */
 
+    /*
+|--------------------------------------------------------------------------
+| GSO APPROVE
+|--------------------------------------------------------------------------
+|
+| for_gso_review
+|       ↓
+| for_budget_review
+|
+*/
+
+    public function gsoApprove(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        $isGso = $user
+            ->roles()
+            ->where('name', 'gso')
+            ->exists();
+
+        if (!$isGso) {
+            abort(
+                403,
+                'Only the General Services Office can validate maintenance requests.'
+            );
+        }
+
+        if (
+            $maintenanceRequest->status !==
+            'for_gso_review'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for GSO review can be validated.'
+            );
+        }
+
+        $maintenanceRequest->update([
+            'status' => 'for_budget_review',
+        ]);
+
+        return back()->with(
+            'success',
+            'GSO validation completed. Maintenance request sent to Budget Office.'
+        );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| GSO RETURN
+|--------------------------------------------------------------------------
+|
+| for_gso_review
+|       ↓
+| assessment
+|
+*/
+
+    public function gsoReturn(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        $isGso = $user
+            ->roles()
+            ->where('name', 'gso')
+            ->exists();
+
+        if (!$isGso) {
+            abort(
+                403,
+                'Only the General Services Office can return maintenance requests.'
+            );
+        }
+
+        if (
+            $maintenanceRequest->status !==
+            'for_gso_review'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for GSO review can be returned.'
+            );
+        }
+
+        $validated = $request->validate([
+            'remarks' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $maintenanceRequest->update([
+            'remarks' => $validated['remarks'],
+            'status' => 'assessment',
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request returned to the Supervisor for reassessment.'
+        );
+    }
+
     public function budgetApprove(
         Request $request,
         MaintenanceRequest $maintenanceRequest

@@ -153,6 +153,32 @@ Route::middleware(['auth'])->group(function () {
         'maintenance-requests.head-return'
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | GENERAL SERVICES OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/gso-approve',
+        [
+            MaintenanceRequestController::class,
+            'gsoApprove',
+        ]
+    )->name(
+        'maintenance-requests.gso-approve'
+    );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/gso-return',
+        [
+            MaintenanceRequestController::class,
+            'gsoReturn',
+        ]
+    )->name(
+        'maintenance-requests.gso-return'
+    );
+
 
     /*
     |--------------------------------------------------------------------------
