@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Department;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -37,8 +38,8 @@ class AdminUserSeeder extends Seeder
         | MAINTENANCE DEPARTMENT
         |--------------------------------------------------------------------------
         |
-        | Your existing Department Heads are in Department 10.
-        | We use Department 10 for the workflow test accounts.
+        | Department 10 is currently being used by the
+        | maintenance workflow test accounts.
         |
         */
 
@@ -57,9 +58,47 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        $password = Hash::make(
-            '12345678'
-        );
+        $password = Hash::make('12345678');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ROLES
+        |--------------------------------------------------------------------------
+        */
+
+        $roles = Role::whereIn('name', [
+            'system_admin',
+            'department_head',
+            'maintenance_supervisor',
+            'technician',
+            'staff',
+            'budget_officer',
+        ])->pluck('id', 'name');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY ROLES
+        |--------------------------------------------------------------------------
+        */
+
+        $requiredRoles = [
+            'system_admin',
+            'department_head',
+            'maintenance_supervisor',
+            'technician',
+            'staff',
+            'budget_officer',
+        ];
+
+        foreach ($requiredRoles as $roleName) {
+            if (!$roles->has($roleName)) {
+                throw new \RuntimeException(
+                    "Role [{$roleName}] does not exist. Run RoleSeeder first."
+                );
+            }
+        }
 
 
         /*
@@ -74,18 +113,14 @@ class AdminUserSeeder extends Seeder
             ],
             [
                 'name' => 'PONG ADMIN',
-
                 'phone_verified' => true,
-
-                'department_id' =>
-                $adminDepartment->id,
-
+                'department_id' => $adminDepartment->id,
                 'password' => $password,
             ]
         );
 
         $admin->roles()->syncWithoutDetaching([
-            'system_admin',
+            $roles['system_admin'],
         ]);
 
 
@@ -100,20 +135,15 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014663',
             ],
             [
-                'name' =>
-                'Maintenance Department Head',
-
+                'name' => 'Maintenance Department Head',
                 'phone_verified' => true,
-
-                'department_id' =>
-                $maintenanceDepartment->id,
-
+                'department_id' => $maintenanceDepartment->id,
                 'password' => $password,
             ]
         );
 
         $head->roles()->syncWithoutDetaching([
-            'department_head',
+            $roles['department_head'],
         ]);
 
 
@@ -128,20 +158,15 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014664',
             ],
             [
-                'name' =>
-                'Maintenance Supervisor',
-
+                'name' => 'Maintenance Supervisor',
                 'phone_verified' => true,
-
-                'department_id' =>
-                $maintenanceDepartment->id,
-
+                'department_id' => $maintenanceDepartment->id,
                 'password' => $password,
             ]
         );
 
         $supervisor->roles()->syncWithoutDetaching([
-            'maintenance_supervisor',
+            $roles['maintenance_supervisor'],
         ]);
 
 
@@ -156,20 +181,15 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014665',
             ],
             [
-                'name' =>
-                'Maintenance Technician',
-
+                'name' => 'Maintenance Technician',
                 'phone_verified' => true,
-
-                'department_id' =>
-                $maintenanceDepartment->id,
-
+                'department_id' => $maintenanceDepartment->id,
                 'password' => $password,
             ]
         );
 
         $technician->roles()->syncWithoutDetaching([
-            'technician',
+            $roles['technician'],
         ]);
 
 
@@ -184,20 +204,15 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014666',
             ],
             [
-                'name' =>
-                'Maintenance Staff',
-
+                'name' => 'Maintenance Staff',
                 'phone_verified' => true,
-
-                'department_id' =>
-                $maintenanceDepartment->id,
-
+                'department_id' => $maintenanceDepartment->id,
                 'password' => $password,
             ]
         );
 
         $staff->roles()->syncWithoutDetaching([
-            'staff',
+            $roles['staff'],
         ]);
 
 
@@ -212,20 +227,15 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014667',
             ],
             [
-                'name' =>
-                'Budget Office Officer',
-
+                'name' => 'Budget Office Officer',
                 'phone_verified' => true,
-
-                'department_id' =>
-                $maintenanceDepartment->id,
-
+                'department_id' => $maintenanceDepartment->id,
                 'password' => $password,
             ]
         );
 
         $budgetOfficer->roles()->syncWithoutDetaching([
-            'budget_officer',
+            $roles['budget_officer'],
         ]);
     }
 }
