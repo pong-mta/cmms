@@ -42,6 +42,10 @@ class RoleSeeder extends Seeder
                 'name' => 'accounting_officer',
                 'description' => 'Accounting Office Officer',
             ],
+            [
+                'name' => 'mayor',
+                'description' => 'Municipal Mayor',
+            ],
         ];
 
         foreach ($roles as $role) {

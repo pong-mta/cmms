@@ -76,6 +76,7 @@ class AdminUserSeeder extends Seeder
             'staff',
             'budget_officer',
             'accounting_officer',
+            'mayor',
         ])->pluck('id', 'name');
 
 
@@ -94,6 +95,7 @@ class AdminUserSeeder extends Seeder
             'staff',
             'budget_officer',
             'accounting_officer',
+            'mayor',
         ];
 
         foreach ($requiredRoles as $roleName) {
@@ -286,6 +288,28 @@ class AdminUserSeeder extends Seeder
 
         $accountingOfficer->roles()->syncWithoutDetaching([
             $roles['accounting_officer'],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAYOR
+        |--------------------------------------------------------------------------
+        */
+
+        $mayor = User::updateOrCreate(
+            [
+                'phone' => '09156014669',
+            ],
+            [
+                'name' => 'Municipal Mayor',
+                'phone_verified' => true,
+                'department_id' => $maintenanceDepartment->id,
+                'password' => $password,
+            ]
+        );
+
+        $mayor->roles()->syncWithoutDetaching([
+            $roles['mayor'],
         ]);
     }
 }
