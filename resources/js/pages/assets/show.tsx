@@ -1329,46 +1329,45 @@ export default function ShowAsset({
                                                 </div>
 
 
-                                                <div className="mt-4 flex items-center justify-between gap-3">
+                                                <div className="mt-4 flex items-end justify-between gap-3">
 
-                                                    <div className="text-[10px] text-slate-500">
+                                                    <div className="space-y-1 text-[10px] text-slate-500">
 
-                                                        Requested by:{' '}
+                                                        <div>
+                                                            Requested by:{' '}
 
-                                                        <span className="font-semibold text-slate-700">
-                                                            {
-                                                                maintenanceRequest
-                                                                    .requested_by
-                                                                    ?.name ??
-                                                                '—'
-                                                            }
-                                                        </span>
+                                                            <span className="font-semibold text-slate-700">
+                                                                {
+                                                                    maintenanceRequest
+                                                                        .requested_by
+                                                                        ?.name ??
+                                                                    '—'
+                                                                }
+                                                            </span>
+                                                        </div>
 
-                                                    </div>
-                                                    <div className="mt-1 text-[10px] text-slate-500">
+                                                        <div>
+                                                            Completed by:{' '}
 
-                                                        Completed by:{' '}
-
-                                                        <span className="font-semibold text-slate-700">
-                                                            {
-                                                                maintenanceRequest
-                                                                    .completed_by
-                                                                    ?.name ??
-                                                                '—'
-                                                            }
-                                                        </span>
+                                                            <span className="font-semibold text-slate-700">
+                                                                {
+                                                                    maintenanceRequest
+                                                                        .completed_by
+                                                                        ?.name ??
+                                                                    '—'
+                                                                }
+                                                            </span>
+                                                        </div>
 
                                                     </div>
 
 
                                                     <Link
                                                         href={`/maintenance-requests/${maintenanceRequest.id}`}
-                                                        className="text-[10px] font-semibold text-blue-700 hover:text-blue-800"
+                                                        className="shrink-0 text-[10px] font-semibold text-blue-700 hover:text-blue-800"
                                                     >
                                                         View Request
                                                     </Link>
-
-                                                    
 
                                                 </div>
 
