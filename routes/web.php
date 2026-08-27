@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\MaintenanceRecordController;
 use App\Http\Controllers\MaintenanceRequestController;
+use App\Http\Controllers\PreventiveMaintenanceScheduleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -318,6 +319,32 @@ Route::middleware(['auth'])->group(function () {
         ]
     )->name(
         'maintenance-requests.cancel'
+    );
+
+
+    /*
+|--------------------------------------------------------------------------
+| PREVENTIVE MAINTENANCE
+|--------------------------------------------------------------------------
+*/
+
+    Route::post(
+        '/assets/{asset}/preventive-maintenance',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'store',
+        ]
+    )->name(
+        'assets.preventive-maintenance.store'
+    );
+    Route::get(
+        '/assets/{asset}/preventive-maintenance/create',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'create',
+        ]
+    )->name(
+        'assets.preventive-maintenance.create'
     );
 });
 
