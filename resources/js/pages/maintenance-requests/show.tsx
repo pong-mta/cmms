@@ -437,6 +437,15 @@ export default function ShowMaintenanceRequest({
         ]);
     };
 
+    const [budgetFundingSource, setBudgetFundingSource] =
+        useState('');
+
+    const [budgetAmount, setBudgetAmount] =
+        useState('');
+
+    const [budgetRemarks, setBudgetRemarks] =
+        useState('');
+
     const removeCostItem = (index: number) => {
         setCostItems((current) =>
             current.length === 1
@@ -1656,19 +1665,168 @@ export default function ShowMaintenanceRequest({
                                 {/* ================================================== */}
 
                                 {request.status === 'for_budget_review' && (
-
                                     <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
 
-                                        <p className="text-xs font-semibold text-violet-800">
-                                            Awaiting Budget Office review
-                                        </p>
+                                        <div className="mb-4">
+                                            <p className="text-xs font-semibold text-violet-800">
+                                                Budget Office Review
+                                            </p>
 
-                                        <p className="mt-1 text-[10px] leading-5 text-violet-700">
-                                            This request has been approved by the Department Head and validated by GSO. It is now waiting for budget review.
-                                        </p>
+                                            <p className="mt-1 text-[10px] leading-5 text-violet-700">
+                                                This request has been approved by the Department Head
+                                                and validated by GSO. Review the proposed budget before
+                                                sending the request to Accounting.
+                                            </p>
+                                        </div>
+
+                                        <form
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+
+                                                if (
+                                                    !window.confirm(
+                                                        'Approve this budget and send the maintenance request to Accounting?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/budget-approve`,
+                                                    {
+                                                        funding_source:
+                                                            budgetFundingSource,
+                                                        budget_amount:
+                                                            budgetAmount,
+                                                        remarks:
+                                                            budgetRemarks || null,
+                                                    },
+                                                );
+                                            }}
+                                            className="space-y-3"
+                                        >
+
+                                            {/* FUNDING SOURCE */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="funding_source"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Funding Source
+                                                </label>
+
+                                                <input
+                                                    id="funding_source"
+                                                    type="text"
+                                                    value={budgetFundingSource}
+                                                    onChange={(event) =>
+                                                        setBudgetFundingSource(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="e.g. General Fund"
+                                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* BUDGET AMOUNT */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="budget_amount"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Approved Budget Amount
+                                                </label>
+
+                                                <input
+                                                    id="budget_amount"
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={budgetAmount}
+                                                    onChange={(event) =>
+                                                        setBudgetAmount(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="0.00"
+                                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* REMARKS */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="budget_remarks"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Remarks
+                                                </label>
+
+                                                <textarea
+                                                    id="budget_remarks"
+                                                    rows={3}
+                                                    value={budgetRemarks}
+                                                    onChange={(event) =>
+                                                        setBudgetRemarks(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Budget review remarks..."
+                                                    className="w-full resize-none rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* APPROVE */}
+
+                                            <button
+                                                type="submit"
+                                                disabled={
+                                                    !budgetFundingSource.trim() ||
+                                                    !budgetAmount ||
+                                                    Number(budgetAmount) < 0
+                                                }
+                                                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <CheckCircle2 className="h-4 w-4" />
+
+                                                Approve & Send to Accounting
+                                            </button>
+
+                                        </form>
+
+                                        {/* RETURN TO GSO */}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to GSO?',
+                                                    );
+
+                                                if (!remarks?.trim()) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/budget-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
+                                            }}
+                                            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+
+                                            Return to GSO
+                                        </button>
 
                                     </div>
-
                                 )}
 
                             </div>
