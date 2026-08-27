@@ -1531,6 +1531,8 @@ class MaintenanceRequestController extends Controller
             'completed_at' =>
             now(),
 
+            'completed_by' => $user->id,
+
             'remarks' =>
             $validated['remarks']
                 ?? $maintenanceRequest->remarks,
