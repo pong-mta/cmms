@@ -30,12 +30,20 @@ class RoleSeeder extends Seeder
                 'name' => 'staff',
                 'description' => 'Department Staff',
             ],
+            [
+                'name' => 'budget_officer',
+                'description' => 'Budget Office Officer',
+            ],
         ];
 
         foreach ($roles as $role) {
             Role::updateOrCreate(
-                ['name' => $role['name']],
-                ['description' => $role['description']]
+                [
+                    'name' => $role['name'],
+                ],
+                [
+                    'description' => $role['description'],
+                ]
             );
         }
     }

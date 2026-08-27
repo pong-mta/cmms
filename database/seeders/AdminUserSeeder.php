@@ -6,36 +6,69 @@ use App\Models\User;
 use App\Models\Department;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class AdminUserSeeder extends Seeder
 {
     /**
-     * Seed the admin account.
+     * Seed system and workflow test accounts.
      */
     public function run(): void
     {
         /*
         |--------------------------------------------------------------------------
-        | GET ADMIN DEPARTMENT
+        | ADMIN DEPARTMENT
         |--------------------------------------------------------------------------
         */
 
-        $department = Department::where('code', 'HRMO')->first();
+        $adminDepartment = Department::where(
+            'code',
+            'HRMO'
+        )->first();
 
-        if (!$department) {
+        if (!$adminDepartment) {
             throw new \RuntimeException(
                 'HRMO department does not exist. Run DepartmentSeeder first.'
             );
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | ADMIN ACCOUNT
+        | MAINTENANCE DEPARTMENT
+        |--------------------------------------------------------------------------
+        |
+        | Your existing Department Heads are in Department 10.
+        | We use Department 10 for the workflow test accounts.
+        |
+        */
+
+        $maintenanceDepartment = Department::find(10);
+
+        if (!$maintenanceDepartment) {
+            throw new \RuntimeException(
+                'Department ID 10 does not exist.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PASSWORD
         |--------------------------------------------------------------------------
         */
 
-        $user = User::updateOrCreate(
+        $password = Hash::make(
+            '12345678'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SYSTEM ADMIN
+        |--------------------------------------------------------------------------
+        */
+
+        $admin = User::updateOrCreate(
             [
                 'phone' => '09156014662',
             ],
@@ -44,36 +77,155 @@ class AdminUserSeeder extends Seeder
 
                 'phone_verified' => true,
 
-                'department_id' => $department->id,
+                'department_id' =>
+                $adminDepartment->id,
 
-                'password' => Hash::make('jokerpong006'),
+                'password' => $password,
             ]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | GET ADMIN ROLE
-        |--------------------------------------------------------------------------
-        */
+        $admin->roles()->syncWithoutDetaching([
+            'system_admin',
+        ]);
 
-        $adminRoleId = DB::table('roles')
-            ->where('name', 'system_admin')
-            ->value('id');
-
-        if (!$adminRoleId) {
-            throw new \RuntimeException(
-                'Admin role does not exist. Run RoleSeeder first.'
-            );
-        }
 
         /*
         |--------------------------------------------------------------------------
-        | ASSIGN ADMIN ROLE
+        | DEPARTMENT HEAD
         |--------------------------------------------------------------------------
         */
 
-        $user->roles()->syncWithoutDetaching([
-            $adminRoleId,
+        $head = User::updateOrCreate(
+            [
+                'phone' => '09156014663',
+            ],
+            [
+                'name' =>
+                'Maintenance Department Head',
+
+                'phone_verified' => true,
+
+                'department_id' =>
+                $maintenanceDepartment->id,
+
+                'password' => $password,
+            ]
+        );
+
+        $head->roles()->syncWithoutDetaching([
+            'department_head',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAINTENANCE SUPERVISOR
+        |--------------------------------------------------------------------------
+        */
+
+        $supervisor = User::updateOrCreate(
+            [
+                'phone' => '09156014664',
+            ],
+            [
+                'name' =>
+                'Maintenance Supervisor',
+
+                'phone_verified' => true,
+
+                'department_id' =>
+                $maintenanceDepartment->id,
+
+                'password' => $password,
+            ]
+        );
+
+        $supervisor->roles()->syncWithoutDetaching([
+            'maintenance_supervisor',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TECHNICIAN
+        |--------------------------------------------------------------------------
+        */
+
+        $technician = User::updateOrCreate(
+            [
+                'phone' => '09156014665',
+            ],
+            [
+                'name' =>
+                'Maintenance Technician',
+
+                'phone_verified' => true,
+
+                'department_id' =>
+                $maintenanceDepartment->id,
+
+                'password' => $password,
+            ]
+        );
+
+        $technician->roles()->syncWithoutDetaching([
+            'technician',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | STAFF
+        |--------------------------------------------------------------------------
+        */
+
+        $staff = User::updateOrCreate(
+            [
+                'phone' => '09156014666',
+            ],
+            [
+                'name' =>
+                'Maintenance Staff',
+
+                'phone_verified' => true,
+
+                'department_id' =>
+                $maintenanceDepartment->id,
+
+                'password' => $password,
+            ]
+        );
+
+        $staff->roles()->syncWithoutDetaching([
+            'staff',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | BUDGET OFFICER
+        |--------------------------------------------------------------------------
+        */
+
+        $budgetOfficer = User::updateOrCreate(
+            [
+                'phone' => '09156014667',
+            ],
+            [
+                'name' =>
+                'Budget Office Officer',
+
+                'phone_verified' => true,
+
+                'department_id' =>
+                $maintenanceDepartment->id,
+
+                'password' => $password,
+            ]
+        );
+
+        $budgetOfficer->roles()->syncWithoutDetaching([
+            'budget_officer',
         ]);
     }
 }
