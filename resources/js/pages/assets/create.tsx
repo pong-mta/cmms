@@ -206,7 +206,7 @@ export default function CreateAsset({
                         description="Basic information about the municipal asset."
                     >
 
-                        <div className="grid gap-5 md:grid-cols-2">
+                        <div className="grid gap-5 md:grid-cols-3">
 
 
                             {/* NAME */}
