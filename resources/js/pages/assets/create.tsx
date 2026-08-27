@@ -93,7 +93,6 @@ export default function CreateAsset({
         processing,
         errors,
     } = useForm({
-        asset_code: '',
         name: '',
         serial_number: '',
         description: '',
@@ -211,46 +210,6 @@ export default function CreateAsset({
                     >
 
                         <div className="grid gap-5 md:grid-cols-2">
-
-
-                            {/* ASSET CODE */}
-
-                            {/* <Field
-                                label="Asset Code"
-                                required
-                                error={
-                                    errors.asset_code
-                                }
-                            >
-
-                                <input
-                                    type="text"
-                                    value={
-                                        data.asset_code
-                                    }
-                                    onChange={(
-                                        event,
-                                    ) =>
-                                        setData(
-                                            'asset_code',
-                                            event
-                                                .target
-                                                .value
-                                                .toUpperCase(),
-                                        )
-                                    }
-                                    placeholder="e.g. VEH-2026-0001"
-                                    className={inputClass(
-                                        errors.asset_code,
-                                    )}
-                                />
-
-                                <FieldHint>
-                                    Use your LGU's asset
-                                    identification format.
-                                </FieldHint>
-
-                            </Field> */}
 
 
                             {/* NAME */}
