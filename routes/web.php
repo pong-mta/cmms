@@ -342,12 +342,20 @@ Route::middleware(['auth'])->group(function () {
 
     // PREVENTIVE MAINTENANCE
 
+    // Route::get(
+    //     '/maintenance/preventive',
+    //     [
+    //         PreventiveMaintenanceScheduleController::class,
+    //         'index',
+    //     ]
+    // )->name(
+    //     'maintenance.preventive'
+    // );
     Route::get(
         '/maintenance/preventive',
-        [
-            PreventiveMaintenanceScheduleController::class,
-            'index',
-        ]
+        function () {
+            return 'PREVENTIVE ROUTE WORKS';
+        }
     )->name(
         'maintenance.preventive'
     );
