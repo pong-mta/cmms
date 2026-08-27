@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\MaintenanceWorkLog;
 
 class MaintenanceRequestController extends Controller
 {
@@ -1512,6 +1513,18 @@ class MaintenanceRequestController extends Controller
     */
 
         $validated = $request->validate([
+            'work_performed' => [
+                'required',
+                'string',
+                'max:10000',
+            ],
+
+            'materials_used' => [
+                'nullable',
+                'string',
+                'max:10000',
+            ],
+
             'remarks' => [
                 'nullable',
                 'string',
@@ -1521,7 +1534,29 @@ class MaintenanceRequestController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | COMPLETE WORK
+    | CREATE WORK LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->workLogs()->create([
+            'performed_by' =>
+            $user->id,
+
+            'work_performed' =>
+            $validated['work_performed'],
+
+            'materials_used' =>
+            $validated['materials_used']
+                ?? null,
+
+            'remarks' =>
+            $validated['remarks']
+                ?? null,
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | COMPLETE REQUEST
     |--------------------------------------------------------------------------
     */
 
@@ -1532,7 +1567,8 @@ class MaintenanceRequestController extends Controller
             'completed_at' =>
             now(),
 
-            'completed_by' => $user->id,
+            'completed_by' =>
+            $user->id,
 
             'remarks' =>
             $validated['remarks']
@@ -1547,7 +1583,7 @@ class MaintenanceRequestController extends Controller
 
         return back()->with(
             'success',
-            'Maintenance request completed successfully.'
+            'Maintenance work completed successfully.'
         );
     }
     /*
