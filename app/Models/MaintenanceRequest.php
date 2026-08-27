@@ -181,4 +181,12 @@ class MaintenanceRequest extends Model
             MaintenanceRequestCostItem::class
         );
     }
+
+    public function gsoReviewedBy()
+    {
+        return $this->belongsTo(
+            User::class,
+            'gso_reviewed_by'
+        );
+    }
 }
