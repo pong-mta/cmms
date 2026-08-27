@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
     AlertTriangle,
@@ -47,6 +47,17 @@ interface UserInfo {
     id: number;
     name: string;
     phone?: string;
+}
+
+interface RequestCostItem {
+    id?: number;
+    type: 'labor' | 'parts' | 'other';
+    description: string;
+    quantity: number | string;
+    unit: string;
+    unit_cost: number | string;
+    total_cost: number | string;
+    remarks?: string | null;
 }
 
 interface MaintenanceRequest {
@@ -107,6 +118,8 @@ interface MaintenanceRequest {
     estimated_other_cost?: number | string | null;
 
     estimated_total_cost?: number | string | null;
+
+    cost_items?: RequestCostItem[];
 
     head_reviewed_at?: string | null;
 
@@ -331,19 +344,88 @@ export default function ShowMaintenanceRequest({
     ] = useState('');
 
     const [
-        estimatedLaborCost,
-        setEstimatedLaborCost,
-    ] = useState('');
+        costItems,
+        setCostItems,
+    ] = useState<RequestCostItem[]>([
+        {
+            type: 'parts',
+            description: '',
+            quantity: 1,
+            unit: 'pc',
+            unit_cost: '',
+            total_cost: 0,
+            remarks: '',
+        },
+    ]);
 
-    const [
-        estimatedPartsCost,
-        setEstimatedPartsCost,
-    ] = useState('');
+    const calculatedTotal = useMemo(
+        () =>
+            costItems.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(item.quantity || 0) *
+                        Number(item.unit_cost || 0),
+                0,
+            ),
+        [costItems],
+    );
 
-    const [
-        estimatedOtherCost,
-        setEstimatedOtherCost,
-    ] = useState('');
+    const updateCostItem = (
+        index: number,
+        field: keyof RequestCostItem,
+        value: string,
+    ) => {
+        setCostItems((current) =>
+            current.map((item, itemIndex) =>
+                itemIndex === index
+                    ? {
+                          ...item,
+                          [field]: value,
+                          total_cost:
+                              field === 'quantity' ||
+                              field === 'unit_cost'
+                                  ? Number(
+                                        field === 'quantity'
+                                            ? value || 0
+                                            : item.quantity || 0,
+                                    ) *
+                                    Number(
+                                        field === 'unit_cost'
+                                            ? value || 0
+                                            : item.unit_cost || 0,
+                                    )
+                                  : item.total_cost,
+                      }
+                    : item,
+            ),
+        );
+    };
+
+    const addCostItem = () => {
+        setCostItems((current) => [
+            ...current,
+            {
+                type: 'parts',
+                description: '',
+                quantity: 1,
+                unit: 'pc',
+                unit_cost: '',
+                total_cost: 0,
+                remarks: '',
+            },
+        ]);
+    };
+
+    const removeCostItem = (index: number) => {
+        setCostItems((current) =>
+            current.length === 1
+                ? current
+                : current.filter(
+                      (_, itemIndex) =>
+                          itemIndex !== index,
+                  ),
+        );
+    };
 
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -698,49 +780,125 @@ export default function ShowMaintenanceRequest({
                                     )}
 
 
-                                    <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                    {request.cost_items &&
+                                        request.cost_items.length > 0 && (
+                                            <div className="mt-6">
+                                                <div className="mb-3 flex items-center justify-between">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                        Detailed Costing
+                                                    </p>
 
-                                        <CostItem
-                                            label="Labor"
-                                            value={request.estimated_labor_cost}
-                                        />
+                                                    <p className="text-xs font-bold text-slate-800">
+                                                        ₱
+                                                        {Number(
+                                                            request.estimated_total_cost ?? 0,
+                                                        ).toLocaleString(
+                                                            'en-PH',
+                                                            {
+                                                                minimumFractionDigits: 2,
+                                                            },
+                                                        )}
+                                                    </p>
+                                                </div>
 
-                                        <CostItem
-                                            label="Parts"
-                                            value={request.estimated_parts_cost}
-                                        />
+                                                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                                                    <table className="w-full min-w-[720px] text-left text-xs">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Type
+                                                                </th>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Description
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Qty
+                                                                </th>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Unit
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Unit Cost
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Total
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
 
-                                        <CostItem
-                                            label="Other"
-                                            value={request.estimated_other_cost}
-                                        />
+                                                        <tbody className="divide-y divide-slate-100">
+                                                            {request.cost_items.map(
+                                                                (item, index) => (
+                                                                    <tr
+                                                                        key={
+                                                                            item.id ??
+                                                                            index
+                                                                        }
+                                                                    >
+                                                                        <td className="px-3 py-2 font-semibold capitalize text-slate-700">
+                                                                            {item.type}
+                                                                        </td>
 
-                                    </div>
+                                                                        <td className="px-3 py-2 text-slate-600">
+                                                                            {item.description}
+                                                                        </td>
 
+                                                                        <td className="px-3 py-2 text-right text-slate-600">
+                                                                            {item.quantity}
+                                                                        </td>
 
-                                    <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                                                                        <td className="px-3 py-2 text-slate-600">
+                                                                            {item.unit}
+                                                                        </td>
 
-                                        <div className="flex items-center justify-between">
+                                                                        <td className="px-3 py-2 text-right text-slate-600">
+                                                                            ₱
+                                                                            {Number(
+                                                                                item.unit_cost ?? 0,
+                                                                            ).toLocaleString(
+                                                                                'en-PH',
+                                                                                {
+                                                                                    minimumFractionDigits: 2,
+                                                                                },
+                                                                            )}
+                                                                        </td>
 
-                                            <span className="text-xs font-semibold text-slate-600">
-                                                Estimated Total
-                                            </span>
+                                                                        <td className="px-3 py-2 text-right font-semibold text-slate-800">
+                                                                            ₱
+                                                                            {Number(
+                                                                                item.total_cost ?? 0,
+                                                                            ).toLocaleString(
+                                                                                'en-PH',
+                                                                                {
+                                                                                    minimumFractionDigits: 2,
+                                                                                },
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
 
-                                            <span className="text-lg font-bold text-slate-900">
-                                                ₱
-                                                {Number(
-                                                    request.estimated_total_cost ?? 0,
-                                                ).toLocaleString(
-                                                    'en-PH',
-                                                    {
-                                                        minimumFractionDigits: 2,
-                                                    },
-                                                )}
-                                            </span>
+                                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                    <CostItem
+                                                        label="Labor"
+                                                        value={request.estimated_labor_cost}
+                                                    />
 
-                                        </div>
+                                                    <CostItem
+                                                        label="Parts"
+                                                        value={request.estimated_parts_cost}
+                                                    />
 
-                                    </div>
+                                                    <CostItem
+                                                        label="Other"
+                                                        value={request.estimated_other_cost}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
 
                                     {request.assessed_by && (
@@ -1442,118 +1600,265 @@ export default function ShowMaintenanceRequest({
                                     </div>
 
 
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div>
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-700">
+                                                    Estimated Costing
+                                                </label>
 
-                                        <div>
+                                                <p className="mt-1 text-[10px] text-slate-400">
+                                                    Add the actual materials, labor, services, or other expenses needed for the work.
+                                                </p>
+                                            </div>
 
-                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                                                Estimated Labor
-                                            </label>
-
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={
-                                                    estimatedLaborCost
-                                                }
-                                                onChange={(event) =>
-                                                    setEstimatedLaborCost(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="0.00"
-                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                            />
-
+                                            <button
+                                                type="button"
+                                                onClick={addCostItem}
+                                                className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                                            >
+                                                + Add Item
+                                            </button>
                                         </div>
 
+                                        <div className="space-y-3">
+                                            {costItems.map(
+                                                (item, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="rounded-xl border border-slate-200 bg-slate-50/50 p-3"
+                                                    >
+                                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[120px_1fr_90px_100px_130px_40px]">
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                    Type
+                                                                </label>
 
-                                        <div>
+                                                                <select
+                                                                    value={
+                                                                        item.type
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'type',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                >
+                                                                    <option value="labor">
+                                                                        Labor
+                                                                    </option>
+                                                                    <option value="parts">
+                                                                        Parts
+                                                                    </option>
+                                                                    <option value="other">
+                                                                        Other
+                                                                    </option>
+                                                                </select>
+                                                            </div>
 
-                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                                                Estimated Parts
-                                            </label>
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                    Description
+                                                                </label>
 
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={
-                                                    estimatedPartsCost
-                                                }
-                                                onChange={(event) =>
-                                                    setEstimatedPartsCost(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="0.00"
-                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                            />
+                                                                <input
+                                                                    type="text"
+                                                                    value={
+                                                                        item.description
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'description',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="e.g. Replacement bearing"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
 
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                    Quantity
+                                                                </label>
+
+                                                                <input
+                                                                    type="number"
+                                                                    min="0.01"
+                                                                    step="0.01"
+                                                                    value={
+                                                                        item.quantity
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'quantity',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                    Unit
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    value={
+                                                                        item.unit
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'unit',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="pc"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                    Unit Cost
+                                                                </label>
+
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    value={
+                                                                        item.unit_cost
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'unit_cost',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="0.00"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex items-end justify-end">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeCostItem(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        costItems.length ===
+                                                                        1
+                                                                    }
+                                                                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                                                    title="Remove item"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-3">
+                                                            <label className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                                                Item Remarks
+                                                            </label>
+
+                                                            <input
+                                                                type="text"
+                                                                value={
+                                                                    item.remarks ??
+                                                                    ''
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    updateCostItem(
+                                                                        index,
+                                                                        'remarks',
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder="Optional"
+                                                                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                            />
+                                                        </div>
+
+                                                        <div className="mt-3 flex justify-end">
+                                                            <span className="text-xs font-bold text-slate-800">
+                                                                Item Total: ₱
+                                                                {(
+                                                                    Number(
+                                                                        item.quantity ||
+                                                                            0,
+                                                                    ) *
+                                                                    Number(
+                                                                        item.unit_cost ||
+                                                                            0,
+                                                                    )
+                                                                ).toLocaleString(
+                                                                    'en-PH',
+                                                                    {
+                                                                        minimumFractionDigits: 2,
+                                                                    },
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
 
+                                        <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-semibold text-slate-600">
+                                                    Estimated Total
+                                                </span>
 
-                                        <div>
-
-                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                                                Estimated Other
-                                            </label>
-
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={
-                                                    estimatedOtherCost
-                                                }
-                                                onChange={(event) =>
-                                                    setEstimatedOtherCost(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="0.00"
-                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                            />
-
+                                                <span className="text-lg font-bold text-slate-900">
+                                                    ₱
+                                                    {calculatedTotal.toLocaleString(
+                                                        'en-PH',
+                                                        {
+                                                            minimumFractionDigits: 2,
+                                                        },
+                                                    )}
+                                                </span>
+                                            </div>
                                         </div>
-
-                                    </div>
-
-
-                                    <div className="rounded-xl bg-slate-50 p-4">
-
-                                        <div className="flex items-center justify-between">
-
-                                            <span className="text-xs font-semibold text-slate-600">
-                                                Estimated Total
-                                            </span>
-
-                                            <span className="text-lg font-bold text-slate-900">
-                                                ₱
-                                                {(
-                                                    Number(
-                                                        estimatedLaborCost ||
-                                                            0,
-                                                    ) +
-                                                    Number(
-                                                        estimatedPartsCost ||
-                                                            0,
-                                                    ) +
-                                                    Number(
-                                                        estimatedOtherCost ||
-                                                            0,
-                                                    )
-                                                ).toLocaleString(
-                                                    'en-PH',
-                                                    {
-                                                        minimumFractionDigits: 2,
-                                                    },
-                                                )}
-                                            </span>
-
-                                        </div>
-
                                     </div>
 
 
@@ -1561,28 +1866,53 @@ export default function ShowMaintenanceRequest({
                                         type="button"
                                         disabled={
                                             !assessment.trim() ||
-                                            !workScope.trim()
+                                            !workScope.trim() ||
+                                            costItems.length === 0 ||
+                                            costItems.some(
+                                                (item) =>
+                                                    !item.description.trim() ||
+                                                    !item.unit.trim() ||
+                                                    Number(
+                                                        item.quantity || 0,
+                                                    ) <= 0 ||
+                                                    Number(
+                                                        item.unit_cost || 0,
+                                                    ) < 0,
+                                            )
                                         }
                                         onClick={() => {
-
                                             router.post(
                                                 `/maintenance-requests/${request.id}/assess`,
                                                 {
                                                     assessment,
                                                     work_scope:
                                                         workScope,
-                                                    estimated_labor_cost:
-                                                        estimatedLaborCost ||
-                                                        0,
-                                                    estimated_parts_cost:
-                                                        estimatedPartsCost ||
-                                                        0,
-                                                    estimated_other_cost:
-                                                        estimatedOtherCost ||
-                                                        0,
+                                                    cost_items:
+                                                        costItems.map(
+                                                            (item) => ({
+                                                                type:
+                                                                    item.type,
+                                                                description:
+                                                                    item.description,
+                                                                quantity:
+                                                                    Number(
+                                                                        item.quantity ||
+                                                                            0,
+                                                                    ),
+                                                                unit:
+                                                                    item.unit,
+                                                                unit_cost:
+                                                                    Number(
+                                                                        item.unit_cost ||
+                                                                            0,
+                                                                    ),
+                                                                remarks:
+                                                                    item.remarks ||
+                                                                    null,
+                                                            }),
+                                                        ),
                                                 },
                                             );
-
                                         }}
                                         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >

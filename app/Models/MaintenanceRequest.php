@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MaintenanceRequest extends Model
 {
@@ -165,6 +166,19 @@ class MaintenanceRequest extends Model
         return $this->belongsTo(
             User::class,
             'budget_reviewed_by'
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| COST ITEMS
+|--------------------------------------------------------------------------
+*/
+
+    public function costItems(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRequestCostItem::class
         );
     }
 }

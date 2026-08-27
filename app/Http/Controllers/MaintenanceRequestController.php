@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\Department;
 use App\Models\MaintenanceRequest;
+use App\Models\MaintenanceRequestCostItem;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,6 +29,10 @@ class MaintenanceRequestController extends Controller
                 'department',
                 'requestedBy',
                 'assignedTo',
+                'assessedBy',
+                'headReviewedBy',
+                'budgetReviewedBy',
+                'costItems',
             ])
             ->latest()
             ->paginate(15)
@@ -39,7 +45,6 @@ class MaintenanceRequestController extends Controller
             ]
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -79,7 +84,6 @@ class MaintenanceRequestController extends Controller
             ]
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -122,7 +126,6 @@ class MaintenanceRequestController extends Controller
             $validated['asset_id']
         );
 
-
         /*
         |--------------------------------------------------------------------------
         | REQUEST CODE
@@ -149,7 +152,6 @@ class MaintenanceRequestController extends Controller
             $year,
             $nextNumber
         );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -200,7 +202,6 @@ class MaintenanceRequestController extends Controller
             $validated['remarks'] ?? null,
         ]);
 
-
         return redirect()
             ->route('maintenance-requests.index')
             ->with(
@@ -208,7 +209,6 @@ class MaintenanceRequestController extends Controller
                 'Maintenance request submitted successfully.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -224,6 +224,10 @@ class MaintenanceRequestController extends Controller
             'department',
             'requestedBy',
             'assignedTo',
+            'assessedBy',
+            'headReviewedBy',
+            'budgetReviewedBy',
+            'costItems',
         ]);
 
         $technicians = User::query()
@@ -260,11 +264,17 @@ class MaintenanceRequestController extends Controller
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | SUPERVISOR ASSESSMENT
     |--------------------------------------------------------------------------
+    |
+    | submitted
+    |     ↓
+    | assessment
+    |     ↓
+    | for_head_review
+    |
     */
 
     public function assess(
@@ -272,7 +282,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
 
         /*
         |--------------------------------------------------------------------------
@@ -295,7 +304,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
         /*
         |--------------------------------------------------------------------------
         | CHECK DEPARTMENT
@@ -313,27 +321,36 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
         /*
         |--------------------------------------------------------------------------
         | CHECK STATUS
         |--------------------------------------------------------------------------
+        |
+        | A request can be assessed when:
+        |
+        | submitted
+        | OR
+        | returned by Head as assessment
+        |
         */
 
-        if (
-            $maintenanceRequest->status !==
-            'submitted'
-        ) {
+        if (!in_array(
+            $maintenanceRequest->status,
+            [
+                'submitted',
+                'assessment',
+            ],
+            true
+        )) {
             return back()->with(
                 'error',
-                'Only submitted requests can be assessed.'
+                'This request cannot be assessed at its current status.'
             );
         }
 
-
         /*
         |--------------------------------------------------------------------------
-        | VALIDATE
+        | VALIDATE ASSESSMENT
         |--------------------------------------------------------------------------
         */
 
@@ -348,100 +365,206 @@ class MaintenanceRequestController extends Controller
                 'string',
             ],
 
-            'estimated_labor_cost' => [
+            'cost_items' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'cost_items.*.type' => [
+                'required',
+                'in:labor,parts,other',
+            ],
+
+            'cost_items.*.description' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'cost_items.*.quantity' => [
+                'required',
+                'numeric',
+                'min:0.01',
+            ],
+
+            'cost_items.*.unit' => [
+                'required',
+                'string',
+                'max:50',
+            ],
+
+            'cost_items.*.unit_cost' => [
                 'required',
                 'numeric',
                 'min:0',
             ],
 
-            'estimated_parts_cost' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'estimated_other_cost' => [
-                'required',
-                'numeric',
-                'min:0',
+            'cost_items.*.remarks' => [
+                'nullable',
+                'string',
+                'max:1000',
             ],
         ]);
 
-
         /*
         |--------------------------------------------------------------------------
-        | CALCULATE TOTAL
+        | SAVE ASSESSMENT + COST ITEMS
         |--------------------------------------------------------------------------
         */
 
-        $estimatedLabor =
-            (float) $validated['estimated_labor_cost'];
+        DB::transaction(function () use (
+            $maintenanceRequest,
+            $user,
+            $validated
+        ) {
+            /*
+            |--------------------------------------------------------------------------
+            | DELETE OLD COST ITEMS
+            |--------------------------------------------------------------------------
+            |
+            | Important when the Head returns the request to the Supervisor.
+            |
+            */
 
-        $estimatedParts =
-            (float) $validated['estimated_parts_cost'];
+            $maintenanceRequest
+                ->costItems()
+                ->delete();
 
-        $estimatedOther =
-            (float) $validated['estimated_other_cost'];
+            $laborTotal = 0;
+            $partsTotal = 0;
+            $otherTotal = 0;
 
-        $estimatedTotal =
-            $estimatedLabor +
-            $estimatedParts +
-            $estimatedOther;
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE COST ITEMS
+            |--------------------------------------------------------------------------
+            */
 
+            foreach (
+                $validated['cost_items']
+                as $item
+            ) {
+                $quantity =
+                    (float) $item['quantity'];
 
-        /*
-        |--------------------------------------------------------------------------
-        | SAVE ASSESSMENT
-        |--------------------------------------------------------------------------
-        */
+                $unitCost =
+                    (float) $item['unit_cost'];
 
-        $maintenanceRequest->update([
-            'assessed_by' =>
-            $user->id,
+                $total =
+                    $quantity * $unitCost;
 
-            'assessed_at' =>
-            now(),
+                MaintenanceRequestCostItem::create([
+                    'maintenance_request_id' =>
+                    $maintenanceRequest->id,
 
-            'assessment' =>
-            $validated['assessment'],
+                    'type' =>
+                    $item['type'],
 
-            'work_scope' =>
-            $validated['work_scope'],
+                    'description' =>
+                    $item['description'],
 
-            'estimated_labor_cost' =>
-            $estimatedLabor,
+                    'quantity' =>
+                    $quantity,
 
-            'estimated_parts_cost' =>
-            $estimatedParts,
+                    'unit' =>
+                    $item['unit'],
 
-            'estimated_other_cost' =>
-            $estimatedOther,
+                    'unit_cost' =>
+                    $unitCost,
 
-            'estimated_total_cost' =>
-            $estimatedTotal,
+                    'total_cost' =>
+                    $total,
 
-            'status' =>
-            'for_head_review',
-        ]);
+                    'remarks' =>
+                    $item['remarks'] ?? null,
+                ]);
 
+                /*
+                |--------------------------------------------------------------------------
+                | TOTALS
+                |--------------------------------------------------------------------------
+                */
+
+                if ($item['type'] === 'labor') {
+                    $laborTotal += $total;
+                }
+
+                if ($item['type'] === 'parts') {
+                    $partsTotal += $total;
+                }
+
+                if ($item['type'] === 'other') {
+                    $otherTotal += $total;
+                }
+            }
+
+            $estimatedTotal =
+                $laborTotal +
+                $partsTotal +
+                $otherTotal;
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            $maintenanceRequest->update([
+                'assessed_by' =>
+                $user->id,
+
+                'assessed_at' =>
+                now(),
+
+                'assessment' =>
+                $validated['assessment'],
+
+                'work_scope' =>
+                $validated['work_scope'],
+
+                /*
+                |--------------------------------------------------------------------------
+                | KEEP SUMMARY TOTALS
+                |--------------------------------------------------------------------------
+                |
+                | These existing columns remain useful for quick reporting.
+                |
+                */
+
+                'estimated_labor_cost' =>
+                $laborTotal,
+
+                'estimated_parts_cost' =>
+                $partsTotal,
+
+                'estimated_other_cost' =>
+                $otherTotal,
+
+                'estimated_total_cost' =>
+                $estimatedTotal,
+
+                'status' =>
+                'for_head_review',
+            ]);
+        });
 
         return back()->with(
             'success',
-            'Assessment and estimated costing submitted for Department Head review.'
+            'Assessment and detailed costing submitted for Department Head review.'
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
     | HEAD APPROVE
     |--------------------------------------------------------------------------
     |
-    | FOR HEAD REVIEW
+    | for_head_review
     |       ↓
-    | HEAD APPROVED
+    | head_approved
     |       ↓
-    | FOR BUDGET REVIEW
+    | for_budget_review
     |
     */
 
@@ -449,13 +572,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $isDepartmentHead = $user
             ->roles()
@@ -472,13 +588,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK DEPARTMENT
-        |--------------------------------------------------------------------------
-        */
-
         if (
             !$user->department_id ||
             $user->department_id !==
@@ -490,13 +599,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->status !==
             'for_head_review'
@@ -507,13 +609,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | APPROVE
-        |--------------------------------------------------------------------------
-        */
-
         $maintenanceRequest->update([
             'head_reviewed_by' =>
             $user->id,
@@ -522,24 +617,11 @@ class MaintenanceRequestController extends Controller
             now(),
 
             'status' =>
-            'head_approved',
+            'for_budget_review',
 
             'approved_at' =>
             now(),
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SEND TO BUDGET
-        |--------------------------------------------------------------------------
-        */
-
-        $maintenanceRequest->update([
-            'status' =>
-            'for_budget_review',
-        ]);
-
 
         return back()->with(
             'success',
@@ -547,15 +629,14 @@ class MaintenanceRequestController extends Controller
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | HEAD RETURN
     |--------------------------------------------------------------------------
     |
-    | FOR HEAD REVIEW
+    | for_head_review
     |       ↓
-    | SUBMITTED
+    | assessment
     |
     */
 
@@ -564,13 +645,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $isDepartmentHead = $user
             ->roles()
@@ -587,13 +661,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK DEPARTMENT
-        |--------------------------------------------------------------------------
-        */
-
         if (
             !$user->department_id ||
             $user->department_id !==
@@ -605,13 +672,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->status !==
             'for_head_review'
@@ -622,13 +682,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE REMARKS
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
             'remarks' => [
                 'required',
@@ -636,13 +689,6 @@ class MaintenanceRequestController extends Controller
                 'max:2000',
             ],
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RETURN
-        |--------------------------------------------------------------------------
-        */
 
         $maintenanceRequest->update([
             'head_reviewed_by' =>
@@ -658,24 +704,22 @@ class MaintenanceRequestController extends Controller
             'assessment',
         ]);
 
-
         return back()->with(
             'success',
             'Maintenance request returned to the Supervisor for reassessment.'
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | BUDGET APPROVE
     |--------------------------------------------------------------------------
     |
-    | FOR BUDGET REVIEW
+    | for_budget_review
     |       ↓
-    | BUDGET APPROVED
+    | budget_approved
     |       ↓
-    | READY FOR WORK
+    | ready_for_work
     |
     */
 
@@ -684,13 +728,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $isBudgetOfficer = $user
             ->roles()
@@ -707,13 +744,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->status !==
             'for_budget_review'
@@ -723,13 +753,6 @@ class MaintenanceRequestController extends Controller
                 'Only requests waiting for Budget review can be approved.'
             );
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE
-        |--------------------------------------------------------------------------
-        */
 
         $validated = $request->validate([
             'funding_source' => [
@@ -751,13 +774,6 @@ class MaintenanceRequestController extends Controller
             ],
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | SAVE BUDGET APPROVAL
-        |--------------------------------------------------------------------------
-        */
-
         $maintenanceRequest->update([
             'budget_reviewed_by' =>
             $user->id,
@@ -772,25 +788,11 @@ class MaintenanceRequestController extends Controller
             $validated['budget_amount'],
 
             'budget_remarks' =>
-            $validated['remarks']
-                ?? null,
+            $validated['remarks'] ?? null,
 
-            'status' =>
-            'budget_approved',
-        ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | READY FOR WORK
-        |--------------------------------------------------------------------------
-        */
-
-        $maintenanceRequest->update([
             'status' =>
             'ready_for_work',
         ]);
-
 
         return back()->with(
             'success',
@@ -798,15 +800,14 @@ class MaintenanceRequestController extends Controller
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | BUDGET RETURN
     |--------------------------------------------------------------------------
     |
-    | FOR BUDGET REVIEW
+    | for_budget_review
     |       ↓
-    | FOR HEAD REVIEW
+    | for_head_review
     |
     */
 
@@ -815,13 +816,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $isBudgetOfficer = $user
             ->roles()
@@ -838,13 +832,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->status !==
             'for_budget_review'
@@ -855,13 +842,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
             'remarks' => [
                 'required',
@@ -869,13 +849,6 @@ class MaintenanceRequestController extends Controller
                 'max:2000',
             ],
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RETURN TO HEAD
-        |--------------------------------------------------------------------------
-        */
 
         $maintenanceRequest->update([
             'budget_reviewed_by' =>
@@ -891,22 +864,20 @@ class MaintenanceRequestController extends Controller
             'for_head_review',
         ]);
 
-
         return back()->with(
             'success',
             'Budget review returned to the Department Head.'
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | ASSIGN TECHNICIAN
     |--------------------------------------------------------------------------
     |
-    | READY FOR WORK
+    | ready_for_work
     |       ↓
-    | ASSIGNED
+    | assigned
     |
     */
 
@@ -915,13 +886,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $canAssign = $user
             ->roles()
@@ -941,13 +905,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->status !==
             'ready_for_work'
@@ -958,13 +915,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE TECHNICIAN
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
             'assigned_to' => [
                 'required',
@@ -972,23 +922,9 @@ class MaintenanceRequestController extends Controller
             ],
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | GET TECHNICIAN
-        |--------------------------------------------------------------------------
-        */
-
         $technician = User::findOrFail(
             $validated['assigned_to']
         );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK TECHNICIAN ROLE
-        |--------------------------------------------------------------------------
-        */
 
         $isTechnician = $technician
             ->roles()
@@ -1005,13 +941,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK DEPARTMENT
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $technician->department_id !==
             $maintenanceRequest->department_id
@@ -1022,13 +951,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | ASSIGN
-        |--------------------------------------------------------------------------
-        */
-
         $maintenanceRequest->update([
             'assigned_to' =>
             $technician->id,
@@ -1037,22 +959,20 @@ class MaintenanceRequestController extends Controller
             'assigned',
         ]);
 
-
         return back()->with(
             'success',
             'Maintenance request assigned successfully.'
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | START WORK
     |--------------------------------------------------------------------------
     |
-    | ASSIGNED
-    |    ↓
-    | IN PROGRESS
+    | assigned
+    |     ↓
+    | in_progress
     |
     */
 
@@ -1060,13 +980,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK TECHNICIAN
-        |--------------------------------------------------------------------------
-        */
 
         $isTechnician = $user
             ->roles()
@@ -1083,13 +996,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ASSIGNMENT
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->assigned_to !==
             $user->id
@@ -1099,13 +1005,6 @@ class MaintenanceRequestController extends Controller
                 'This maintenance request is not assigned to you.'
             );
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $maintenanceRequest->status !==
@@ -1117,13 +1016,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | START
-        |--------------------------------------------------------------------------
-        */
-
         $maintenanceRequest->update([
             'status' =>
             'in_progress',
@@ -1132,13 +1024,11 @@ class MaintenanceRequestController extends Controller
             now(),
         ]);
 
-
         return back()->with(
             'success',
             'Maintenance work started.'
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1151,13 +1041,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK TECHNICIAN
-        |--------------------------------------------------------------------------
-        */
 
         $isTechnician = $user
             ->roles()
@@ -1174,13 +1057,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK ASSIGNMENT
-        |--------------------------------------------------------------------------
-        */
-
         if (
             $maintenanceRequest->assigned_to !==
             $user->id
@@ -1190,13 +1066,6 @@ class MaintenanceRequestController extends Controller
                 'This maintenance request is not assigned to you.'
             );
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK STATUS
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $maintenanceRequest->status !==
@@ -1208,13 +1077,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE REMARKS
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
             'remarks' => [
                 'nullable',
@@ -1222,13 +1084,6 @@ class MaintenanceRequestController extends Controller
                 'max:2000',
             ],
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | COMPLETE
-        |--------------------------------------------------------------------------
-        */
 
         $maintenanceRequest->update([
             'status' =>
@@ -1242,13 +1097,11 @@ class MaintenanceRequestController extends Controller
                 ?? $maintenanceRequest->remarks,
         ]);
 
-
         return back()->with(
             'success',
             'Maintenance request completed successfully.'
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1261,13 +1114,6 @@ class MaintenanceRequestController extends Controller
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK AUTHORIZED ROLES
-        |--------------------------------------------------------------------------
-        */
 
         $canCancel = $user
             ->roles()
@@ -1288,13 +1134,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK FINAL STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if (
             in_array(
                 $maintenanceRequest->status,
@@ -1311,13 +1150,6 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATE
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
             'remarks' => [
                 'required',
@@ -1326,13 +1158,6 @@ class MaintenanceRequestController extends Controller
             ],
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CANCEL
-        |--------------------------------------------------------------------------
-        */
-
         $maintenanceRequest->update([
             'status' =>
             'cancelled',
@@ -1340,7 +1165,6 @@ class MaintenanceRequestController extends Controller
             'remarks' =>
             $validated['remarks'],
         ]);
-
 
         return back()->with(
             'success',
