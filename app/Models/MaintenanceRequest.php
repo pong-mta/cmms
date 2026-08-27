@@ -59,6 +59,10 @@ class MaintenanceRequest extends Model
         'accounting_reviewed_at',
         'accounting_reference_no',
         'accounting_remarks',
+
+        'mayor_reviewed_by',
+        'mayor_reviewed_at',
+        'mayor_remarks',
     ];
 
     protected $casts = [
@@ -205,6 +209,15 @@ class MaintenanceRequest extends Model
         return $this->belongsTo(
             User::class,
             'accounting_reviewed_by'
+        );
+    }
+
+
+    public function mayorReviewedBy()
+    {
+        return $this->belongsTo(
+            User::class,
+            'mayor_reviewed_by'
         );
     }
 }

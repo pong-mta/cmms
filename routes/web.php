@@ -235,6 +235,33 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | MAYOR OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/mayor-approve',
+        [
+            MaintenanceRequestController::class,
+            'mayorApprove',
+        ]
+    )->name(
+        'maintenance-requests.mayor-approve'
+    );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/mayor-return',
+        [
+            MaintenanceRequestController::class,
+            'mayorReturn',
+        ]
+    )->name(
+        'maintenance-requests.mayor-return'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
     | ASSIGN TECHNICIAN
     |--------------------------------------------------------------------------
     */

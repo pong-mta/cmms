@@ -228,6 +228,8 @@ class MaintenanceRequestController extends Controller
             'headReviewedBy',
             'gsoReviewedBy',
             'budgetReviewedBy',
+            'accountingReviewedBy',
+            'mayorReviewedBy',
             'costItems',
         ]);
 
@@ -1405,6 +1407,189 @@ class MaintenanceRequestController extends Controller
         return back()->with(
             'success',
             'Maintenance request cancelled.'
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| MAYOR APPROVE
+|--------------------------------------------------------------------------
+|
+| for_mayor_approval
+|        ↓
+| ready_for_work
+|
+*/
+
+    public function mayorApprove(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isMayor = $user
+            ->roles()
+            ->where('name', 'mayor')
+            ->exists();
+
+        if (!$isMayor) {
+            abort(
+                403,
+                'Only the Municipal Mayor can approve maintenance requests.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'for_mayor_approval'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for Mayor approval can be approved.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE REMARKS
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'mayor_remarks' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | APPROVE
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'mayor_reviewed_by' =>
+            $user->id,
+
+            'mayor_reviewed_at' =>
+            now(),
+
+            'mayor_remarks' =>
+            $validated['mayor_remarks'] ?? null,
+
+            'status' =>
+            'ready_for_work',
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request approved by the Mayor. It is now ready for work.'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MAYOR RETURN
+    |--------------------------------------------------------------------------
+    |
+    | for_mayor_approval
+    |        ↓
+    | for_accounting_review
+    |
+    */
+
+    public function mayorReturn(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ): RedirectResponse {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isMayor = $user
+            ->roles()
+            ->where('name', 'mayor')
+            ->exists();
+
+        if (!$isMayor) {
+            abort(
+                403,
+                'Only the Municipal Mayor can return maintenance requests.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'for_mayor_approval'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests waiting for Mayor approval can be returned.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE REMARKS
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'mayor_remarks' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | RETURN TO ACCOUNTING
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'mayor_reviewed_by' =>
+            $user->id,
+
+            'mayor_reviewed_at' =>
+            now(),
+
+            'mayor_remarks' =>
+            $validated['mayor_remarks'],
+
+            'status' =>
+            'for_accounting_review',
+        ]);
+
+        return back()->with(
+            'success',
+            'Maintenance request returned to Accounting for review.'
         );
     }
 }

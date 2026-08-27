@@ -144,6 +144,8 @@ interface MaintenanceRequest {
     accounting_reference_no?: string | null;
     accounting_remarks?: string | null;
 
+    mayor_reviewed_at?: string | null;
+
     funding_source?: string | null;
 
     budget_amount?: number | string | null;
@@ -355,6 +357,8 @@ export default function ShowMaintenanceRequest({
 
     const isMaintenanceSupervisor =
         userRoles.includes('maintenance_supervisor');
+    const isMayor =
+        userRoles.includes('mayor');
 
     const [
         showRejectModal,
@@ -467,6 +471,9 @@ export default function ShowMaintenanceRequest({
         useState('');
 
     const [accountingRemarks, setAccountingRemarks] =
+        useState('');
+
+    const [mayorRemarks, setMayorRemarks] =
         useState('');
 
     const removeCostItem = (index: number) => {
@@ -1481,6 +1488,7 @@ export default function ShowMaintenanceRequest({
                                         'in_progress',
                                         'completed',
                                     ].includes(request.status)}
+                                    date={request.mayor_reviewed_at}
                                 />
 
 
@@ -2322,6 +2330,236 @@ export default function ShowMaintenanceRequest({
 
 
                         {/* ================================================== */}
+                        {/* MAYOR APPROVAL */}
+                        {/* ================================================== */}
+
+                        {request.status === 'for_mayor_approval' &&
+                            isMayor && (
+
+                            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+
+                                <div className="mb-4">
+
+                                    <p className="text-xs font-semibold text-amber-900">
+                                        Mayor Approval
+                                    </p>
+
+                                    <p className="mt-1 text-[10px] leading-5 text-amber-800">
+                                        This maintenance request has completed GSO,
+                                        Budget, and Accounting review and is now awaiting
+                                        final approval from the Municipal Mayor.
+                                    </p>
+
+                                </div>
+
+
+                                {/* ================================================== */}
+                                {/* FINANCIAL SUMMARY */}
+                                {/* ================================================== */}
+
+                                <div className="mb-4 rounded-xl border border-amber-200 bg-white p-4">
+
+                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Financial Summary
+                                    </p>
+
+                                    <div className="space-y-2">
+
+                                        <div className="flex items-center justify-between">
+
+                                            <span className="text-xs text-slate-500">
+                                                Funding Source
+                                            </span>
+
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                {request.funding_source ?? '—'}
+                                            </span>
+
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+
+                                            <span className="text-xs text-slate-500">
+                                                Budget Amount
+                                            </span>
+
+                                            <span className="text-sm font-bold text-slate-900">
+                                                ₱
+                                                {Number(
+                                                    request.budget_amount ?? 0,
+                                                ).toLocaleString('en-PH', {
+                                                    minimumFractionDigits: 2,
+                                                })}
+                                            </span>
+
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+
+                                            <span className="text-xs text-slate-500">
+                                                Accounting Reference
+                                            </span>
+
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                {request.accounting_reference_no ?? '—'}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* ================================================== */}
+                                {/* ACCOUNTING REMARKS */}
+                                {/* ================================================== */}
+
+                                {request.accounting_remarks && (
+
+                                    <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+
+                                        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Accounting Remarks
+                                        </p>
+
+                                        <p className="text-xs leading-5 text-slate-700">
+                                            {request.accounting_remarks}
+                                        </p>
+
+                                    </div>
+
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* MAYOR REMARKS */}
+                                {/* ================================================== */}
+
+                                <div className="mb-4">
+
+                                    <label
+                                        htmlFor="mayor_remarks"
+                                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-700"
+                                    >
+                                        Mayor Remarks
+                                    </label>
+
+                                    <textarea
+                                        id="mayor_remarks"
+                                        rows={3}
+                                        value={mayorRemarks}
+                                        onChange={(event) =>
+                                            setMayorRemarks(
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="Enter remarks for this approval..."
+                                        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                    />
+
+                                </div>
+
+
+                                {/* ================================================== */}
+                                {/* APPROVE */}
+                                {/* ================================================== */}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+
+                                        if (
+                                            !window.confirm(
+                                                'Approve this maintenance request? It will be marked as Ready for Work.',
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
+                                        router.post(
+                                            `/maintenance-requests/${request.id}/mayor-approve`,
+                                            {
+                                                mayor_remarks:
+                                                    mayorRemarks || null,
+                                            },
+                                        );
+
+                                    }}
+                                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                >
+
+                                    <CheckCircle2 className="h-4 w-4" />
+
+                                    Approve & Release for Work
+
+                                </button>
+
+
+                                {/* ================================================== */}
+                                {/* RETURN */}
+                                {/* ================================================== */}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+
+                                        const remarks =
+                                            window.prompt(
+                                                'Why are you returning this request to Accounting?',
+                                            );
+
+                                        if (!remarks?.trim()) {
+                                            return;
+                                        }
+
+                                        router.post(
+                                            `/maintenance-requests/${request.id}/mayor-return`,
+                                            {
+                                                mayor_remarks:
+                                                    remarks,
+                                            },
+                                        );
+
+                                    }}
+                                    className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                >
+
+                                    <ArrowLeft className="h-4 w-4" />
+
+                                    Return to Accounting
+
+                                </button>
+
+                            </div>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* WAITING FOR MAYOR */}
+                        {/* ================================================== */}
+
+                        {request.status === 'for_mayor_approval' &&
+                            !isMayor && (
+
+                            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+
+                                <p className="text-xs font-semibold text-amber-900">
+                                    Awaiting Mayor Approval
+                                </p>
+
+                                <p className="mt-1 text-[10px] leading-5 text-amber-800">
+                                    Accounting review has been completed. This request
+                                    is now waiting for final approval from the Municipal Mayor.
+                                </p>
+
+                            </div>
+
+                        )}
+
+
+                        {/* ================================================== */}
                         {/* REQUESTER */}
                         {/* ================================================== */}
 
@@ -3069,6 +3307,20 @@ export default function ShowMaintenanceRequest({
                                     label="Budget Reviewed"
                                     value={
                                         request.budget_reviewed_at
+                                    }
+                                />
+
+                                <DateItem
+                                    label="Accounting Reviewed"
+                                    value={
+                                        request.accounting_reviewed_at
+                                    }
+                                    />
+
+                                <DateItem
+                                    label="Mayor Reviewed"
+                                    value={
+                                        request.mayor_reviewed_at
                                     }
                                 />
 
