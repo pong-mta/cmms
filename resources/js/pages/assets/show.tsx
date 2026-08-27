@@ -79,6 +79,24 @@ interface MaintenanceRecord {
         | 'cancelled';
 }
 
+interface MaintenanceRequestCostItem {
+    id: number;
+
+    type: string;
+
+    description: string;
+
+    quantity: string | number;
+
+    unit: string;
+
+    unit_cost: string | number;
+
+    total_cost: string | number;
+
+    remarks?: string | null;
+}
+
 interface MaintenanceRequest {
     id: number;
 
@@ -105,6 +123,8 @@ interface MaintenanceRequest {
         id: number;
         name: string;
     } | null;
+
+    cost_items?: MaintenanceRequestCostItem[];
 }
 
 
@@ -480,6 +500,24 @@ export default function ShowAsset({
 
     const maintenanceRequests =
     asset.maintenance_requests ?? [];
+
+    const totalMaintenanceCost =
+    maintenanceRequests.reduce(
+        (sum, request) =>
+            sum +
+            (request.cost_items ?? []).reduce(
+                (
+                    requestTotal,
+                    item,
+                ) =>
+                    requestTotal +
+                    Number(
+                        item.total_cost ?? 0,
+                    ),
+                0,
+            ),
+        0,
+    );
 
 
     /*
@@ -1227,6 +1265,18 @@ export default function ShowAsset({
                                         <p className="text-[10px] text-slate-500">
                                             Maintenance requests associated with this asset
                                         </p>
+
+                                        <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5">
+
+                                            <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-600">
+                                                Total Maintenance Cost
+                                            </span>
+
+                                            <span className="text-xs font-bold text-emerald-700">
+                                                {formatCurrency(totalMaintenanceCost)}
+                                            </span>
+
+                                        </div>
 
                                     </div>
 
