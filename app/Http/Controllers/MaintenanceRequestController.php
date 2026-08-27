@@ -396,4 +396,105 @@ class MaintenanceRequestController extends Controller
             'Maintenance request approved successfully.'
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| REJECT
+|--------------------------------------------------------------------------
+*/
+
+    public function reject(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ) {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isDepartmentHead = $user
+            ->roles()
+            ->where('name', 'department_head')
+            ->exists();
+
+        if (!$isDepartmentHead) {
+            abort(
+                403,
+                'Only a Department Head can reject maintenance requests.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            !$user->department_id ||
+            $user->department_id !==
+            $maintenanceRequest->department_id
+        ) {
+            abort(
+                403,
+                'You can only reject requests from your department.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'reviewing'
+        ) {
+            return back()->with(
+                'error',
+                'Only requests under review can be rejected.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE REASON
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'reason' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | REJECT
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'status' => 'rejected',
+
+            'remarks' =>
+            $validated['reason'],
+        ]);
+
+
+        return back()->with(
+            'success',
+            'Maintenance request rejected.'
+        );
+    }
 }

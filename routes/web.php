@@ -123,6 +123,15 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'maintenance-requests.approve'
     );
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/reject',
+        [
+            MaintenanceRequestController::class,
+            'reject',
+        ]
+    )->name(
+        'maintenance-requests.reject'
+    );
 });
 
 require __DIR__ . '/settings.php';

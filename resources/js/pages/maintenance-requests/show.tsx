@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 import {
     AlertTriangle,
@@ -252,6 +253,12 @@ function formatDateTime(
 export default function ShowMaintenanceRequest({
     request,
 }: Props) {
+
+    const [showRejectModal, setShowRejectModal] =
+    useState(false);
+
+    const [rejectReason, setRejectReason] =
+        useState('');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -825,6 +832,22 @@ export default function ShowMaintenanceRequest({
 
                                 )}
 
+                                {request.status === 'reviewing' && (
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowRejectModal(true)
+                                        }
+                                        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                                    >
+                                        <AlertTriangle className="h-4 w-4" />
+
+                                        Reject Request
+                                    </button>
+
+                                )}
+
                             </div>
 
                         </section>
@@ -1017,6 +1040,106 @@ export default function ShowMaintenanceRequest({
                 </div>
 
             </div>
+
+            {showRejectModal && (
+
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+                        <div className="flex items-center gap-3">
+
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+
+                                <AlertTriangle className="h-5 w-5" />
+
+                            </div>
+
+                            <div>
+
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Reject Maintenance Request
+                                </h2>
+
+                                <p className="text-[10px] text-slate-500">
+                                    Please provide a reason for rejection.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="mt-5">
+
+                            <label
+                                htmlFor="reject_reason"
+                                className="mb-1.5 block text-xs font-semibold text-slate-700"
+                            >
+                                Rejection Reason
+                            </label>
+
+
+                            <textarea
+                                id="reject_reason"
+                                value={rejectReason}
+                                onChange={(event) =>
+                                    setRejectReason(
+                                        event.target.value,
+                                    )
+                                }
+                                rows={5}
+                                placeholder="Explain why this maintenance request is being rejected..."
+                                className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                            />
+
+                        </div>
+
+
+                        <div className="mt-5 flex gap-2">
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowRejectModal(
+                                        false,
+                                    );
+
+                                    setRejectReason('');
+                                }}
+                                className="h-10 flex-1 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                                Cancel
+                            </button>
+
+
+                            <Link
+                                href={`/maintenance-requests/${request.id}/reject`}
+                                method="post"
+                                data={{
+                                    reason: rejectReason,
+                                }}
+                                as="button"
+                                disabled={
+                                    !rejectReason.trim()
+                                }
+                                onClick={() =>
+                                    setShowRejectModal(
+                                        false,
+                                    )
+                                }
+                                className="h-10 flex-1 rounded-xl bg-red-600 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Reject Request
+                            </Link>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
 
         </AppLayout>
     );
