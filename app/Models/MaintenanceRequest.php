@@ -19,6 +19,13 @@ class MaintenanceRequest extends Model
         'assessed_by',
         'assigned_to',
 
+        'assignment_type',
+        'external_contractor',
+        'external_worker_name',
+        'external_worker_contact',
+        'assignment_remarks',
+        'assigned_at',
+
         'title',
         'description',
         'priority',
@@ -71,6 +78,7 @@ class MaintenanceRequest extends Model
         'approved_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'assigned_at' => 'datetime',
 
         'estimated_labor_cost' => 'decimal:2',
         'estimated_parts_cost' => 'decimal:2',
