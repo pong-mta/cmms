@@ -27,6 +27,10 @@ class RoleSeeder extends Seeder
                 'description' => 'Maintenance Technician',
             ],
             [
+                'name' => 'gso',
+                'description' => 'General Services Office',
+            ],
+            [
                 'name' => 'staff',
                 'description' => 'Department Staff',
             ],
