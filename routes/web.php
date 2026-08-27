@@ -352,7 +352,7 @@ Route::middleware(['auth'])->group(function () {
     //     'maintenance.preventive'
     // );
     Route::get(
-        '/maintenance/preventives',
+        '/maintenance/preventive',
         function () {
             return 'PREVENTIVE ROUTE WORKS';
         }
