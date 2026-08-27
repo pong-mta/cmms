@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 
 import {
     CalendarClock,
@@ -433,6 +434,26 @@ export default function PreventiveMaintenance({
                                                 >
                                                     View Asset
                                                 </Link>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (
+                                                            !confirm(
+                                                                'Create a maintenance request for this preventive maintenance schedule?'
+                                                            )
+                                                        ) {
+                                                            return;
+                                                        }
+
+                                                        router.post(
+                                                            `/preventive-maintenance/${schedule.id}/create-request`
+                                                        );
+                                                    }}
+                                                    className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                                                >
+                                                    Create Maintenance Request
+                                                </button>
 
                                             </div>
 
