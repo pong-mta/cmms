@@ -36,6 +36,7 @@ class MaintenanceRequest extends Model
         'approved_at',
         'started_at',
         'completed_at',
+        'completed_by',
 
         'assessment',
         'work_scope',
@@ -225,6 +226,20 @@ class MaintenanceRequest extends Model
     {
         return $this->hasMany(
             MaintenanceRequestCostItem::class
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| COMPLETED BY
+|--------------------------------------------------------------------------
+*/
+
+    public function completedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'completed_by'
         );
     }
 }
