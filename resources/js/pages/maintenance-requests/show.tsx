@@ -2807,7 +2807,8 @@ export default function ShowMaintenanceRequest({
                         {/* ASSIGNED */}
                         {/* ================================================== */}
 
-                        {request.status === 'assigned' && (
+                        {request.status === 'assigned' &&
+                            isMaintenanceSupervisor && (
                             <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
 
                                 <div className="flex items-center gap-2">
