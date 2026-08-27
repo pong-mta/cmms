@@ -148,7 +148,7 @@ export default function CreateMaintenanceRequest({
                         </h1>
 
                         <p className="mt-1 text-xs text-slate-500">
-                            Report an asset problem or request maintenance service.
+                            Report a problem or request maintenance service for an LGU asset.
                         </p>
 
                     </div>
@@ -235,7 +235,7 @@ export default function CreateMaintenanceRequest({
                                                 event.target.value,
                                             )
                                         }
-                                        placeholder="e.g. Vehicle engine overheating"
+                                        placeholder="e.g. Generator overheating, leaking pipe, broken office equipment"
                                         className={`h-11 w-full rounded-xl border bg-white px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                                             errors.title
                                                 ? 'border-red-300'
@@ -279,7 +279,7 @@ export default function CreateMaintenanceRequest({
                                                 event.target.value,
                                             )
                                         }
-                                        placeholder="Describe the problem, symptoms, or service needed..."
+                                        placeholder="Describe the problem, symptoms, location, or service needed..."
                                         rows={6}
                                         className={`w-full resize-none rounded-xl border bg-white px-3 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                                             errors.description
@@ -370,7 +370,7 @@ export default function CreateMaintenanceRequest({
                                         </h2>
 
                                         <p className="mt-0.5 text-[10px] text-slate-500">
-                                            Select the asset requiring service.
+                                            Select the LGU asset requiring service.
                                         </p>
 
                                     </div>
@@ -576,10 +576,7 @@ export default function CreateMaintenanceRequest({
 
                                     <p className="mt-1 text-[10px] leading-5 text-blue-700">
 
-                                        Your request will be submitted for
-                                        review. A department head or authorized
-                                        personnel can review and assign the
-                                        maintenance work.
+                                        Your request will be submitted to the Maintenance Supervisor for assessment and costing. After assessment, it will proceed to Department Head review, Budget review, and then assignment to a technician.
 
                                     </p>
 
