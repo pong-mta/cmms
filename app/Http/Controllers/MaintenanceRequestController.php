@@ -226,6 +226,7 @@ class MaintenanceRequestController extends Controller
             'assignedTo',
             'assessedBy',
             'headReviewedBy',
+            'gsoReviewedBy',
             'budgetReviewedBy',
             'costItems',
         ]);
@@ -772,6 +773,8 @@ class MaintenanceRequestController extends Controller
         }
 
         $maintenanceRequest->update([
+            'gso_reviewed_by' => $user->id,
+            'gso_reviewed_at' => now(),
             'status' => 'for_budget_review',
         ]);
 
