@@ -76,6 +76,21 @@ interface MaintenanceRequest {
 
     assigned_to?: UserInfo | null;
 
+        assignment_type?: 
+        | 'lgu_employee'
+        | 'external_contractor'
+        | null;
+
+    external_contractor?: string | null;
+
+    external_worker_name?: string | null;
+
+    external_worker_contact?: string | null;
+
+    assignment_remarks?: string | null;
+
+    assigned_at?: string | null;
+
     head_reviewed_by?: UserInfo | null;
 
     gso_reviewed_by?: UserInfo | null;
@@ -377,6 +392,33 @@ export default function ShowMaintenanceRequest({
     const [
         selectedTechnician,
         setSelectedTechnician,
+    ] = useState('');
+
+    const [
+        assignmentType,
+        setAssignmentType,
+    ] = useState<
+        'lgu_employee' | 'external_contractor'
+    >('lgu_employee');
+
+    const [
+        externalContractor,
+        setExternalContractor,
+    ] = useState('');
+
+    const [
+        externalWorkerName,
+        setExternalWorkerName,
+    ] = useState('');
+
+    const [
+        externalWorkerContact,
+        setExternalWorkerContact,
+    ] = useState('');
+
+    const [
+        assignmentRemarks,
+        setAssignmentRemarks,
     ] = useState('');
 
     const [
@@ -3278,117 +3320,325 @@ export default function ShowMaintenanceRequest({
 
 
                         {/* ================================================== */}
-                        {/* ASSIGN TECHNICIAN */}
+                        {/* ASSIGN WORKER */}
                         {/* ================================================== */}
 
                         {request.status === 'ready_for_work' &&
                             isMaintenanceSupervisor && (
 
-                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <section className="overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-sm">
 
-                                <div className="flex items-center gap-3">
+                                <div className="border-b border-indigo-100 bg-indigo-50/40 px-5 py-4">
 
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-                                        <User className="h-5 w-5" />
-                                    </div>
+                                    <div className="flex items-center gap-3">
 
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                                            <User className="h-5 w-5" />
+                                        </div>
 
-                                    <div>
+                                        <div>
 
-                                        <h2 className="text-sm font-bold text-slate-900">
-                                            Assign Technician
-                                        </h2>
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Assign Worker
+                                            </h2>
 
-                                        <p className="text-[10px] text-slate-500">
-                                            Select a technician for this maintenance request.
-                                        </p>
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Assign an LGU employee or external contractor.
+                                            </p>
+
+                                        </div>
 
                                     </div>
 
                                 </div>
 
 
-                                <div className="mt-5">
+                                <div className="p-5">
 
-                                    <label
-                                        htmlFor="assigned_to"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
-                                        Technician
-                                    </label>
+                                    {/* ASSIGNMENT TYPE */}
+
+                                    <div>
+
+                                        <label
+                                            htmlFor="assignment_type"
+                                            className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                        >
+                                            Worker Type
+                                        </label>
+
+                                        <select
+                                            id="assignment_type"
+                                            value={assignmentType}
+                                            onChange={(event) => {
+                                                const value =
+                                                    event.target.value as
+                                                        | 'lgu_employee'
+                                                        | 'external_contractor';
+
+                                                setAssignmentType(value);
+
+                                                if (
+                                                    value ===
+                                                    'lgu_employee'
+                                                ) {
+                                                    setExternalContractor('');
+                                                    setExternalWorkerName('');
+                                                    setExternalWorkerContact('');
+                                                } else {
+                                                    setSelectedTechnician('');
+                                                }
+                                            }}
+                                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                        >
+
+                                            <option value="lgu_employee">
+                                                LGU Employee
+                                            </option>
+
+                                            <option value="external_contractor">
+                                                External Contractor
+                                            </option>
+
+                                        </select>
+
+                                    </div>
 
 
-                                    <select
-                                        id="assigned_to"
-                                        value={
-                                            selectedTechnician
-                                        }
-                                        onChange={(event) =>
-                                            setSelectedTechnician(
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                    >
+                                    {/* LGU EMPLOYEE */}
 
-                                        <option value="">
-                                            Select technician
-                                        </option>
+                                    {assignmentType ===
+                                        'lgu_employee' && (
 
+                                        <div className="mt-4">
 
-                                        {technicians.map(
-                                            (technician) => (
-                                                <option
-                                                    key={technician.id}
-                                                    value={technician.id}
-                                                >
-                                                    {technician.name}
-                                                    {technician.phone
-                                                        ? ` — ${technician.phone}`
-                                                        : ''}
+                                            <label
+                                                htmlFor="assigned_to"
+                                                className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                            >
+                                                Technician
+                                            </label>
+
+                                            <select
+                                                id="assigned_to"
+                                                value={selectedTechnician}
+                                                onChange={(event) =>
+                                                    setSelectedTechnician(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            >
+
+                                                <option value="">
+                                                    Select technician
                                                 </option>
-                                            ),
-                                        )}
 
-                                    </select>
+                                                {technicians.map(
+                                                    (technician) => (
+                                                        <option
+                                                            key={
+                                                                technician.id
+                                                            }
+                                                            value={
+                                                                technician.id
+                                                            }
+                                                        >
+                                                            {technician.name}
+                                                        </option>
+                                                    ),
+                                                )}
 
-
-                                    {technicians.length === 0 && (
-
-                                        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-
-                                            <p className="text-[10px] font-semibold text-amber-800">
-                                                No technicians are currently assigned to this department.
-                                            </p>
+                                            </select>
 
                                         </div>
 
                                     )}
 
 
+                                    {/* EXTERNAL CONTRACTOR */}
+
+                                    {assignmentType ===
+                                        'external_contractor' && (
+
+                                        <div className="mt-4 space-y-4">
+
+                                            <div>
+
+                                                <label
+                                                    htmlFor="external_contractor"
+                                                    className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                                >
+                                                    Contractor / Company
+                                                </label>
+
+                                                <input
+                                                    id="external_contractor"
+                                                    type="text"
+                                                    value={externalContractor}
+                                                    onChange={(event) =>
+                                                        setExternalContractor(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Enter company or contractor name"
+                                                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                />
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <label
+                                                    htmlFor="external_worker_name"
+                                                    className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                                >
+                                                    Worker Name
+                                                </label>
+
+                                                <input
+                                                    id="external_worker_name"
+                                                    type="text"
+                                                    value={externalWorkerName}
+                                                    onChange={(event) =>
+                                                        setExternalWorkerName(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Enter worker name"
+                                                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                />
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <label
+                                                    htmlFor="external_worker_contact"
+                                                    className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                                >
+                                                    Contact Number
+                                                </label>
+
+                                                <input
+                                                    id="external_worker_contact"
+                                                    type="text"
+                                                    value={externalWorkerContact}
+                                                    onChange={(event) =>
+                                                        setExternalWorkerContact(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="09XXXXXXXXX"
+                                                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                />
+
+                                            </div>
+
+                                        </div>
+
+                                    )}
+
+
+                                    {/* ASSIGNMENT REMARKS */}
+
+                                    <div className="mt-4">
+
+                                        <label
+                                            htmlFor="assignment_remarks"
+                                            className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-indigo-900"
+                                        >
+                                            Assignment Remarks
+                                        </label>
+
+                                        <textarea
+                                            id="assignment_remarks"
+                                            value={assignmentRemarks}
+                                            onChange={(event) =>
+                                                setAssignmentRemarks(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={3}
+                                            placeholder="Optional assignment instructions or remarks"
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                        />
+
+                                    </div>
+
+
+                                    {/* SUBMIT */}
+
                                     <button
                                         type="button"
                                         disabled={
-                                            !selectedTechnician ||
-                                            technicians.length === 0
+                                            assignmentType ===
+                                            'lgu_employee'
+                                                ? !selectedTechnician ||
+                                                technicians.length === 0
+                                                : !externalContractor.trim() ||
+                                                !externalWorkerName.trim()
                                         }
                                         onClick={() => {
+
+                                            const message =
+                                                assignmentType ===
+                                                'lgu_employee'
+                                                    ? 'Assign this LGU technician to the maintenance request?'
+                                                    : 'Assign this external contractor to the maintenance request?';
+
+                                            if (
+                                                !window.confirm(
+                                                    message,
+                                                )
+                                            ) {
+                                                return;
+                                            }
 
                                             router.post(
                                                 `/maintenance-requests/${request.id}/assign`,
                                                 {
+                                                    assignment_type:
+                                                        assignmentType,
+
                                                     assigned_to:
-                                                        selectedTechnician,
+                                                        assignmentType ===
+                                                        'lgu_employee'
+                                                            ? selectedTechnician
+                                                            : null,
+
+                                                    external_contractor:
+                                                        assignmentType ===
+                                                        'external_contractor'
+                                                            ? externalContractor
+                                                            : null,
+
+                                                    external_worker_name:
+                                                        assignmentType ===
+                                                        'external_contractor'
+                                                            ? externalWorkerName
+                                                            : null,
+
+                                                    external_worker_contact:
+                                                        assignmentType ===
+                                                        'external_contractor'
+                                                            ? externalWorkerContact
+                                                            : null,
+
+                                                    assignment_remarks:
+                                                        assignmentRemarks ||
+                                                        null,
                                                 },
                                             );
 
                                         }}
-                                        className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
 
                                         <User className="h-4 w-4" />
 
-                                        Assign Technician
+                                        Assign Worker
 
                                     </button>
 
