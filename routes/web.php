@@ -87,7 +87,8 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-    //Maintenance Request
+    // Maintenance Request
+
     Route::get('/maintenance-requests', [
         MaintenanceRequestController::class,
         'index',
@@ -97,41 +98,95 @@ Route::middleware(['auth'])->group(function () {
         MaintenanceRequestController::class,
         'create',
     ])->name('maintenance-requests.create');
+
     Route::post('/maintenance-requests', [
         MaintenanceRequestController::class,
         'store',
     ])->name('maintenance-requests.store');
+
     Route::get('/maintenance-requests/{maintenanceRequest}', [
         MaintenanceRequestController::class,
         'show',
     ])->name('maintenance-requests.show');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUPERVISOR ASSESSMENT
+    |--------------------------------------------------------------------------
+    */
+
     Route::post(
-        '/maintenance-requests/{maintenanceRequest}/review',
+        '/maintenance-requests/{maintenanceRequest}/assess',
         [
             MaintenanceRequestController::class,
-            'review',
+            'assess',
         ]
     )->name(
-        'maintenance-requests.review'
+        'maintenance-requests.assess'
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT HEAD
+    |--------------------------------------------------------------------------
+    */
+
     Route::post(
-        '/maintenance-requests/{maintenanceRequest}/approve',
+        '/maintenance-requests/{maintenanceRequest}/head-approve',
         [
             MaintenanceRequestController::class,
-            'approve',
+            'headApprove',
         ]
     )->name(
-        'maintenance-requests.approve'
+        'maintenance-requests.head-approve'
     );
+
     Route::post(
-        '/maintenance-requests/{maintenanceRequest}/reject',
+        '/maintenance-requests/{maintenanceRequest}/head-return',
         [
             MaintenanceRequestController::class,
-            'reject',
+            'headReturn',
         ]
     )->name(
-        'maintenance-requests.reject'
+        'maintenance-requests.head-return'
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BUDGET OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/budget-approve',
+        [
+            MaintenanceRequestController::class,
+            'budgetApprove',
+        ]
+    )->name(
+        'maintenance-requests.budget-approve'
+    );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/budget-return',
+        [
+            MaintenanceRequestController::class,
+            'budgetReturn',
+        ]
+    )->name(
+        'maintenance-requests.budget-return'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGN TECHNICIAN
+    |--------------------------------------------------------------------------
+    */
+
     Route::post(
         '/maintenance-requests/{maintenanceRequest}/assign',
         [
@@ -142,14 +197,48 @@ Route::middleware(['auth'])->group(function () {
         'maintenance-requests.assign'
     );
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | TECHNICIAN
+    |--------------------------------------------------------------------------
+    */
+
     Route::post(
-        '/maintenance-requests/{maintenanceRequest}/assess',
+        '/maintenance-requests/{maintenanceRequest}/start',
         [
             MaintenanceRequestController::class,
-            'assess',
+            'startWork',
         ]
     )->name(
-        'maintenance-requests.assess'
+        'maintenance-requests.start'
+    );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/complete',
+        [
+            MaintenanceRequestController::class,
+            'complete',
+        ]
+    )->name(
+        'maintenance-requests.complete'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/cancel',
+        [
+            MaintenanceRequestController::class,
+            'cancel',
+        ]
+    )->name(
+        'maintenance-requests.cancel'
     );
 });
 
