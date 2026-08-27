@@ -77,6 +77,8 @@ interface MaintenanceRequest {
 
     assigned_to?: UserInfo | null;
 
+    completed_by?: UserInfo | null;
+
         assignment_type?: 
         | 'lgu_employee'
         | 'external_contractor'
@@ -3122,6 +3124,13 @@ export default function ShowMaintenanceRequest({
                                     <PersonItem
                                         label="Assigned To"
                                         user={request.assigned_to}
+                                    />
+                                )}
+
+                                {request.status === 'completed' && (
+                                    <PersonItem
+                                        label="Completed By"
+                                        user={request.completed_by}
                                     />
                                 )}
 
