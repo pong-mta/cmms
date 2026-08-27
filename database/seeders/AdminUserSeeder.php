@@ -75,6 +75,7 @@ class AdminUserSeeder extends Seeder
             'technician',
             'staff',
             'budget_officer',
+            'accounting_officer',
         ])->pluck('id', 'name');
 
 
@@ -88,9 +89,11 @@ class AdminUserSeeder extends Seeder
             'system_admin',
             'department_head',
             'maintenance_supervisor',
+            'gso',
             'technician',
             'staff',
             'budget_officer',
+            'accounting_officer',
         ];
 
         foreach ($requiredRoles as $roleName) {
@@ -169,6 +172,7 @@ class AdminUserSeeder extends Seeder
         $supervisor->roles()->syncWithoutDetaching([
             $roles['maintenance_supervisor'],
         ]);
+
 
         /*
         |--------------------------------------------------------------------------
@@ -259,6 +263,29 @@ class AdminUserSeeder extends Seeder
 
         $budgetOfficer->roles()->syncWithoutDetaching([
             $roles['budget_officer'],
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ACCOUNTING OFFICER
+        |--------------------------------------------------------------------------
+        */
+
+        $accountingOfficer = User::updateOrCreate(
+            [
+                'phone' => '09156014669',
+            ],
+            [
+                'name' => 'Accounting Office Officer',
+                'phone_verified' => true,
+                'department_id' => $maintenanceDepartment->id,
+                'password' => $password,
+            ]
+        );
+
+        $accountingOfficer->roles()->syncWithoutDetaching([
+            $roles['accounting_officer'],
         ]);
     }
 }
