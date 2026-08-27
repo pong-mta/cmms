@@ -360,6 +360,15 @@ Route::middleware(['auth'])->group(function () {
         'maintenance.preventive'
     );
 
+    Route::get(
+        '/pm-test',
+        function () {
+            return 'PM TEST WORKS';
+        }
+    )->name(
+        'pm.test'
+    );
+
     Route::post(
         '/assets/{asset}/preventive-maintenance',
         [
