@@ -141,6 +141,16 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'maintenance-requests.assign'
     );
+
+    Route::post(
+        '/maintenance-requests/{maintenanceRequest}/assess',
+        [
+            MaintenanceRequestController::class,
+            'assess',
+        ]
+    )->name(
+        'maintenance-requests.assess'
+    );
 });
 
 require __DIR__ . '/settings.php';

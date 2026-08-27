@@ -13,6 +13,8 @@ import {
     Clock3,
     User,
     Wrench,
+    ClipboardCheck,
+    Send,
 } from 'lucide-react';
 
 
@@ -270,6 +272,15 @@ export default function ShowMaintenanceRequest({
         useState('');
     const [selectedTechnician, setSelectedTechnician] =
     useState('');
+
+    const [assessment, setAssessment] = useState('');
+    const [workScope, setWorkScope] = useState('');
+    const [estimatedLaborCost, setEstimatedLaborCost] =
+        useState('');
+    const [estimatedPartsCost, setEstimatedPartsCost] =
+        useState('');
+    const [estimatedOtherCost, setEstimatedOtherCost] =
+        useState('');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -916,6 +927,226 @@ export default function ShowMaintenanceRequest({
                             </div>
 
                         </section>
+
+                        {request.status === 'submitted' && (
+                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                        <ClipboardCheck className="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Supervisor Assessment
+                                        </h2>
+
+                                        <p className="text-[10px] text-slate-500">
+                                            Assess the request and prepare the estimated costing.
+                                        </p>
+                                    </div>
+
+                                </div>
+
+
+                                <div className="mt-5 space-y-4">
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                            Assessment
+                                        </label>
+
+                                        <textarea
+                                            value={assessment}
+                                            onChange={(event) =>
+                                                setAssessment(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={4}
+                                            placeholder="Describe the assessment and findings..."
+                                            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                            Work Scope
+                                        </label>
+
+                                        <textarea
+                                            value={workScope}
+                                            onChange={(event) =>
+                                                setWorkScope(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={4}
+                                            placeholder="Describe the work that needs to be performed..."
+                                            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+                                        <div>
+
+                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                                Estimated Labor
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    estimatedLaborCost
+                                                }
+                                                onChange={(event) =>
+                                                    setEstimatedLaborCost(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                                Estimated Parts
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    estimatedPartsCost
+                                                }
+                                                onChange={(event) =>
+                                                    setEstimatedPartsCost(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                                Estimated Other
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    estimatedOtherCost
+                                                }
+                                                onChange={(event) =>
+                                                    setEstimatedOtherCost(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div className="rounded-xl bg-slate-50 p-4">
+
+                                        <div className="flex items-center justify-between">
+
+                                            <span className="text-xs font-semibold text-slate-600">
+                                                Estimated Total
+                                            </span>
+
+                                            <span className="text-lg font-bold text-slate-900">
+                                                ₱
+                                                {(
+                                                    Number(
+                                                        estimatedLaborCost ||
+                                                            0,
+                                                    ) +
+                                                    Number(
+                                                        estimatedPartsCost ||
+                                                            0,
+                                                    ) +
+                                                    Number(
+                                                        estimatedOtherCost ||
+                                                            0,
+                                                    )
+                                                ).toLocaleString(
+                                                    'en-PH',
+                                                    {
+                                                        minimumFractionDigits: 2,
+                                                    },
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            !assessment.trim() ||
+                                            !workScope.trim()
+                                        }
+                                        onClick={() => {
+                                            router.post(
+                                                `/maintenance-requests/${request.id}/assess`,
+                                                {
+                                                    assessment,
+                                                    work_scope:
+                                                        workScope,
+                                                    estimated_labor_cost:
+                                                        estimatedLaborCost ||
+                                                        0,
+                                                    estimated_parts_cost:
+                                                        estimatedPartsCost ||
+                                                        0,
+                                                    estimated_other_cost:
+                                                        estimatedOtherCost ||
+                                                        0,
+                                                },
+                                            );
+                                        }}
+                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <Send className="h-4 w-4" />
+
+                                        Send to Department Head
+
+                                    </button>
+
+                                </div>
+
+                            </section>
+                        )}
 
                         {request.status === 'approved' && (
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

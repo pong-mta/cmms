@@ -654,4 +654,171 @@ class MaintenanceRequestController extends Controller
             'Maintenance request assigned successfully.'
         );
     }
+
+
+    /*
+|--------------------------------------------------------------------------
+| START ASSESSMENT
+|--------------------------------------------------------------------------
+*/
+
+    public function assess(
+        Request $request,
+        MaintenanceRequest $maintenanceRequest
+    ) {
+        $user = auth()->user();
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK ROLE
+    |--------------------------------------------------------------------------
+    */
+
+        $isSupervisor = $user
+            ->roles()
+            ->where('name', 'maintenance_supervisor')
+            ->exists();
+
+        if (!$isSupervisor) {
+            abort(
+                403,
+                'Only a Maintenance Supervisor can assess maintenance requests.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            !$user->department_id ||
+            $user->department_id !==
+            $maintenanceRequest->department_id
+        ) {
+            abort(
+                403,
+                'You can only assess requests from your department.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CHECK STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->status !==
+            'submitted'
+        ) {
+            return back()->with(
+                'error',
+                'Only submitted requests can be assessed.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE ASSESSMENT
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'assessment' => [
+                'required',
+                'string',
+            ],
+
+            'work_scope' => [
+                'required',
+                'string',
+            ],
+
+            'estimated_labor_cost' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'estimated_parts_cost' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'estimated_other_cost' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+        ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CALCULATE ESTIMATED TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+        $estimatedLabor =
+            (float) $validated['estimated_labor_cost'];
+
+        $estimatedParts =
+            (float) $validated['estimated_parts_cost'];
+
+        $estimatedOther =
+            (float) $validated['estimated_other_cost'];
+
+        $estimatedTotal =
+            $estimatedLabor +
+            $estimatedParts +
+            $estimatedOther;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SAVE ASSESSMENT
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->update([
+            'assessed_by' =>
+            $user->id,
+
+            'assessed_at' =>
+            now(),
+
+            'assessment' =>
+            $validated['assessment'],
+
+            'work_scope' =>
+            $validated['work_scope'],
+
+            'estimated_labor_cost' =>
+            $estimatedLabor,
+
+            'estimated_parts_cost' =>
+            $estimatedParts,
+
+            'estimated_other_cost' =>
+            $estimatedOther,
+
+            'estimated_total_cost' =>
+            $estimatedTotal,
+
+            'status' =>
+            'for_head_review',
+        ]);
+
+
+        return back()->with(
+            'success',
+            'Assessment and estimated costing submitted for Department Head review.'
+        );
+    }
 }
