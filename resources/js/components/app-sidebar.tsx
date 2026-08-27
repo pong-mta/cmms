@@ -132,7 +132,7 @@ const mainNavItems: NavItem[] = [
 
             {
                 title: 'Preventive Maintenance',
-                url: '/maintenance/preventive',
+                url: '/preventive-maintenance',
                 icon: CalendarClock,
             },
 
