@@ -342,7 +342,7 @@ export default function CreateAsset({
 
                             {/* DESCRIPTION */}
 
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-3">
 
                                 <Field
                                     label="Description"
