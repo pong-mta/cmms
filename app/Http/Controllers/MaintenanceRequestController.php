@@ -230,6 +230,7 @@ class MaintenanceRequestController extends Controller
             'budgetReviewedBy',
             'accountingReviewedBy',
             'mayorReviewedBy',
+            'completedBy',
             'costItems',
         ]);
 
