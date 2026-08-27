@@ -339,6 +339,9 @@ export default function ShowMaintenanceRequest({
     const isGso =
         userRoles.includes('gso');
 
+    const isMaintenanceSupervisor =
+        userRoles.includes('maintenance_supervisor');
+
     const [
         showRejectModal,
         setShowRejectModal,
@@ -1664,7 +1667,8 @@ export default function ShowMaintenanceRequest({
                                 {/* BUDGET OFFICE */}
                                 {/* ================================================== */}
 
-                                {request.status === 'for_budget_review' && (
+                                {request.status === 'for_budget_review' &&
+                                    isBudgetOfficer && (
                                     <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
 
                                         <div className="mb-4">
@@ -1829,6 +1833,21 @@ export default function ShowMaintenanceRequest({
                                     </div>
                                 )}
 
+                                {request.status === 'for_budget_review' &&
+                                    !isBudgetOfficer && (
+                                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                                        <p className="text-xs font-semibold text-violet-800">
+                                            Awaiting Budget Office review
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-violet-700">
+                                            {isGso
+                                                ? 'GSO validation has been completed. This request is now with the Budget Office for funding review.'
+                                                : 'This request has been validated by GSO and is now waiting for Budget Office review. No action is required from you at this stage.'}
+                                        </p>
+                                    </div>
+                                )}
+
                             </div>
 
                         </section>
@@ -1921,7 +1940,8 @@ export default function ShowMaintenanceRequest({
                         {/* ================================================== */}
 
                         {(request.status === 'submitted' ||
-                            request.status === 'assessment') && (
+                            request.status === 'assessment') &&
+                            isMaintenanceSupervisor && (
 
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
@@ -2340,7 +2360,8 @@ export default function ShowMaintenanceRequest({
                         {/* ASSIGN TECHNICIAN */}
                         {/* ================================================== */}
 
-                        {request.status === 'ready_for_work' && (
+                        {request.status === 'ready_for_work' &&
+                            isMaintenanceSupervisor && (
 
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
