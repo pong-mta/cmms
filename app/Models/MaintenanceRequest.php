@@ -49,6 +49,10 @@ class MaintenanceRequest extends Model
         'budget_amount',
 
         'remarks',
+
+        'gso_reviewed_by',
+        'gso_reviewed_at',
+        'gso_remarks',
     ];
 
     protected $casts = [
