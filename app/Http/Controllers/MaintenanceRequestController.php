@@ -92,11 +92,6 @@ class MaintenanceRequestController extends Controller
                 'exists:assets,id',
             ],
 
-            'department_id' => [
-                'nullable',
-                'exists:departments,id',
-            ],
-
             'title' => [
                 'required',
                 'string',
@@ -118,6 +113,10 @@ class MaintenanceRequestController extends Controller
                 'string',
             ],
         ]);
+
+        $asset = Asset::findOrFail(
+            $validated['asset_id']
+        );
 
 
         /*
@@ -162,8 +161,7 @@ class MaintenanceRequestController extends Controller
             'asset_id' => $validated['asset_id'],
 
             'department_id' =>
-            $validated['department_id']
-                ?? null,
+            $asset->department_id,
 
             'requested_by' => auth()->id(),
 

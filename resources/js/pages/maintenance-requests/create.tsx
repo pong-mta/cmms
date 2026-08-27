@@ -27,16 +27,10 @@ interface Asset {
 }
 
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-}
 
 
 interface Props {
     assets: Asset[];
-    departments: Department[];
 }
 
 
@@ -66,7 +60,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CreateMaintenanceRequest({
     assets,
-    departments,
 }: Props) {
 
     /*
@@ -83,7 +76,6 @@ export default function CreateMaintenanceRequest({
         errors,
     } = useForm({
         asset_id: '',
-        department_id: '',
         title: '',
         description: '',
         priority: 'normal',
@@ -562,107 +554,7 @@ export default function CreateMaintenanceRequest({
                         </section>
 
 
-                        {/* ================================================== */}
-                        {/* DEPARTMENT */}
-                        {/* ================================================== */}
-
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-
-                                    <Building2 className="h-5 w-5" />
-
-                                </div>
-
-
-                                <div>
-
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Department
-                                    </h2>
-
-                                    <p className="text-[10px] text-slate-500">
-                                        Department responsible for the request.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-                            <div className="mt-5">
-
-                                <label
-                                    htmlFor="department_id"
-                                    className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                >
-                                    Department
-                                </label>
-
-
-                                <select
-                                    id="department_id"
-                                    value={data.department_id}
-                                    onChange={(event) =>
-                                        setData(
-                                            'department_id',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={`h-11 w-full rounded-xl border bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
-                                        errors.department_id
-                                            ? 'border-red-300'
-                                            : 'border-slate-200'
-                                    }`}
-                                >
-
-                                    <option value="">
-                                        Select department
-                                    </option>
-
-
-                                    {departments.map(
-                                        (
-                                            department,
-                                        ) => (
-
-                                            <option
-                                                key={
-                                                    department.id
-                                                }
-                                                value={
-                                                    department.id
-                                                }
-                                            >
-                                                {department.name}
-                                                {' ('}
-                                                {
-                                                    department.code
-                                                }
-                                                {')'}
-                                            </option>
-
-                                        ),
-                                    )}
-
-                                </select>
-
-
-                                {errors.department_id && (
-
-                                    <p className="mt-1.5 text-[10px] font-medium text-red-600">
-                                        {
-                                            errors.department_id
-                                        }
-                                    </p>
-
-                                )}
-
-                            </div>
-
-                        </section>
+                      
 
 
                         {/* ================================================== */}
