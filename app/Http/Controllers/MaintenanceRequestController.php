@@ -626,7 +626,7 @@ class MaintenanceRequestController extends Controller
             now(),
 
             'status' =>
-            'for_budget_review',
+            'for_gso_review',
 
             'approved_at' =>
             now(),
@@ -634,7 +634,7 @@ class MaintenanceRequestController extends Controller
 
         return back()->with(
             'success',
-            'Maintenance request approved and sent to Budget Office for review.'
+            'Maintenance request approved and sent to GSO for validation.'
         );
     }
 
