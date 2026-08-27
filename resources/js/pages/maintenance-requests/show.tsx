@@ -523,6 +523,11 @@ export default function ShowMaintenanceRequest({
     const [mayorRemarks, setMayorRemarks] =
         useState('');
 
+    const [
+        completionRemarks,
+        setCompletionRemarks,
+    ] = useState('');
+
     const removeCostItem = (index: number) => {
         setCostItems((current) =>
             current.length === 1
@@ -2911,6 +2916,92 @@ export default function ShowMaintenanceRequest({
 
                             </div>
                         )}
+
+                        {/* ================================================== */}
+                        {/* IN PROGRESS */}
+                        {/* ================================================== */}
+
+                        {request.status === 'in_progress' &&
+                            isMaintenanceSupervisor && (
+                                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+
+                                    <div className="flex items-center gap-2">
+
+                                        <Clock3 className="h-4 w-4 text-amber-600" />
+
+                                        <p className="text-xs font-semibold text-amber-900">
+                                            Work In Progress
+                                        </p>
+
+                                    </div>
+
+                                    <p className="mt-2 text-[10px] leading-5 text-amber-800">
+                                        Maintenance work is currently in progress.
+                                        Complete the request when the work has been finished.
+                                    </p>
+
+                                    {request.started_at && (
+                                        <p className="mt-3 text-[10px] text-slate-500">
+                                            Started {formatDateTime(request.started_at)}
+                                        </p>
+                                    )}
+
+                                    <div className="mt-4">
+
+                                        <label
+                                            htmlFor="completion_remarks"
+                                            className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-amber-900"
+                                        >
+                                            Completion Remarks
+                                        </label>
+
+                                        <textarea
+                                            id="completion_remarks"
+                                            rows={4}
+                                            placeholder="Describe the work completed, repairs made, parts replaced, or other relevant details..."
+                                            className="w-full resize-none rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                            onChange={(event) => {
+                                                setCompletionRemarks(
+                                                    event.target.value,
+                                                );
+                                            }}
+                                        />
+
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+
+                                            if (
+                                                !window.confirm(
+                                                    'Complete this maintenance request? This will mark the work as completed.',
+                                                )
+                                            ) {
+                                                return;
+                                            }
+
+                                            router.post(
+                                                `/maintenance-requests/${request.id}/complete`,
+                                                {
+                                                    remarks:
+                                                        completionRemarks ||
+                                                        null,
+                                                },
+                                            );
+
+                                        }}
+                                        className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                    >
+
+                                        <CheckCircle2 className="h-4 w-4" />
+
+                                        Complete Work
+
+                                    </button>
+
+                                </div>
+                            )}
 
 
                         {/* ================================================== */}

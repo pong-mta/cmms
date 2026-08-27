@@ -1449,10 +1449,17 @@ class MaintenanceRequestController extends Controller
         );
     }
     /*
-    |--------------------------------------------------------------------------
-    | COMPLETE
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| COMPLETE
+|--------------------------------------------------------------------------
+|
+| in_progress
+|      ↓
+| completed
+|
+| Only the Maintenance Supervisor can complete work.
+|
+*/
 
     public function complete(
         Request $request,
@@ -1460,30 +1467,32 @@ class MaintenanceRequestController extends Controller
     ): RedirectResponse {
         $user = auth()->user();
 
-        $isTechnician = $user
+        /*
+    |--------------------------------------------------------------------------
+    | SUPERVISOR ONLY
+    |--------------------------------------------------------------------------
+    */
+
+        $isSupervisor = $user
             ->roles()
             ->where(
                 'name',
-                'technician'
+                'maintenance_supervisor'
             )
             ->exists();
 
-        if (!$isTechnician) {
+        if (!$isSupervisor) {
             abort(
                 403,
-                'Only a Maintenance Technician can complete work.'
+                'Only the Maintenance Supervisor can complete work.'
             );
         }
 
-        if (
-            $maintenanceRequest->assigned_to !==
-            $user->id
-        ) {
-            abort(
-                403,
-                'This maintenance request is not assigned to you.'
-            );
-        }
+        /*
+    |--------------------------------------------------------------------------
+    | STATUS CHECK
+    |--------------------------------------------------------------------------
+    */
 
         if (
             $maintenanceRequest->status !==
@@ -1495,6 +1504,12 @@ class MaintenanceRequestController extends Controller
             );
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE
+    |--------------------------------------------------------------------------
+    */
+
         $validated = $request->validate([
             'remarks' => [
                 'nullable',
@@ -1502,6 +1517,12 @@ class MaintenanceRequestController extends Controller
                 'max:2000',
             ],
         ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | COMPLETE WORK
+    |--------------------------------------------------------------------------
+    */
 
         $maintenanceRequest->update([
             'status' =>
@@ -1515,12 +1536,17 @@ class MaintenanceRequestController extends Controller
                 ?? $maintenanceRequest->remarks,
         ]);
 
+        /*
+    |--------------------------------------------------------------------------
+    | SUCCESS
+    |--------------------------------------------------------------------------
+    */
+
         return back()->with(
             'success',
             'Maintenance request completed successfully.'
         );
     }
-
     /*
     |--------------------------------------------------------------------------
     | CANCEL
