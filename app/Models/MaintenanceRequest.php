@@ -9,27 +9,62 @@ class MaintenanceRequest extends Model
 {
     protected $fillable = [
         'request_code',
+
         'asset_id',
         'department_id',
+
         'requested_by',
+        'assessed_by',
         'assigned_to',
+
         'title',
         'description',
         'priority',
         'status',
+
         'requested_at',
+        'assessed_at',
         'approved_at',
         'started_at',
         'completed_at',
+
+        'assessment',
+        'work_scope',
+
+        'estimated_labor_cost',
+        'estimated_parts_cost',
+        'estimated_other_cost',
+        'estimated_total_cost',
+
+        'head_reviewed_by',
+        'head_reviewed_at',
+        'head_remarks',
+
+        'budget_reviewed_by',
+        'budget_reviewed_at',
+        'budget_remarks',
+
+        'funding_source',
+        'budget_amount',
+
         'remarks',
     ];
 
     protected $casts = [
         'requested_at' => 'datetime',
+        'assessed_at' => 'datetime',
         'approved_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+
+        'estimated_labor_cost' => 'decimal:2',
+        'estimated_parts_cost' => 'decimal:2',
+        'estimated_other_cost' => 'decimal:2',
+        'estimated_total_cost' => 'decimal:2',
+
+        'budget_amount' => 'decimal:2',
     ];
+
 
     /*
     |--------------------------------------------------------------------------
@@ -44,6 +79,7 @@ class MaintenanceRequest extends Model
         );
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | DEPARTMENT
@@ -56,6 +92,7 @@ class MaintenanceRequest extends Model
             Department::class
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -71,6 +108,22 @@ class MaintenanceRequest extends Model
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSESSED BY
+    |--------------------------------------------------------------------------
+    */
+
+    public function assessedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'assessed_by'
+        );
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | ASSIGNED TO
@@ -82,6 +135,36 @@ class MaintenanceRequest extends Model
         return $this->belongsTo(
             User::class,
             'assigned_to'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HEAD REVIEWED BY
+    |--------------------------------------------------------------------------
+    */
+
+    public function headReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'head_reviewed_by'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BUDGET REVIEWED BY
+    |--------------------------------------------------------------------------
+    */
+
+    public function budgetReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'budget_reviewed_by'
         );
     }
 }
