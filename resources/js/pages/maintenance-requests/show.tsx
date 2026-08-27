@@ -2767,3 +2767,42 @@ function InfoItem({
 
     );
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| DATE ITEM
+|--------------------------------------------------------------------------
+*/
+
+function DateItem({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string | null;
+}) {
+
+    return (
+
+        <div className="flex items-center justify-between gap-4">
+
+            <span className="text-[10px] font-medium text-slate-400">
+                {label}
+            </span>
+
+
+            <span className="text-right text-[10px] font-semibold text-slate-600">
+
+                {value
+                    ? formatDateTime(
+                          value,
+                      )
+                    : '—'}
+
+            </span>
+
+        </div>
+
+    );
+}
