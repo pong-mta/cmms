@@ -1378,45 +1378,32 @@ class MaintenanceRequestController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | START WORK
-    |--------------------------------------------------------------------------
-    |
-    | assigned
-    |     ↓
-    | in_progress
-    |
-    */
+|--------------------------------------------------------------------------
+| START WORK
+|--------------------------------------------------------------------------
+|
+| assigned
+|     ↓
+| in_progress
+|
+| LGU Employee:
+|     Assigned technician can start work.
+|
+| External Contractor:
+|     Maintenance Supervisor can start work.
+|
+*/
 
     public function startWork(
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
         $user = auth()->user();
 
-        $isTechnician = $user
-            ->roles()
-            ->where(
-                'name',
-                'technician'
-            )
-            ->exists();
-
-        if (!$isTechnician) {
-            abort(
-                403,
-                'Only a Maintenance Technician can start work.'
-            );
-        }
-
-        if (
-            $maintenanceRequest->assigned_to !==
-            $user->id
-        ) {
-            abort(
-                403,
-                'This maintenance request is not assigned to you.'
-            );
-        }
+        /*
+    |--------------------------------------------------------------------------
+    | STATUS CHECK
+    |--------------------------------------------------------------------------
+    */
 
         if (
             $maintenanceRequest->status !==
@@ -1428,6 +1415,89 @@ class MaintenanceRequestController extends Controller
             );
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | LGU EMPLOYEE
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $maintenanceRequest->assignment_type ===
+            'lgu_employee'
+        ) {
+
+            $isTechnician = $user
+                ->roles()
+                ->where(
+                    'name',
+                    'technician'
+                )
+                ->exists();
+
+            if (!$isTechnician) {
+                abort(
+                    403,
+                    'Only a Maintenance Technician can start this work.'
+                );
+            }
+
+            if (
+                $maintenanceRequest->assigned_to !==
+                $user->id
+            ) {
+                abort(
+                    403,
+                    'This maintenance request is not assigned to you.'
+                );
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | EXTERNAL CONTRACTOR
+    |--------------------------------------------------------------------------
+    */ elseif (
+            $maintenanceRequest->assignment_type ===
+            'external_contractor'
+        ) {
+
+            $isSupervisor = $user
+                ->roles()
+                ->whereIn(
+                    'name',
+                    [
+                        'maintenance_supervisor',
+                        'system_admin',
+                    ]
+                )
+                ->exists();
+
+            if (!$isSupervisor) {
+                abort(
+                    403,
+                    'Only the Maintenance Supervisor can start work for an external contractor.'
+                );
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | UNKNOWN ASSIGNMENT TYPE
+    |--------------------------------------------------------------------------
+    */ else {
+
+            return back()->with(
+                'error',
+                'This maintenance request has an invalid assignment type.'
+            );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | START WORK
+    |--------------------------------------------------------------------------
+    */
+
         $maintenanceRequest->update([
             'status' =>
             'in_progress',
@@ -1436,12 +1506,17 @@ class MaintenanceRequestController extends Controller
             now(),
         ]);
 
+        /*
+    |--------------------------------------------------------------------------
+    | SUCCESS
+    |--------------------------------------------------------------------------
+    */
+
         return back()->with(
             'success',
             'Maintenance work started.'
         );
     }
-
     /*
     |--------------------------------------------------------------------------
     | COMPLETE

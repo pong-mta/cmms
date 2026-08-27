@@ -16,6 +16,7 @@ import {
     ClipboardCheck,
     Send,
     FileCheck2,
+    Play,
 } from 'lucide-react';
 
 
@@ -2884,6 +2885,28 @@ export default function ShowMaintenanceRequest({
                                         Assigned {formatDateTime(request.assigned_at)}
                                     </p>
                                 )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (
+                                            !window.confirm(
+                                                'Start maintenance work now?',
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
+                                        router.post(
+                                            `/maintenance-requests/${request.id}/start-work`,
+                                        );
+                                    }}
+                                    className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                >
+                                    <Play className="h-4 w-4" />
+
+                                    Start Work
+                                </button>
 
                             </div>
                         )}
