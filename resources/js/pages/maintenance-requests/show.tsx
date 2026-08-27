@@ -3766,14 +3766,12 @@ export default function ShowMaintenanceRequest({
                                     }
                                 />
 
-
                                 <DateItem
                                     label="Assessed"
                                     value={
                                         request.assessed_at
                                     }
                                 />
-
 
                                 <DateItem
                                     label="Head Reviewed"
@@ -3782,14 +3780,12 @@ export default function ShowMaintenanceRequest({
                                     }
                                 />
 
-
                                 <DateItem
                                     label="GSO Validated"
                                     value={
                                         request.gso_reviewed_at
                                     }
                                 />
-
 
                                 <DateItem
                                     label="Budget Reviewed"
@@ -3803,15 +3799,21 @@ export default function ShowMaintenanceRequest({
                                     value={
                                         request.accounting_reviewed_at
                                     }
-                                    />
+                                />
 
                                 <DateItem
-                                    label="Mayor Reviewed"
+                                    label="Mayor Approved"
                                     value={
                                         request.mayor_reviewed_at
                                     }
                                 />
 
+                                <DateItem
+                                    label="Assigned"
+                                    value={
+                                        request.assigned_at
+                                    }
+                                />
 
                                 <DateItem
                                     label="Started"
@@ -3819,7 +3821,6 @@ export default function ShowMaintenanceRequest({
                                         request.started_at
                                     }
                                 />
-
 
                                 <DateItem
                                     label="Completed"
