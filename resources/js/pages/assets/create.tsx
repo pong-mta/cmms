@@ -215,7 +215,7 @@ export default function CreateAsset({
 
                             {/* ASSET CODE */}
 
-                            <Field
+                            {/* <Field
                                 label="Asset Code"
                                 required
                                 error={
@@ -250,7 +250,7 @@ export default function CreateAsset({
                                     identification format.
                                 </FieldHint>
 
-                            </Field>
+                            </Field> */}
 
 
                             {/* NAME */}
