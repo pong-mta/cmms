@@ -7,6 +7,7 @@ use App\Http\Controllers\PreventiveMaintenanceScheduleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 
 
 Route::get('/', function () {
@@ -26,14 +27,10 @@ Route::get('/reset-password', function () {
 })->name('reset-password');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function (Request $request) {
-        return Inertia::render('dashboard', [
-            'user' => $request->user()->load([
-                'department',
-                'roles',
-            ]),
-        ]);
-    })->name('dashboard');
+    Route::get(
+        'dashboard',
+        [DashboardController::class, 'index']
+    )->name('dashboard');
 
 
     //ASSETS
