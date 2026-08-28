@@ -585,4 +585,41 @@ class PreventiveMaintenanceScheduleController extends Controller
             'Preventive maintenance schedule cancelled successfully.'
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| HISTORY
+|--------------------------------------------------------------------------
+*/
+
+    public function history(
+        PreventiveMaintenanceSchedule $schedule
+    ): Response {
+
+        $schedule->load([
+            'asset:id,asset_code,name,department_id',
+            'asset.department:id,name,code',
+            'assignedTo:id,name',
+            'maintenanceRequests' => function ($query) {
+                $query
+                    ->with([
+                        'requestedBy:id,name',
+                        'completedBy:id,name',
+                        'workLogs' => function ($query) {
+                            $query
+                                ->with('performedBy:id,name')
+                                ->latest('id');
+                        },
+                    ])
+                    ->latest('id');
+            },
+        ]);
+
+        return Inertia::render(
+            'preventive-maintenance/history',
+            [
+                'schedule' => $schedule,
+            ]
+        );
+    }
 }

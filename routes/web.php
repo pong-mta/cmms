@@ -438,6 +438,16 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'preventive-maintenance.cancel'
     );
+
+    Route::get(
+        '/preventive-maintenance/{schedule}/history',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'history',
+        ]
+    )->name(
+        'preventive-maintenance.history'
+    );
 });
 
 require __DIR__ . '/settings.php';

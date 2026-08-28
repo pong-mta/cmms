@@ -439,6 +439,13 @@ export default function PreventiveMaintenance({
                                                     Edit
                                                 </Link>
 
+                                                <Link
+                                                    href={`/preventive-maintenance/${schedule.id}/history`}
+                                                    className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                                                >
+                                                    History
+                                                </Link>
+
 
                                                 {/* VIEW ASSET */}
 
