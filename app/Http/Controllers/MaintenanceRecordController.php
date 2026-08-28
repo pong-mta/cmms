@@ -139,6 +139,8 @@ class MaintenanceRecordController extends Controller
                 ->selectRaw('status, COUNT(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status');
+            
+            dd($statusCounts);
 
             $maintenanceStatuses = $statusCounts
                 ->map(function ($total, $status) {
