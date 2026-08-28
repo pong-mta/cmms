@@ -4,19 +4,37 @@ import { Head, Link } from '@inertiajs/react';
 
 import {
     Archive,
+    BarChart3,
     Bell,
     Building2,
     CalendarClock,
     CheckCircle2,
     ClipboardList,
     Clock3,
+    FileBarChart,
     FileText,
     History,
+    LayoutDashboard,
     Package,
     Plus,
     Users,
     Wrench,
 } from 'lucide-react';
+
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
 
 
 /*
@@ -69,12 +87,24 @@ interface DashboardStats {
     completed: number;
 }
 
+interface MaintenanceStatus {
+    status: string;
+    total: number;
+}
+
+interface MonthlyMaintenance {
+    month: string;
+    total: number;
+}
+
 interface MaintenanceItem {
     id: number;
     title?: string;
     status?: string;
     priority?: string;
     completed_at?: string | null;
+    created_at?: string | null;
+
     asset?: {
         id: number;
         asset_code: string;
@@ -95,9 +125,55 @@ interface DashboardProps {
 
     stats?: DashboardStats;
 
+    maintenanceStatuses?: MaintenanceStatus[];
+
+    monthlyMaintenance?: MonthlyMaintenance[];
+
     recentMaintenance?: MaintenanceItem[];
 
     pendingActions?: PendingAction[];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHART COLORS
+|--------------------------------------------------------------------------
+*/
+
+const STATUS_COLORS = [
+    '#2563eb',
+    '#f59e0b',
+    '#f97316',
+    '#10b981',
+    '#ef4444',
+    '#8b5cf6',
+    '#64748b',
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| HELPERS
+|--------------------------------------------------------------------------
+*/
+
+function formatRole(role?: string): string {
+    if (!role) {
+        return 'User';
+    }
+
+    return role
+        .replace(/_/g, ' ')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (letter) =>
+            letter.toUpperCase(),
+        );
+}
+
+
+function getPrimaryRole(user: User): string {
+    return user.roles?.[0]?.name ?? 'User';
 }
 
 
@@ -110,6 +186,8 @@ interface DashboardProps {
 export default function Dashboard({
     user,
     stats,
+    maintenanceStatuses = [],
+    monthlyMaintenance = [],
     recentMaintenance = [],
     pendingActions = [],
 }: DashboardProps) {
@@ -128,6 +206,7 @@ export default function Dashboard({
         user.department?.code ??
         '';
 
+
     /*
     |--------------------------------------------------------------------------
     | ROLE
@@ -135,24 +214,16 @@ export default function Dashboard({
     */
 
     const roleName =
-        user.roles?.[0]?.name ??
-        'User';
+        getPrimaryRole(user);
 
-    const formattedRole =
-        roleName
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, (letter) =>
-                letter.toUpperCase(),
-            );
+    const roleLabel =
+        formatRole(roleName);
 
 
     /*
     |--------------------------------------------------------------------------
     | STATISTICS
     |--------------------------------------------------------------------------
-    |
-    | Defaults are zero until Laravel supplies real department statistics.
-    |
     */
 
     const dashboardStats: DashboardStats = {
@@ -160,11 +231,20 @@ export default function Dashboard({
         maintenance: stats?.maintenance ?? 0,
         requests: stats?.requests ?? 0,
         pending: stats?.pending ?? 0,
-        maintenance_due: stats?.maintenance_due ?? 0,
-        overdue: stats?.overdue ?? 0,
-        completed: stats?.completed ?? 0,
+        maintenance_due:
+            stats?.maintenance_due ?? 0,
+        overdue:
+            stats?.overdue ?? 0,
+        completed:
+            stats?.completed ?? 0,
     };
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | RETURN
+    |--------------------------------------------------------------------------
+    */
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -175,6 +255,7 @@ export default function Dashboard({
 
 
             <div className="flex flex-1 flex-col gap-6 p-6">
+
 
                 {/* ====================================================== */}
                 {/* HEADER */}
@@ -188,9 +269,11 @@ export default function Dashboard({
                             LGU Operations Platform
                         </p>
 
+
                         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                             Good day, {user.name}
                         </h1>
+
 
                         <p className="mt-1 text-sm text-slate-500">
                             {departmentName} Department Dashboard
@@ -199,21 +282,26 @@ export default function Dashboard({
                     </div>
 
 
-                    {/* USER / NOTIFICATION */}
-
                     <div className="flex items-center gap-3">
+
+                        {/* NOTIFICATIONS */}
 
                         <button
                             type="button"
                             className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+                            title="Notifications"
                         >
 
                             <Bell className="h-5 w-5" />
 
-                            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+                            {dashboardStats.pending > 0 && (
+                                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+                            )}
 
                         </button>
 
+
+                        {/* USER */}
 
                         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
 
@@ -233,7 +321,7 @@ export default function Dashboard({
                                 </p>
 
                                 <p className="text-[10px] text-slate-500">
-                                    {departmentName}
+                                    {roleLabel}
                                 </p>
 
                             </div>
@@ -246,7 +334,7 @@ export default function Dashboard({
 
 
                 {/* ====================================================== */}
-                {/* DEPARTMENT CARD */}
+                {/* DEPARTMENT BANNER */}
                 {/* ====================================================== */}
 
                 <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b1f3a] to-[#0b5cab] p-6 text-white shadow-lg">
@@ -257,9 +345,7 @@ export default function Dashboard({
 
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl font-bold ring-1 ring-white/20">
 
-                                {user.name
-                                    .charAt(0)
-                                    .toUpperCase()}
+                                <Building2 className="h-7 w-7" />
 
                             </div>
 
@@ -270,9 +356,11 @@ export default function Dashboard({
                                     Department
                                 </p>
 
+
                                 <h2 className="mt-1 text-lg font-bold">
                                     {departmentName}
                                 </h2>
+
 
                                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-blue-100">
 
@@ -282,12 +370,14 @@ export default function Dashboard({
                                         </span>
                                     )}
 
+
                                     <span className="text-blue-300">
                                         •
                                     </span>
 
+
                                     <span>
-                                        {formattedRole}
+                                        {roleLabel}
                                     </span>
 
                                 </div>
@@ -300,11 +390,12 @@ export default function Dashboard({
                         <div className="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
 
                             <p className="text-[10px] uppercase tracking-wider text-blue-200">
-                                Mobile Number
+                                Department ID
                             </p>
 
+
                             <p className="mt-1 text-sm font-semibold">
-                                {user.phone}
+                                {user.department_id ?? '—'}
                             </p>
 
                         </div>
@@ -315,7 +406,7 @@ export default function Dashboard({
 
 
                 {/* ====================================================== */}
-                {/* DEPARTMENT STATISTICS */}
+                {/* MAIN STATISTICS */}
                 {/* ====================================================== */}
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -343,7 +434,7 @@ export default function Dashboard({
                     <StatCard
                         title="Requests"
                         value={dashboardStats.requests}
-                        description="Maintenance requests"
+                        description="Department maintenance requests"
                         icon={
                             <ClipboardList className="h-5 w-5" />
                         }
@@ -351,7 +442,7 @@ export default function Dashboard({
 
 
                     <StatCard
-                        title="Pending Actions"
+                        title="Pending"
                         value={dashboardStats.pending}
                         description="Actions requiring attention"
                         icon={
@@ -398,7 +489,243 @@ export default function Dashboard({
 
 
                 {/* ====================================================== */}
-                {/* MAIN CONTENT */}
+                {/* CHARTS */}
+                {/* ====================================================== */}
+
+                <div className="grid gap-6 xl:grid-cols-2">
+
+
+                    {/* ================================================== */}
+                    {/* MAINTENANCE STATUS */}
+                    {/* ================================================== */}
+
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                        <div>
+
+                            <div className="flex items-center gap-2">
+
+                                <BarChart3 className="h-5 w-5 text-blue-600" />
+
+                                <h3 className="font-semibold text-slate-900">
+                                    Maintenance Status
+                                </h3>
+
+                            </div>
+
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Current maintenance status for {departmentName}
+                            </p>
+
+                        </div>
+
+
+                        <div className="mt-5 h-[300px]">
+
+                            {maintenanceStatuses.length > 0 ? (
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+
+                                    <BarChart
+                                        data={maintenanceStatuses}
+                                        margin={{
+                                            top: 10,
+                                            right: 10,
+                                            left: -20,
+                                            bottom: 10,
+                                        }}
+                                    >
+
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            vertical={false}
+                                        />
+
+                                        <XAxis
+                                            dataKey="status"
+                                            tick={{
+                                                fontSize: 11,
+                                            }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+
+                                        <YAxis
+                                            allowDecimals={false}
+                                            tick={{
+                                                fontSize: 11,
+                                            }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+
+                                        <Tooltip
+                                            cursor={{
+                                                fill: '#f8fafc',
+                                            }}
+                                        />
+
+                                        <Bar
+                                            dataKey="total"
+                                            name="Maintenance"
+                                            radius={[
+                                                6,
+                                                6,
+                                                0,
+                                                0,
+                                            ]}
+                                        >
+
+                                            {maintenanceStatuses.map(
+                                                (_, index) => (
+                                                    <Cell
+                                                        key={`status-${index}`}
+                                                        fill={
+                                                            STATUS_COLORS[
+                                                                index %
+                                                                STATUS_COLORS.length
+                                                            ]
+                                                        }
+                                                    />
+                                                ),
+                                            )}
+
+                                        </Bar>
+
+                                    </BarChart>
+
+                                </ResponsiveContainer>
+
+                            ) : (
+
+                                <EmptyChart
+                                    icon={
+                                        <Wrench className="h-7 w-7" />
+                                    }
+                                    title="No maintenance data"
+                                    description="Maintenance status will appear here when your department has records."
+                                />
+
+                            )}
+
+                        </div>
+
+                    </section>
+
+
+                    {/* ================================================== */}
+                    {/* MONTHLY TREND */}
+                    {/* ================================================== */}
+
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                        <div>
+
+                            <div className="flex items-center gap-2">
+
+                                <BarChart3 className="h-5 w-5 text-emerald-600" />
+
+                                <h3 className="font-semibold text-slate-900">
+                                    Monthly Maintenance Trend
+                                </h3>
+
+                            </div>
+
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Maintenance activity over the past months
+                            </p>
+
+                        </div>
+
+
+                        <div className="mt-5 h-[300px]">
+
+                            {monthlyMaintenance.length > 0 ? (
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+
+                                    <LineChart
+                                        data={monthlyMaintenance}
+                                        margin={{
+                                            top: 10,
+                                            right: 10,
+                                            left: -20,
+                                            bottom: 10,
+                                        }}
+                                    >
+
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            vertical={false}
+                                        />
+
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{
+                                                fontSize: 11,
+                                            }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+
+                                        <YAxis
+                                            allowDecimals={false}
+                                            tick={{
+                                                fontSize: 11,
+                                            }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+
+                                        <Tooltip />
+
+                                        <Line
+                                            type="monotone"
+                                            dataKey="total"
+                                            name="Maintenance"
+                                            stroke="#10b981"
+                                            strokeWidth={3}
+                                            dot={{
+                                                r: 4,
+                                            }}
+                                            activeDot={{
+                                                r: 6,
+                                            }}
+                                        />
+
+                                    </LineChart>
+
+                                </ResponsiveContainer>
+
+                            ) : (
+
+                                <EmptyChart
+                                    icon={
+                                        <BarChart3 className="h-7 w-7" />
+                                    }
+                                    title="No trend data"
+                                    description="Monthly maintenance activity will appear here."
+                                />
+
+                            )}
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+                {/* ====================================================== */}
+                {/* RECENT + PENDING */}
                 {/* ====================================================== */}
 
                 <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -418,8 +745,9 @@ export default function Dashboard({
                                     Recent Maintenance
                                 </h3>
 
+
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Latest maintenance activity in your department
+                                    Latest activity in your department
                                 </p>
 
                             </div>
@@ -437,25 +765,13 @@ export default function Dashboard({
 
                         {recentMaintenance.length === 0 ? (
 
-                            <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-
+                            <EmptyState
+                                icon={
                                     <Wrench className="h-7 w-7" />
-
-                                </div>
-
-
-                                <h4 className="mt-4 text-sm font-semibold text-slate-800">
-                                    No maintenance activity yet
-                                </h4>
-
-
-                                <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
-                                    Maintenance activities for your department will appear here.
-                                </p>
-
-                            </div>
+                                }
+                                title="No maintenance activity yet"
+                                description="Maintenance activities for your department will appear here."
+                            />
 
                         ) : (
 
@@ -472,15 +788,22 @@ export default function Dashboard({
 
                                             <p className="truncate text-sm font-semibold text-slate-800">
                                                 {item.title ??
-                                                    'Maintenance Request'}
+                                                    'Maintenance Record'}
                                             </p>
 
+
                                             {item.asset && (
+
                                                 <p className="mt-1 text-xs text-slate-500">
+
                                                     {item.asset.asset_code}
+
                                                     {' • '}
+
                                                     {item.asset.name}
+
                                                 </p>
+
                                             )}
 
                                         </div>
@@ -514,6 +837,7 @@ export default function Dashboard({
                                 Pending Actions
                             </h3>
 
+
                             <p className="mt-1 text-xs text-slate-500">
                                 Items requiring your department's attention
                             </p>
@@ -523,25 +847,14 @@ export default function Dashboard({
 
                         {pendingActions.length === 0 ? (
 
-                            <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
-
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-600">
-
+                            <EmptyState
+                                icon={
                                     <CheckCircle2 className="h-7 w-7" />
-
-                                </div>
-
-
-                                <h4 className="mt-4 text-sm font-semibold text-slate-800">
-                                    Nothing pending
-                                </h4>
-
-
-                                <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
-                                    Your department currently has no pending actions.
-                                </p>
-
-                            </div>
+                                }
+                                title="Nothing pending"
+                                description="Your department currently has no pending actions."
+                                success
+                            />
 
                         ) : (
 
@@ -584,6 +897,7 @@ export default function Dashboard({
                         <h3 className="font-semibold text-slate-900">
                             Quick Actions
                         </h3>
+
 
                         <p className="mt-1 text-xs text-slate-500">
                             Common operations for {departmentName}
@@ -643,7 +957,6 @@ export default function Dashboard({
                 {/* ====================================================== */}
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
 
                     <InfoCard
                         icon={
@@ -723,6 +1036,7 @@ function StatCard({
                         {title}
                     </p>
 
+
                     <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
                         {value}
                     </p>
@@ -731,7 +1045,9 @@ function StatCard({
 
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+
                     {icon}
+
                 </div>
 
             </div>
@@ -772,6 +1088,7 @@ function SmallStatCard({
                     {title}
                 </p>
 
+
                 <p className="mt-1 text-2xl font-bold text-slate-900">
                     {value}
                 </p>
@@ -780,8 +1097,100 @@ function SmallStatCard({
 
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
+
                 {icon}
+
             </div>
+
+        </div>
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EMPTY CHART
+|--------------------------------------------------------------------------
+*/
+
+function EmptyChart({
+    icon,
+    title,
+    description,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+}) {
+
+    return (
+
+        <div className="flex h-full flex-col items-center justify-center text-center">
+
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+
+                {icon}
+
+            </div>
+
+
+            <h4 className="mt-4 text-sm font-semibold text-slate-800">
+                {title}
+            </h4>
+
+
+            <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
+                {description}
+            </p>
+
+        </div>
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EMPTY STATE
+|--------------------------------------------------------------------------
+*/
+
+function EmptyState({
+    icon,
+    title,
+    description,
+    success = false,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    success?: boolean;
+}) {
+
+    return (
+
+        <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+
+            <div
+                className={
+                    success
+                        ? 'flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-600'
+                        : 'flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400'
+                }
+            >
+
+                {icon}
+
+            </div>
+
+
+            <h4 className="mt-4 text-sm font-semibold text-slate-800">
+                {title}
+            </h4>
+
+
+            <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
+                {description}
+            </p>
 
         </div>
     );
@@ -812,11 +1221,13 @@ function QuickAction({
                 {icon}
             </div>
 
+
             <div className="min-w-0">
 
                 <p className="text-xs font-semibold text-slate-800">
                     {title}
                 </p>
+
 
                 <p className="mt-0.5 truncate text-[10px] text-slate-500">
                     {description}
@@ -835,7 +1246,9 @@ function QuickAction({
                 href={href}
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-left transition hover:border-blue-100 hover:bg-blue-50"
             >
+
                 {content}
+
             </Link>
 
         );
@@ -848,7 +1261,9 @@ function QuickAction({
             type="button"
             className="flex w-full items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-left transition hover:border-blue-100 hover:bg-blue-50"
         >
+
             {content}
+
         </button>
 
     );
@@ -883,7 +1298,9 @@ function InfoCard({
             <div className="flex items-center gap-3">
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-100">
+
                     {icon}
+
                 </div>
 
 
@@ -892,6 +1309,7 @@ function InfoCard({
                     <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                         {title}
                     </p>
+
 
                     <p className="mt-1 truncate text-xs font-semibold text-slate-800">
                         {value}
