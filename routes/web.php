@@ -33,6 +33,39 @@ Route::middleware(['auth'])->group(function () {
     )->name('dashboard');
 
 
+     /*
+    |--------------------------------------------------------------------------
+    | OPERATIONS → REQUESTS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('operations/requests')
+        ->name('operations.requests.')
+        ->group(function () {
+
+            Route::get(
+                '/',
+                [OperationsRequestController::class, 'index']
+            )->name('index');
+
+            Route::get(
+                '/create',
+                [OperationsRequestController::class, 'create']
+            )->name('create');
+
+            Route::post(
+                '/',
+                [OperationsRequestController::class, 'store']
+            )->name('store');
+
+            Route::get(
+                '/{serviceRequest}',
+                [OperationsRequestController::class, 'show']
+            )->name('show');
+
+        });
+
+
     //ASSETS
     Route::get('/assets', [
         AssetController::class,

@@ -203,10 +203,10 @@ function getDepartmentName(
 | DEPARTMENT NAVIGATION
 |--------------------------------------------------------------------------
 |
-| This is the common operational navigation.
+| The navigation is shared across departments.
 |
-| The actual department determines the data shown inside
-| these modules.
+| Department-aware access and data filtering are handled
+| by the backend and individual modules.
 |
 */
 
@@ -246,19 +246,19 @@ function getDepartmentNavigation(
 
             {
                 title: 'Documents',
-                url: '/documents',
+                url: '/operations/documents',
                 icon: FileText,
             },
 
             {
                 title: 'Requests',
-                url: '/requests',
+                url: '/operations/requests',
                 icon: ClipboardList,
             },
 
             {
                 title: 'Notifications',
-                url: '/notifications',
+                url: '/operations/notifications',
                 icon: Bell,
             },
 
@@ -321,7 +321,7 @@ function getDepartmentNavigation(
     | MAINTENANCE
     |--------------------------------------------------------------------------
     |
-    | This is our CMMS module.
+    | Maintenance is a specialized operational module.
     |
     */
 
@@ -717,6 +717,12 @@ export function AppSidebar() {
         );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | RETURN
+    |--------------------------------------------------------------------------
+    */
+
     return (
 
         <Sidebar
@@ -756,56 +762,62 @@ export function AppSidebar() {
 
 
                 {/* ====================================================== */}
-{/* DEPARTMENT */}
-{/* ====================================================== */}
+                {/* DEPARTMENT */}
+                {/* ====================================================== */}
 
-<div className="px-2 pb-2">
+                <div className="px-2 pb-2">
 
-    {/* ================================================== */}
-    {/* EXPANDED SIDEBAR */}
-    {/* ================================================== */}
+                    {/* ================================================== */}
+                    {/* EXPANDED SIDEBAR */}
+                    {/* ================================================== */}
 
-    <div className="group-data-[collapsible=icon]:hidden">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="group-data-[collapsible=icon]:hidden">
 
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Department
-            </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
 
-            <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">
-                {departmentName}
-            </div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                Department
+                            </div>
 
-            {departmentCode && (
-                <div className="mt-0.5 text-[10px] font-medium text-slate-400">
-                    {departmentCode}
+                            <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">
+                                {departmentName}
+                            </div>
+
+                            {departmentCode && (
+
+                                <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                                    {departmentCode}
+                                </div>
+
+                            )}
+
+                            <div className="mt-1 text-[10px] font-medium text-blue-600">
+                                {roleLabel}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* ================================================== */}
+                    {/* COLLAPSED / ICON ONLY */}
+                    {/* ================================================== */}
+
+                    <div className="hidden justify-center group-data-[collapsible=icon]:flex">
+
+                        <div
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50"
+                            title={`${departmentName} — ${roleLabel}`}
+                        >
+
+                            <Building2 className="h-4 w-4 text-blue-600" />
+
+                        </div>
+
+                    </div>
+
                 </div>
-            )}
-
-            <div className="mt-1 text-[10px] font-medium text-blue-600">
-                {roleLabel}
-            </div>
-
-        </div>
-    </div>
-
-
-    {/* ================================================== */}
-    {/* COLLAPSED / ICON ONLY */}
-    {/* ================================================== */}
-
-    <div className="hidden group-data-[collapsible=icon]:flex justify-center">
-
-        <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50"
-            title={`${departmentName} — ${roleLabel}`}
-        >
-            <Building2 className="h-4 w-4 text-blue-600" />
-        </div>
-
-    </div>
-
-</div>
 
             </SidebarHeader>
 
