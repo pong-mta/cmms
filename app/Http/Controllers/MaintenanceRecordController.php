@@ -36,6 +36,19 @@ class MaintenanceRecordController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $maintenanceRequests = MaintenanceRequest::query()
+            ->with([
+                'asset:id,asset_code,name,department_id',
+                'department:id,name,code',
+                'requestedBy:id,name',
+                'assignedTo:id,name',
+                'completedBy:id,name',
+                'preventiveMaintenanceSchedule:id,title',
+            ])
+            ->where('status', 'completed')
+            ->latest('completed_at')
+            ->get();
+
         $types = MaintenanceType::query()
             ->where('status', true)
             ->orderBy('name')
@@ -58,6 +71,7 @@ class MaintenanceRecordController extends Controller
             'maintenance/index',
             [
                 'records' => $records,
+                'maintenanceRequests' => $maintenanceRequests,
                 'types' => $types,
                 'departments' => $departments,
             ]
