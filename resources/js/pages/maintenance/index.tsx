@@ -644,12 +644,8 @@ export default function MaintenanceIndex({
                                     <Bar
                                         dataKey="total"
                                         name="Completed Maintenance"
-                                        radius={[
-                                            6,
-                                            6,
-                                            0,
-                                            0,
-                                        ]}
+                                        fill="#2563eb"
+                                        radius={[6, 6, 0, 0]}
                                     />
 
                                 </BarChart>
@@ -693,7 +689,18 @@ export default function MaintenanceIndex({
                                         outerRadius={90}
                                         innerRadius={55}
                                         paddingAngle={3}
-                                    />
+                                    >
+                                        {maintenanceTypes.map((entry, index) => (
+                                            <Cell
+                                                key={`maintenance-type-${entry.type}-${index}`}
+                                                fill={
+                                                    index === 0
+                                                        ? '#2563eb'
+                                                        : '#f59e0b'
+                                                }
+                                            />
+                                        ))}
+                                    </Pie>
 
                                     <Tooltip />
 
