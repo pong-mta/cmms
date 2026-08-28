@@ -127,7 +127,7 @@ export function NavMain({
             {/* ========================================================== */}
 
             <SidebarGroupLabel className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                CMMS
+               LGU OPERATIONS
             </SidebarGroupLabel>
 
 
