@@ -48,6 +48,8 @@ interface PreventiveMaintenanceSchedule {
     assigned_to?: UserOption | null;
 
     asset?: Asset | null;
+    has_active_request: boolean;
+    active_request_id?: number | null;
 }
 
 interface Props {
@@ -61,7 +63,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Preventive Maintenance',
-        href: '/maintenance/preventive',
+        href: '/preventive-maintenance',
     },
 ];
 
@@ -428,43 +430,50 @@ export default function PreventiveMaintenance({
 
                                            <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
 
+                                            <Link
+                                                href={`/preventive-maintenance/${schedule.id}/edit`}
+                                                className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                                            >
+                                                Edit
+                                            </Link>
+
+                                            <Link
+                                                href={`/assets/${schedule.asset_id}`}
+                                                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                                            >
+                                                View Asset
+                                            </Link>
+
+                                            {schedule.has_active_request ? (
                                                 <Link
-                                                    href={`/assets/${schedule.asset_id}`}
-                                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                                                    href={`/maintenance-requests/${schedule.active_request_id}`}
+                                                    className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
                                                 >
-                                                    View Asset
+                                                    View Maintenance Request
                                                 </Link>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (
+                                                            !confirm(
+                                                                'Create a maintenance request for this preventive maintenance schedule?'
+                                                            )
+                                                        ) {
+                                                            return;
+                                                        }
 
-                                                {schedule.has_active_request ? (
-                                                    <Link
-                                                        href={`/maintenance-requests/${schedule.active_request_id}`}
-                                                        className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
-                                                    >
-                                                        View Maintenance Request
-                                                    </Link>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (
-                                                                !confirm(
-                                                                    'Create a maintenance request for this preventive maintenance schedule?'
-                                                                )
-                                                            ) {
-                                                                return;
-                                                            }
+                                                        router.post(
+                                                            `/preventive-maintenance/${schedule.id}/create-request`
+                                                        );
+                                                    }}
+                                                    className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+                                                >
+                                                    Create Maintenance Request
+                                                </button>
+                                            )}
 
-                                                            router.post(
-                                                                `/preventive-maintenance/${schedule.id}/create-request`
-                                                            );
-                                                        }}
-                                                        className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
-                                                    >
-                                                        Create Maintenance Request
-                                                    </button>
-                                                )}
-
-                                            </div>
+                                        </div>
 
                                         </div>
 

@@ -362,4 +362,134 @@ class PreventiveMaintenanceScheduleController extends Controller
                 ' created successfully.'
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| EDIT
+|--------------------------------------------------------------------------
+*/
+
+    public function edit(
+        PreventiveMaintenanceSchedule $schedule
+    ): Response {
+
+        $schedule->load([
+            'asset',
+        ]);
+
+        $users = User::query()
+            ->where(
+                'department_id',
+                $schedule->asset->department_id
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'department_id',
+            ]);
+
+        return Inertia::render(
+            'preventive-maintenance/edit',
+            [
+                'schedule' => $schedule,
+                'asset' => $schedule->asset,
+                'users' => $users,
+            ]
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| UPDATE
+|--------------------------------------------------------------------------
+*/
+
+    public function update(
+        Request $request,
+        PreventiveMaintenanceSchedule $schedule
+    ): RedirectResponse {
+
+        $validated = $request->validate([
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'frequency_type' => [
+                'required',
+                'in:days,weeks,months,years',
+            ],
+
+            'frequency_value' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'start_date' => [
+                'required',
+                'date',
+            ],
+
+            'next_due_date' => [
+                'required',
+                'date',
+            ],
+
+            'assigned_to' => [
+                'nullable',
+                'exists:users,id',
+            ],
+
+            'notes' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
+        $schedule->update([
+            'title' =>
+            $validated['title'],
+
+            'description' =>
+            $validated['description']
+                ?? null,
+
+            'frequency_type' =>
+            $validated['frequency_type'],
+
+            'frequency_value' =>
+            $validated['frequency_value'],
+
+            'start_date' =>
+            $validated['start_date'],
+
+            'next_due_date' =>
+            $validated['next_due_date'],
+
+            'assigned_to' =>
+            $validated['assigned_to']
+                ?? null,
+
+            'notes' =>
+            $validated['notes']
+                ?? null,
+        ]);
+
+        return redirect()
+            ->route(
+                'maintenance.preventive'
+            )
+            ->with(
+                'success',
+                'Preventive maintenance schedule updated successfully.'
+            );
+    }
 }

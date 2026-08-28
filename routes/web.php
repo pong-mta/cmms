@@ -389,6 +389,25 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'preventive-maintenance.create-request'
     );
+    Route::get(
+        '/preventive-maintenance/{schedule}/edit',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'edit',
+        ]
+    )->name(
+        'preventive-maintenance.edit'
+    );
+
+    Route::put(
+        '/preventive-maintenance/{schedule}',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'update',
+        ]
+    )->name(
+        'preventive-maintenance.update'
+    );
 });
 
 require __DIR__ . '/settings.php';
