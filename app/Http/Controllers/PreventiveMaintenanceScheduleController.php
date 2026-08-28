@@ -492,4 +492,97 @@ class PreventiveMaintenanceScheduleController extends Controller
                 'Preventive maintenance schedule updated successfully.'
             );
     }
+
+
+    /*
+|--------------------------------------------------------------------------
+| PAUSE
+|--------------------------------------------------------------------------
+*/
+
+    public function pause(
+        PreventiveMaintenanceSchedule $schedule
+    ): RedirectResponse {
+
+        if ($schedule->status !== 'active') {
+            return back()->with(
+                'error',
+                'Only active preventive maintenance schedules can be paused.'
+            );
+        }
+
+        $schedule->update([
+            'status' => 'paused',
+        ]);
+
+        return back()->with(
+            'success',
+            'Preventive maintenance schedule paused successfully.'
+        );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| RESUME
+|--------------------------------------------------------------------------
+*/
+
+    public function resume(
+        PreventiveMaintenanceSchedule $schedule
+    ): RedirectResponse {
+
+        if ($schedule->status !== 'paused') {
+            return back()->with(
+                'error',
+                'Only paused preventive maintenance schedules can be resumed.'
+            );
+        }
+
+        $schedule->update([
+            'status' => 'active',
+        ]);
+
+        return back()->with(
+            'success',
+            'Preventive maintenance schedule resumed successfully.'
+        );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| CANCEL
+|--------------------------------------------------------------------------
+*/
+
+    public function cancel(
+        PreventiveMaintenanceSchedule $schedule
+    ): RedirectResponse {
+
+        if (
+            in_array(
+                $schedule->status,
+                [
+                    'completed',
+                    'cancelled',
+                ],
+                true
+            )
+        ) {
+            return back()->with(
+                'error',
+                'This preventive maintenance schedule can no longer be cancelled.'
+            );
+        }
+
+        $schedule->update([
+            'status' => 'cancelled',
+        ]);
+
+        return back()->with(
+            'success',
+            'Preventive maintenance schedule cancelled successfully.'
+        );
+    }
 }

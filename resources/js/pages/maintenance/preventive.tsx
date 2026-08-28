@@ -428,52 +428,160 @@ export default function PreventiveMaintenance({
                                             </div>
 
 
-                                           <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+                                           <div className="mt-5 flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-4">
 
-                                            <Link
-                                                href={`/preventive-maintenance/${schedule.id}/edit`}
-                                                className="text-xs font-semibold text-slate-600 hover:text-slate-900"
-                                            >
-                                                Edit
-                                            </Link>
+                                                {/* EDIT */}
 
-                                            <Link
-                                                href={`/assets/${schedule.asset_id}`}
-                                                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                                            >
-                                                View Asset
-                                            </Link>
-
-                                            {schedule.has_active_request ? (
                                                 <Link
-                                                    href={`/maintenance-requests/${schedule.active_request_id}`}
-                                                    className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                    href={`/preventive-maintenance/${schedule.id}/edit`}
+                                                    className="text-xs font-semibold text-slate-600 hover:text-slate-900"
                                                 >
-                                                    View Maintenance Request
+                                                    Edit
                                                 </Link>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (
-                                                            !confirm(
-                                                                'Create a maintenance request for this preventive maintenance schedule?'
-                                                            )
-                                                        ) {
-                                                            return;
-                                                        }
 
-                                                        router.post(
-                                                            `/preventive-maintenance/${schedule.id}/create-request`
-                                                        );
-                                                    }}
-                                                    className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+
+                                                {/* VIEW ASSET */}
+
+                                                <Link
+                                                    href={`/assets/${schedule.asset_id}`}
+                                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700"
                                                 >
-                                                    Create Maintenance Request
-                                                </button>
-                                            )}
+                                                    View Asset
+                                                </Link>
 
-                                        </div>
+
+                                                {/* ACTIVE */}
+
+                                                {schedule.status === 'active' && (
+                                                    <>
+                                                        {schedule.has_active_request ? (
+                                                            <Link
+                                                                href={`/maintenance-requests/${schedule.active_request_id}`}
+                                                                className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                            >
+                                                                View Maintenance Request
+                                                            </Link>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (
+                                                                        !confirm(
+                                                                            'Create a maintenance request for this preventive maintenance schedule?'
+                                                                        )
+                                                                    ) {
+                                                                        return;
+                                                                    }
+
+                                                                    router.post(
+                                                                        `/preventive-maintenance/${schedule.id}/create-request`
+                                                                    );
+                                                                }}
+                                                                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+                                                            >
+                                                                Create Maintenance Request
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (
+                                                                    !confirm(
+                                                                        'Pause this preventive maintenance schedule?'
+                                                                    )
+                                                                ) {
+                                                                    return;
+                                                                }
+
+                                                                router.post(
+                                                                    `/preventive-maintenance/${schedule.id}/pause`
+                                                                );
+                                                            }}
+                                                            className="rounded-lg bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+                                                        >
+                                                            Pause
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (
+                                                                    !confirm(
+                                                                        'Cancel this preventive maintenance schedule? This will keep its history but stop the schedule.'
+                                                                    )
+                                                                ) {
+                                                                    return;
+                                                                }
+
+                                                                router.post(
+                                                                    `/preventive-maintenance/${schedule.id}/cancel`
+                                                                );
+                                                            }}
+                                                            className="rounded-lg bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </>
+                                                )}
+
+
+                                                {/* PAUSED */}
+
+                                                {schedule.status === 'paused' && (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (
+                                                                    !confirm(
+                                                                        'Resume this preventive maintenance schedule?'
+                                                                    )
+                                                                ) {
+                                                                    return;
+                                                                }
+
+                                                                router.post(
+                                                                    `/preventive-maintenance/${schedule.id}/resume`
+                                                                );
+                                                            }}
+                                                            className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                        >
+                                                            Resume
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (
+                                                                    !confirm(
+                                                                        'Cancel this preventive maintenance schedule? This will keep its history but stop the schedule.'
+                                                                    )
+                                                                ) {
+                                                                    return;
+                                                                }
+
+                                                                router.post(
+                                                                    `/preventive-maintenance/${schedule.id}/cancel`
+                                                                );
+                                                            }}
+                                                            className="rounded-lg bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </>
+                                                )}
+
+
+                                                {/* CANCELLED */}
+
+                                                {schedule.status === 'cancelled' && (
+                                                    <span className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">
+                                                        Cancelled
+                                                    </span>
+                                                )}
+
+                                            </div>
 
                                         </div>
 

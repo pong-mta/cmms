@@ -408,6 +408,36 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'preventive-maintenance.update'
     );
+
+    Route::post(
+        '/preventive-maintenance/{schedule}/pause',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'pause',
+        ]
+    )->name(
+        'preventive-maintenance.pause'
+    );
+
+    Route::post(
+        '/preventive-maintenance/{schedule}/resume',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'resume',
+        ]
+    )->name(
+        'preventive-maintenance.resume'
+    );
+
+    Route::post(
+        '/preventive-maintenance/{schedule}/cancel',
+        [
+            PreventiveMaintenanceScheduleController::class,
+            'cancel',
+        ]
+    )->name(
+        'preventive-maintenance.cancel'
+    );
 });
 
 require __DIR__ . '/settings.php';
