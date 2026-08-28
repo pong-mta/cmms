@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\PreventiveMaintenanceSchedule;
+use App\Models\MaintenanceRequest;
 
 class MaintenanceRecordController extends Controller
 {
@@ -444,20 +445,34 @@ class MaintenanceRecordController extends Controller
         );
     }
 
+
+
     /*
-|--------------------------------------------------------------------------
-| HISTORY
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | MAINTENANCE HISTORY
+    |--------------------------------------------------------------------------
+    */
 
     public function history(): Response
     {
-        $records = MaintenanceRecord::query()
+        $requests = MaintenanceRequest::query()
             ->with([
-                'asset:id,asset_code,name',
-                'maintenanceType:id,name,code',
-                'department:id,name,code',
-                'assignedTo:id,name',
+                'asset:id,asset_code,name,department_id',
+                'asset.department:id,name,code',
+
+                'requestedBy:id,name',
+
+                'completedBy:id,name',
+
+                'preventiveMaintenanceSchedule:id,title,frequency_type,frequency_value',
+
+                'workLogs' => function ($query) {
+                    $query
+                        ->with([
+                            'performedBy:id,name',
+                        ])
+                        ->latest('id');
+                },
             ])
             ->where('status', 'completed')
             ->latest('completed_at')
@@ -468,7 +483,7 @@ class MaintenanceRecordController extends Controller
         return Inertia::render(
             'maintenance/history',
             [
-                'records' => $records,
+                'requests' => $requests,
             ]
         );
     }
