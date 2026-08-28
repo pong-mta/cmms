@@ -135,16 +135,10 @@ class MaintenanceRecordController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $statusCounts = MaintenanceRecord::query()
+            $statusCounts = MaintenanceRequest::query()
                 ->selectRaw('status, COUNT(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status');
-            
-            dd([
-    'maintenance_records_total' => $records->total(),
-    'maintenance_records_count' => $records->count(),
-    'maintenance_requests_count' => $maintenanceRequests->count(),
-]);
 
             $maintenanceStatuses = $statusCounts
                 ->map(function ($total, $status) {
