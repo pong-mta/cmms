@@ -7,6 +7,7 @@ import {
     Archive,
     Building2,
     CalendarDays,
+    CheckCircle2,
     ChevronLeft,
     ChevronRight,
     Clock3,
@@ -81,6 +82,8 @@ interface MaintenanceRecord {
         | 'high'
         | 'critical';
 }
+
+
 
 interface MaintenanceRequest {
     id: number;
@@ -547,7 +550,8 @@ export default function MaintenanceIndex({
                     <SummaryCard
                         label="Showing"
                         value={
-                            filteredRecords.length
+                            filteredRecords.length +
+                            maintenanceRequests.length
                         }
                         icon={
                             <Archive className="h-4 w-4" />
