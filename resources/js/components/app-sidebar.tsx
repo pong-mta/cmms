@@ -754,42 +754,6 @@ export function AppSidebar() {
 
                 </SidebarMenu>
 
-
-                {/* ====================================================== */}
-                {/* DEPARTMENT */}
-                {/* ====================================================== */}
-
-                <div className="px-2 pb-2">
-
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Department
-                        </div>
-
-
-                        <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">
-                            {departmentName}
-                        </div>
-
-
-                        {departmentCode && (
-
-                            <div className="mt-0.5 text-[10px] font-medium text-slate-400">
-                                {departmentCode}
-                            </div>
-
-                        )}
-
-
-                        <div className="mt-1 text-[10px] font-medium text-blue-600">
-                            {roleLabel}
-                        </div>
-
-                    </div>
-
-                </div>
-
             </SidebarHeader>
 
 
