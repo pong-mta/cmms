@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\PreventiveMaintenanceSchedule;
 use App\Models\MaintenanceRequest;
+use Carbon\Carbon;
 
 class MaintenanceRecordController extends Controller
 {
@@ -67,13 +68,107 @@ class MaintenanceRecordController extends Controller
                 'code',
             ]);
 
+            /*
+            |--------------------------------------------------------------------------
+            | MAINTENANCE CHART DATA
+            |--------------------------------------------------------------------------
+            */
+
+            $year = now()->year;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | COMPLETED MAINTENANCE TREND
+            |--------------------------------------------------------------------------
+            */
+
+            $completedByMonth = MaintenanceRequest::query()
+                ->where('status', 'completed')
+                ->whereYear('completed_at', $year)
+                ->selectRaw('MONTH(completed_at) as month')
+                ->selectRaw('COUNT(*) as total')
+                ->groupByRaw('MONTH(completed_at)')
+                ->pluck('total', 'month');
+
+            $maintenanceTrend = collect(range(1, 12))
+                ->map(function ($month) use ($completedByMonth, $year) {
+                    return [
+                        'month' => Carbon::create($year, $month, 1)->format('M'),
+                        'total' => (int) ($completedByMonth[$month] ?? 0),
+                    ];
+                })
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | MAINTENANCE TYPE
+            |--------------------------------------------------------------------------
+            */
+
+            $preventiveCount = MaintenanceRequest::query()
+                ->where('status', 'completed')
+                ->whereNotNull('preventive_maintenance_schedule_id')
+                ->count();
+
+            $regularCount = MaintenanceRequest::query()
+                ->where('status', 'completed')
+                ->whereNull('preventive_maintenance_schedule_id')
+                ->count();
+
+            $maintenanceTypes = [
+                [
+                    'type' => 'Preventive Maintenance',
+                    'total' => $preventiveCount,
+                ],
+                [
+                    'type' => 'Regular Maintenance',
+                    'total' => $regularCount,
+                ],
+            ];
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | MAINTENANCE STATUS
+            |--------------------------------------------------------------------------
+            */
+
+            $statusCounts = MaintenanceRequest::query()
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            $maintenanceStatuses = $statusCounts
+                ->map(function ($total, $status) {
+                    return [
+                        'status' => str($status)
+                            ->replace('_', ' ')
+                            ->title()
+                            ->toString(),
+
+                        'total' => (int) $total,
+                    ];
+                })
+                ->values();
+
         return Inertia::render(
             'maintenance/index',
             [
                 'records' => $records,
+
                 'maintenanceRequests' => $maintenanceRequests,
+
                 'types' => $types,
+
                 'departments' => $departments,
+
+                'maintenanceTrend' => $maintenanceTrend,
+
+                'maintenanceTypes' => $maintenanceTypes,
+
+                'maintenanceStatuses' => $maintenanceStatuses,
             ]
         );
     }

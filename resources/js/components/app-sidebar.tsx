@@ -119,16 +119,18 @@ const mainNavItems: NavItem[] = [
         items: [
 
             {
+                title: 'Maintenance Overview',
+                url: '/maintenance',
+                icon: Gauge,
+            },
+
+            {
                 title: 'Maintenance Requests',
                 url: '/maintenance-requests',
                 icon: ClipboardList,
             },
 
-            {
-                title: 'Maintenance Overview',
-                url: '/maintenance',
-                icon: Gauge,
-            },
+            
 
             {
                 title: 'Preventive Maintenance',
