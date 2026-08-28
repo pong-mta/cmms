@@ -890,10 +890,120 @@ export default function MaintenanceIndex({
 
                             <tbody className="divide-y divide-slate-100">
                                 
+                                {maintenanceRequests.map((request) => (
+                                    <tr
+                                        key={`pm-${request.id}`}
+                                        className="group bg-blue-50/20 transition hover:bg-blue-50/50"
+                                    >
+                                        {/* MAINTENANCE */}
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                                    <CalendarDays className="h-4 w-4" />
+                                                </div>
 
-                                {filteredRecords.length ===
-                                0 ? (
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs font-semibold text-slate-800">
+                                                            {request.request_code}
+                                                        </p>
 
+                                                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-semibold text-blue-700">
+                                                            PM
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="mt-1 max-w-[220px] truncate text-[10px] text-slate-400">
+                                                        {request.title}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* ASSET */}
+                                        <td className="px-5 py-4">
+                                            {request.asset ? (
+                                                <div>
+                                                    <p className="text-xs font-semibold text-slate-700">
+                                                        {request.asset.name}
+                                                    </p>
+
+                                                    <p className="mt-0.5 text-[10px] font-semibold text-blue-700">
+                                                        {request.asset.asset_code}
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-slate-400">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+
+                                        {/* TYPE */}
+                                        <td className="px-5 py-4">
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-700">
+                                                    Preventive Maintenance
+                                                </p>
+
+                                                <p className="mt-0.5 text-[10px] text-blue-600">
+                                                    Scheduled PM
+                                                </p>
+                                            </div>
+                                        </td>
+
+                                        {/* SCHEDULE */}
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+
+                                                <span className="text-xs font-medium text-slate-600">
+                                                    {formatDate(request.completed_at)}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {/* PRIORITY */}
+                                        <td className="px-5 py-4">
+                                            <span
+                                                className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${priorityClass(
+                                                    request.priority,
+                                                )}`}
+                                            >
+                                                {priorityLabel(request.priority)}
+                                            </span>
+                                        </td>
+
+                                        {/* STATUS */}
+                                        <td className="px-5 py-4">
+                                            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                                Completed
+                                            </span>
+                                        </td>
+
+                                        {/* COST */}
+                                        <td className="px-5 py-4 text-right">
+                                            <span className="text-xs font-semibold text-slate-500">
+                                                —
+                                            </span>
+                                        </td>
+
+                                        {/* ACTION */}
+                                        <td className="px-5 py-4">
+                                            <div className="flex justify-end">
+                                                <Link
+                                                    href={`/maintenance-requests/${request.id}`}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
+                                                    title="View maintenance request"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredRecords.length === 0 &&
+                                    maintenanceRequests.length === 0 ? (
                                     <tr>
 
                                         <td
