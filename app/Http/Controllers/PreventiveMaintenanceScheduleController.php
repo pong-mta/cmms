@@ -615,10 +615,140 @@ class PreventiveMaintenanceScheduleController extends Controller
             },
         ]);
 
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT MAINTENANCE REQUESTS
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequests = $schedule
+            ->maintenanceRequests
+            ->map(function ($request) {
+
+                return [
+                    'id' =>
+                    $request->id,
+
+                    'request_code' =>
+                    $request->request_code,
+
+                    'title' =>
+                    $request->title,
+
+                    'description' =>
+                    $request->description,
+
+                    'status' =>
+                    $request->status,
+
+                    'priority' =>
+                    $request->priority,
+
+                    'requested_at' =>
+                    $request->requested_at,
+
+                    'completed_at' =>
+                    $request->completed_at,
+
+                    'remarks' =>
+                    $request->remarks,
+
+                    'requested_by' =>
+                    $request->requested_by,
+
+                    'completed_by' =>
+                    $request->completed_by,
+
+                    'requestedBy' =>
+                    $request->requestedBy,
+
+                    'completedBy' =>
+                    $request->completedBy,
+
+                    'workLogs' =>
+                    $request->workLogs
+                        ->map(function ($workLog) {
+
+                            return [
+                                'id' =>
+                                $workLog->id,
+
+                                'performed_by' =>
+                                $workLog->performed_by,
+
+                                'work_performed' =>
+                                $workLog->work_performed,
+
+                                'materials_used' =>
+                                $workLog->materials_used,
+
+                                'remarks' =>
+                                $workLog->remarks,
+
+                                'created_at' =>
+                                $workLog->created_at,
+
+                                'performedBy' =>
+                                $workLog->performedBy,
+                            ];
+                        })
+                        ->values(),
+                ];
+            })
+            ->values();
+
+        /*
+    |--------------------------------------------------------------------------
+    | RETURN
+    |--------------------------------------------------------------------------
+    */
+
         return Inertia::render(
             'preventive-maintenance/history',
             [
-                'schedule' => $schedule,
+                'schedule' => [
+                    'id' =>
+                    $schedule->id,
+
+                    'asset_id' =>
+                    $schedule->asset_id,
+
+                    'title' =>
+                    $schedule->title,
+
+                    'description' =>
+                    $schedule->description,
+
+                    'frequency_type' =>
+                    $schedule->frequency_type,
+
+                    'frequency_value' =>
+                    $schedule->frequency_value,
+
+                    'start_date' =>
+                    $schedule->start_date,
+
+                    'next_due_date' =>
+                    $schedule->next_due_date,
+
+                    'last_completed_at' =>
+                    $schedule->last_completed_at,
+
+                    'status' =>
+                    $schedule->status,
+
+                    'notes' =>
+                    $schedule->notes,
+
+                    'asset' =>
+                    $schedule->asset,
+
+                    'assignedTo' =>
+                    $schedule->assignedTo,
+
+                    'maintenanceRequests' =>
+                    $maintenanceRequests,
+                ],
             ]
         );
     }
