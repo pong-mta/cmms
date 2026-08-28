@@ -168,6 +168,21 @@ interface MaintenanceIndexProps {
     types: TypeOption[];
 
     departments: DepartmentOption[];
+
+    maintenanceTrend: {
+        month: string;
+        total: number;
+    }[];
+
+    maintenanceTypes: {
+        type: string;
+        total: number;
+    }[];
+
+    maintenanceStatuses: {
+        status: string;
+        total: number;
+    }[];
 }
 
 
@@ -327,6 +342,9 @@ export default function MaintenanceIndex({
     maintenanceRequests,
     types,
     departments,
+    maintenanceTrend,
+    maintenanceTypes,
+    maintenanceStatuses,
 }: MaintenanceIndexProps) {
 
     /*
