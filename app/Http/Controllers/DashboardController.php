@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\MaintenanceRequest;
 use App\Models\MaintenanceRecord;
+use App\Models\MaintenanceRequest;
+use App\Models\PreventiveMaintenanceSchedule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +26,7 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Default dashboard data
+        | EMPTY DEFAULTS
         |--------------------------------------------------------------------------
         */
 
@@ -39,6 +40,10 @@ class DashboardController extends Controller
             'completed' => 0,
         ];
 
+        $maintenanceStatuses = collect();
+
+        $monthlyMaintenance = collect();
+
         $recentMaintenance = collect();
 
         $pendingActions = collect();
@@ -46,11 +51,10 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | No department
+        | USER WITHOUT DEPARTMENT
         |--------------------------------------------------------------------------
         |
-        | A user without a department should not see another department's
-        | operational data.
+        | Do not expose another department's operational data.
         |
         */
 
@@ -58,6 +62,8 @@ class DashboardController extends Controller
             return Inertia::render('dashboard', [
                 'user' => $user,
                 'stats' => $stats,
+                'maintenanceStatuses' => $maintenanceStatuses,
+                'monthlyMaintenance' => $monthlyMaintenance,
                 'recentMaintenance' => $recentMaintenance,
                 'pendingActions' => $pendingActions,
             ]);
@@ -66,7 +72,7 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | ASSETS
+        | DEPARTMENT ASSETS
         |--------------------------------------------------------------------------
         */
 
@@ -78,26 +84,33 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | MAINTENANCE REQUESTS
+        | DEPARTMENT MAINTENANCE RECORDS
         |--------------------------------------------------------------------------
         */
 
-        $maintenanceRequestQuery = MaintenanceRequest::query()
-            ->whereHas('asset', function ($query) use ($departmentId) {
-                $query->where(
-                    'department_id',
-                    $departmentId
-                );
-            });
+        $maintenanceQuery = MaintenanceRecord::query()
+            ->where('department_id', $departmentId);
 
-
-        $stats['requests'] =
-            (clone $maintenanceRequestQuery)->count();
+        $stats['maintenance'] =
+            (clone $maintenanceQuery)->count();
 
 
         /*
         |--------------------------------------------------------------------------
-        | PENDING MAINTENANCE REQUESTS
+        | DEPARTMENT MAINTENANCE REQUESTS
+        |--------------------------------------------------------------------------
+        */
+
+        $requestQuery = MaintenanceRequest::query()
+            ->where('department_id', $departmentId);
+
+        $stats['requests'] =
+            (clone $requestQuery)->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PENDING REQUESTS
         |--------------------------------------------------------------------------
         */
 
@@ -108,45 +121,102 @@ class DashboardController extends Controller
             'in_progress',
         ];
 
-
         $stats['pending'] =
-            (clone $maintenanceRequestQuery)
-                ->whereIn(
-                    'status',
-                    $pendingStatuses
-                )
+            (clone $requestQuery)
+                ->whereIn('status', $pendingStatuses)
                 ->count();
 
 
         /*
         |--------------------------------------------------------------------------
-        | COMPLETED MAINTENANCE REQUESTS
+        | COMPLETED REQUESTS
         |--------------------------------------------------------------------------
         */
 
         $stats['completed'] =
-            (clone $maintenanceRequestQuery)
-                ->where(
-                    'status',
-                    'completed'
-                )
+            (clone $requestQuery)
+                ->where('status', 'completed')
                 ->count();
 
 
         /*
         |--------------------------------------------------------------------------
-        | MAINTENANCE RECORDS
+        | MAINTENANCE STATUS CHART
         |--------------------------------------------------------------------------
+        |
+        | Uses MaintenanceRequest because its status represents the
+        | workflow of a maintenance request.
+        |
         */
 
-        $maintenanceRecordQuery =
-            MaintenanceRecord::query()
-                ->where('department_id', $departmentId);
+        $statusCounts =
+            (clone $requestQuery)
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->orderBy('status')
+                ->pluck('total', 'status');
 
 
-        $stats['maintenance'] =
-            (clone $maintenanceRecordQuery)
-                ->count();
+        $maintenanceStatuses =
+            $statusCounts
+                ->map(function ($total, $status) {
+
+                    return [
+                        'status' => str($status)
+                            ->replace('_', ' ')
+                            ->title()
+                            ->toString(),
+
+                        'total' => (int) $total,
+                    ];
+                })
+                ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTHLY MAINTENANCE TREND
+        |--------------------------------------------------------------------------
+        |
+        | Last 12 months.
+        |
+        */
+
+        $monthlyResults =
+            (clone $maintenanceQuery)
+                ->selectRaw("
+                    DATE_FORMAT(created_at, '%Y-%m') as month_key,
+                    COUNT(*) as total
+                ")
+                ->where(
+                    'created_at',
+                    '>=',
+                    now()->subMonths(11)->startOfMonth()
+                )
+                ->groupBy('month_key')
+                ->orderBy('month_key')
+                ->pluck('total', 'month_key');
+
+
+        $monthlyMaintenance = collect();
+
+
+        for ($i = 11; $i >= 0; $i--) {
+
+            $date = now()
+                ->copy()
+                ->subMonths($i);
+
+            $monthKey = $date->format('Y-m');
+
+            $monthlyMaintenance->push([
+                'month' => $date->format('M Y'),
+
+                'total' => (int) (
+                    $monthlyResults[$monthKey] ?? 0
+                ),
+            ]);
+        }
 
 
         /*
@@ -156,17 +226,19 @@ class DashboardController extends Controller
         */
 
         $recentMaintenance =
-            (clone $maintenanceRecordQuery)
+            (clone $maintenanceQuery)
                 ->with([
                     'asset:id,asset_code,name',
                 ])
-                ->latest()
+                ->latest('created_at')
                 ->limit(8)
                 ->get([
                     'id',
                     'asset_id',
                     'status',
+                    'priority',
                     'created_at',
+                    'completed_at',
                 ])
                 ->map(function ($record) {
 
@@ -179,8 +251,14 @@ class DashboardController extends Controller
                         'status' =>
                             $record->status,
 
+                        'priority' =>
+                            $record->priority,
+
+                        'created_at' =>
+                            $record->created_at?->toISOString(),
+
                         'completed_at' =>
-                            null,
+                            $record->completed_at?->toISOString(),
 
                         'asset' =>
                             $record->asset
@@ -196,29 +274,8 @@ class DashboardController extends Controller
                                 ]
                                 : null,
                     ];
-                });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | MAINTENANCE DUE
-        |--------------------------------------------------------------------------
-        |
-        | We will connect this to your preventive-maintenance schedule
-        | once we confirm the exact schedule columns.
-        |
-        */
-
-        $stats['maintenance_due'] = 0;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | OVERDUE
-        |--------------------------------------------------------------------------
-        */
-
-        $stats['overdue'] = 0;
+                })
+                ->values();
 
 
         /*
@@ -228,7 +285,7 @@ class DashboardController extends Controller
         */
 
         $pendingRequests =
-            (clone $maintenanceRequestQuery)
+            (clone $requestQuery)
                 ->whereIn(
                     'status',
                     $pendingStatuses
@@ -236,9 +293,17 @@ class DashboardController extends Controller
                 ->with([
                     'asset:id,asset_code,name',
                 ])
-                ->latest()
-                ->limit(5)
-                ->get();
+                ->latest('requested_at')
+                ->limit(8)
+                ->get([
+                    'id',
+                    'request_code',
+                    'asset_id',
+                    'title',
+                    'priority',
+                    'status',
+                    'requested_at',
+                ]);
 
 
         $pendingActions =
@@ -250,7 +315,8 @@ class DashboardController extends Controller
                             $request->id,
 
                         'title' =>
-                            'Maintenance Request',
+                            $request->title
+                                ?: 'Maintenance Request',
 
                         'description' =>
                             $request->asset
@@ -272,22 +338,115 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | MAINTENANCE DUE
+        |--------------------------------------------------------------------------
+        |
+        | Preventive maintenance schedules belong to assets.
+        |
+        | We therefore scope them through the asset's department.
+        |
+        */
+
+        $stats['maintenance_due'] =
+            PreventiveMaintenanceSchedule::query()
+                ->whereHas('asset', function ($query) use ($departmentId) {
+
+                    $query->where(
+                        'department_id',
+                        $departmentId
+                    );
+
+                })
+                ->whereNotNull('next_due_date')
+                ->whereBetween(
+                    'next_due_date',
+                    [
+                        now()->startOfDay(),
+                        now()->addDays(30)->endOfDay(),
+                    ]
+                )
+                ->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OVERDUE
+        |--------------------------------------------------------------------------
+        |
+        | Preventive maintenance schedules whose next due date
+        | has already passed.
+        |
+        */
+
+        $stats['overdue'] =
+            PreventiveMaintenanceSchedule::query()
+                ->whereHas('asset', function ($query) use ($departmentId) {
+
+                    $query->where(
+                        'department_id',
+                        $departmentId
+                    );
+
+                })
+                ->whereNotNull('next_due_date')
+                ->where(
+                    'next_due_date',
+                    '<',
+                    now()->startOfDay()
+                )
+                ->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
         | RETURN DASHBOARD
         |--------------------------------------------------------------------------
         */
 
         return Inertia::render('dashboard', [
 
+            /*
+            |--------------------------------------------------------------------------
+            | USER
+            |--------------------------------------------------------------------------
+            */
+
             'user' => $user,
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | STATISTICS
+            |--------------------------------------------------------------------------
+            */
+
             'stats' => $stats,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHARTS
+            |--------------------------------------------------------------------------
+            */
+
+            'maintenanceStatuses' =>
+                $maintenanceStatuses,
+
+            'monthlyMaintenance' =>
+                $monthlyMaintenance,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | ACTIVITY
+            |--------------------------------------------------------------------------
+            */
 
             'recentMaintenance' =>
                 $recentMaintenance,
 
             'pendingActions' =>
                 $pendingActions,
-
         ]);
     }
 }
