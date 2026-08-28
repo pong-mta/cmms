@@ -443,4 +443,33 @@ class MaintenanceRecordController extends Controller
             ]
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| HISTORY
+|--------------------------------------------------------------------------
+*/
+
+    public function history(): Response
+    {
+        $records = MaintenanceRecord::query()
+            ->with([
+                'asset:id,asset_code,name',
+                'maintenanceType:id,name,code',
+                'department:id,name,code',
+                'assignedTo:id,name',
+            ])
+            ->where('status', 'completed')
+            ->latest('completed_at')
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render(
+            'maintenance/history',
+            [
+                'records' => $records,
+            ]
+        );
+    }
 }
