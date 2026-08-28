@@ -144,7 +144,7 @@ const mainNavItems: NavItem[] = [
 
             {
                 title: 'Maintenance History',
-                url: '/maintenance/history',
+                url: '/maintenance-history',
                 icon: History,
             },
 

@@ -459,7 +459,7 @@ Route::middleware(['auth'])->group(function () {
     );
 
     Route::get(
-        '/maintenance/history',
+        '/maintenance-history',
         [
             MaintenanceRecordController::class,
             'history',
