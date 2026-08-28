@@ -140,14 +140,11 @@ class MaintenanceRecordController extends Controller
                 ->groupBy('status')
                 ->pluck('total', 'status');
             
-            dd(
-                $records->getCollection()->map(function ($record) {
-                    return [
-                        'id' => $record->id,
-                        'status' => $record->status,
-                    ];
-                })
-            );
+            dd([
+    'maintenance_records_total' => $records->total(),
+    'maintenance_records_count' => $records->count(),
+    'maintenance_requests_count' => $maintenanceRequests->count(),
+]);
 
             $maintenanceStatuses = $statusCounts
                 ->map(function ($total, $status) {
