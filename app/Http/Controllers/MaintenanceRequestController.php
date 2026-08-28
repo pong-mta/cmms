@@ -1469,33 +1469,34 @@ class MaintenanceRequestController extends Controller
         Request $request,
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
-
         $user = auth()->user();
 
-        $isTechnician = $user
+        /*
+    |--------------------------------------------------------------------------
+    | SUPERVISOR ONLY
+    |--------------------------------------------------------------------------
+    */
+
+        $isSupervisor = $user
             ->roles()
             ->where(
                 'name',
-                'technician'
+                'maintenance_supervisor'
             )
             ->exists();
 
-        if (!$isTechnician) {
+        if (!$isSupervisor) {
             abort(
                 403,
-                'Only a Maintenance Technician can complete work.'
+                'Only the Maintenance Supervisor can complete work.'
             );
         }
 
-        if (
-            $maintenanceRequest->assigned_to !==
-            $user->id
-        ) {
-            abort(
-                403,
-                'This maintenance request is not assigned to you.'
-            );
-        }
+        /*
+    |--------------------------------------------------------------------------
+    | STATUS CHECK
+    |--------------------------------------------------------------------------
+    */
 
         if (
             $maintenanceRequest->status !==
@@ -1507,7 +1508,25 @@ class MaintenanceRequestController extends Controller
             );
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATE
+    |--------------------------------------------------------------------------
+    */
+
         $validated = $request->validate([
+            'work_performed' => [
+                'required',
+                'string',
+                'max:10000',
+            ],
+
+            'materials_used' => [
+                'nullable',
+                'string',
+                'max:10000',
+            ],
+
             'remarks' => [
                 'nullable',
                 'string',
@@ -1517,7 +1536,29 @@ class MaintenanceRequestController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | COMPLETE MAINTENANCE REQUEST
+    | CREATE WORK LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $maintenanceRequest->workLogs()->create([
+            'performed_by' =>
+            $user->id,
+
+            'work_performed' =>
+            $validated['work_performed'],
+
+            'materials_used' =>
+            $validated['materials_used']
+                ?? null,
+
+            'remarks' =>
+            $validated['remarks']
+                ?? null,
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | COMPLETE REQUEST
     |--------------------------------------------------------------------------
     */
 
@@ -1529,6 +1570,9 @@ class MaintenanceRequestController extends Controller
 
             'completed_at' =>
             $completedAt,
+
+            'completed_by' =>
+            $user->id,
 
             'remarks' =>
             $validated['remarks']
@@ -1552,6 +1596,12 @@ class MaintenanceRequestController extends Controller
             );
 
             $nextDueDate = $currentDueDate->copy();
+
+            /*
+        |--------------------------------------------------------------------------
+        | Keep PM on its original schedule
+        |--------------------------------------------------------------------------
+        */
 
             switch ($schedule->frequency_type) {
 
@@ -1588,6 +1638,53 @@ class MaintenanceRequestController extends Controller
                     break;
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | If the PM was completed very late,
+        | keep advancing until the next date is in the future.
+        |--------------------------------------------------------------------------
+        */
+
+            $today = now()->startOfDay();
+
+            while ($nextDueDate->lessThanOrEqualTo($today)) {
+
+                switch ($schedule->frequency_type) {
+
+                    case 'days':
+
+                        $nextDueDate->addDays(
+                            $schedule->frequency_value
+                        );
+
+                        break;
+
+                    case 'weeks':
+
+                        $nextDueDate->addWeeks(
+                            $schedule->frequency_value
+                        );
+
+                        break;
+
+                    case 'months':
+
+                        $nextDueDate->addMonthsNoOverflow(
+                            $schedule->frequency_value
+                        );
+
+                        break;
+
+                    case 'years':
+
+                        $nextDueDate->addYearsNoOverflow(
+                            $schedule->frequency_value
+                        );
+
+                        break;
+                }
+            }
+
             $schedule->update([
                 'last_completed_at' =>
                 $completedAt,
@@ -1600,9 +1697,15 @@ class MaintenanceRequestController extends Controller
             ]);
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | SUCCESS
+    |--------------------------------------------------------------------------
+    */
+
         return back()->with(
             'success',
-            'Maintenance request completed successfully.'
+            'Maintenance work completed successfully.'
         );
     }
     /*
