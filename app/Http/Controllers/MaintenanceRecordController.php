@@ -140,7 +140,7 @@ class MaintenanceRecordController extends Controller
                 ->groupBy('status')
                 ->pluck('total', 'status');
             
-            dd($statusCounts);
+            dd(MaintenanceRecord::query()->pluck('status', 'id'));
 
             $maintenanceStatuses = $statusCounts
                 ->map(function ($total, $status) {
