@@ -82,6 +82,39 @@ interface MaintenanceRecord {
         | 'critical';
 }
 
+interface MaintenanceRequest {
+    id: number;
+    request_code: string;
+    title: string;
+    description?: string | null;
+    priority: 'low' | 'normal' | 'high' | 'critical';
+    status: string;
+    completed_at?: string | null;
+
+    asset?: Asset | null;
+    department?: Department | null;
+
+    requestedBy?: {
+        id: number;
+        name: string;
+    } | null;
+
+    assignedTo?: {
+        id: number;
+        name: string;
+    } | null;
+
+    completedBy?: {
+        id: number;
+        name: string;
+    } | null;
+
+    preventiveMaintenanceSchedule?: {
+        id: number;
+        title: string;
+    } | null;
+}
+
 interface PaginationLink {
     url: string | null;
     label: string;
@@ -116,6 +149,8 @@ interface DepartmentOption {
 
 interface MaintenanceIndexProps {
     records: PaginatedRecords;
+
+    maintenanceRequests: MaintenanceRequest[];
 
     types: TypeOption[];
 
@@ -276,6 +311,7 @@ function priorityClass(
 
 export default function MaintenanceIndex({
     records,
+    maintenanceRequests,
     types,
     departments,
 }: MaintenanceIndexProps) {
@@ -500,7 +536,8 @@ export default function MaintenanceIndex({
                     <SummaryCard
                         label="Total Records"
                         value={
-                            records.total
+                            records.total +
+                            maintenanceRequests.length
                         }
                         icon={
                             <Wrench className="h-4 w-4" />
@@ -848,6 +885,7 @@ export default function MaintenanceIndex({
 
 
                             <tbody className="divide-y divide-slate-100">
+                                
 
                                 {filteredRecords.length ===
                                 0 ? (
