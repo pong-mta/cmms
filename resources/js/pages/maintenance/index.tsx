@@ -25,6 +25,16 @@ import {
 } from 'react';
 
 
+import {
+    BarChart,
+    Bar,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+
 /*
 |--------------------------------------------------------------------------
 | TYPES
@@ -566,6 +576,38 @@ export default function MaintenanceIndex({
                         }
                     />
 
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="mb-4">
+                        <h2 className="text-sm font-semibold text-slate-800">
+                            Maintenance Trend
+                        </h2>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                            Completed maintenance requests by month
+                        </p>
+                    </div>
+
+                    <div className="h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={maintenanceTrend}>
+                                <CartesianGrid strokeDasharray="3 3" />
+
+                                <XAxis dataKey="month" />
+
+                                <YAxis allowDecimals={false} />
+
+                                <Tooltip />
+
+                                <Bar
+                                    dataKey="total"
+                                    name="Completed Maintenance"
+                                    radius={[6, 6, 0, 0]}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
 
