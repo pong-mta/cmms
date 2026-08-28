@@ -33,6 +33,10 @@ import {
     Tooltip,
     XAxis,
     YAxis,
+    PieChart,
+    Pie,
+    Cell,
+    Legend,
 } from 'recharts';
 
 /*
@@ -596,38 +600,114 @@ export default function MaintenanceIndex({
 
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="mb-4">
-                        <h2 className="text-sm font-semibold text-slate-800">
-                            Maintenance Trend
-                        </h2>
+                <div className="mt-6 grid gap-6 lg:grid-cols-2">
 
-                        <p className="mt-1 text-xs text-slate-500">
-                            Completed maintenance requests by month
-                        </p>
+                    {/* MAINTENANCE TREND */}
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                        <div className="mb-4">
+                            <h2 className="text-sm font-semibold text-slate-800">
+                                Maintenance Trend
+                            </h2>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Completed maintenance requests by month
+                            </p>
+                        </div>
+
+                        <div className="h-72 w-full">
+
+                            <ResponsiveContainer
+                                width="100%"
+                                height="100%"
+                            >
+
+                                <BarChart
+                                    data={maintenanceTrend}
+                                >
+
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                    />
+
+                                    <XAxis
+                                        dataKey="month"
+                                    />
+
+                                    <YAxis
+                                        allowDecimals={false}
+                                    />
+
+                                    <Tooltip />
+
+                                    <Bar
+                                        dataKey="total"
+                                        name="Completed Maintenance"
+                                        radius={[
+                                            6,
+                                            6,
+                                            0,
+                                            0,
+                                        ]}
+                                    />
+
+                                </BarChart>
+
+                            </ResponsiveContainer>
+
+                        </div>
+
                     </div>
 
-                    <div className="h-72 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={maintenanceTrend}>
-                                <CartesianGrid strokeDasharray="3 3" />
 
-                                <XAxis dataKey="month" />
+                    {/* MAINTENANCE TYPE */}
 
-                                <YAxis allowDecimals={false} />
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-                                <Tooltip />
+                        <div className="mb-4">
+                            <h2 className="text-sm font-semibold text-slate-800">
+                                Maintenance Type
+                            </h2>
 
-                                <Bar
-                                    dataKey="total"
-                                    name="Completed Maintenance"
-                                    radius={[6, 6, 0, 0]}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Completed maintenance by type
+                            </p>
+                        </div>
+
+                        <div className="h-72 w-full">
+
+                            <ResponsiveContainer
+                                width="100%"
+                                height="100%"
+                            >
+
+                                <PieChart>
+
+                                    <Pie
+                                        data={maintenanceTypes}
+                                        dataKey="total"
+                                        nameKey="type"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={90}
+                                        innerRadius={55}
+                                        paddingAngle={3}
+                                    />
+
+                                    <Tooltip />
+
+                                    <Legend />
+
+                                </PieChart>
+
+                            </ResponsiveContainer>
+
+                        </div>
+
                     </div>
+
                 </div>
-
 
                 {/* ====================================================== */}
                 {/* SEARCH / FILTER */}
