@@ -5,8 +5,6 @@ import { Head, Link } from '@inertiajs/react';
 import {
     CalendarDays,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     ClipboardList,
     Eye,
     Wrench,
@@ -16,51 +14,62 @@ interface Asset {
     id: number;
     asset_code: string;
     name: string;
+    department?: {
+        id: number;
+        name: string;
+        code: string;
+    } | null;
 }
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-}
-
-interface MaintenanceType {
-    id: number;
-    name: string;
-    code: string;
-}
-
-interface AssignedUser {
+interface User {
     id: number;
     name: string;
 }
 
-interface MaintenanceRecord {
+interface PreventiveMaintenanceSchedule {
     id: number;
-    maintenance_code: string;
+    title: string;
+    frequency_type: string;
+    frequency_value: number;
+}
 
-    asset?: Asset | null;
-    maintenanceType?: MaintenanceType | null;
-    department?: Department | null;
-    assignedTo?: AssignedUser | null;
+interface WorkLog {
+    id: number;
+    work_performed: string;
+    materials_used?: string | null;
+    remarks?: string | null;
+    performedBy?: User | null;
+}
 
-    problem?: string | null;
-    solution?: string | null;
+interface MaintenanceRequest {
+    id: number;
+    request_code: string;
 
-    maintenance_type_id?: number | null;
+    title: string;
+    description?: string | null;
 
     status: string;
     priority: string;
 
-    scheduled_date?: string | null;
+    requested_at?: string | null;
     completed_at?: string | null;
 
-    actual_cost?: number | null;
     remarks?: string | null;
+
+    asset?: Asset | null;
+
+    requestedBy?: User | null;
+    completedBy?: User | null;
+
+    preventiveMaintenanceSchedule?:
+        | PreventiveMaintenanceSchedule
+        | null;
+
+    workLogs?: WorkLog[];
 }
 
-interface PaginatedRecords {
-    data: MaintenanceRecord[];
+interface PaginatedRequests {
+    data: MaintenanceRequest[];
 
     current_page: number;
     last_page: number;
@@ -78,7 +87,7 @@ interface PaginatedRecords {
 }
 
 interface Props {
-    records: PaginatedRecords;
+    requests: PaginatedRequests;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -88,7 +97,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Maintenance History',
-        href: '/maintenance/history',
+        href: '/maintenance-history',
     },
 ];
 
@@ -128,66 +137,50 @@ function formatDateTime(
     );
 }
 
-function formatCurrency(
-    value?: number | null,
-): string {
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return '—';
-    }
-
-    return new Intl.NumberFormat(
-        'en-PH',
-        {
-            style: 'currency',
-            currency: 'PHP',
-            minimumFractionDigits: 2,
-        },
-    ).format(value);
-}
-
 function priorityClass(
     priority: string,
 ): string {
     switch (priority) {
         case 'critical':
-            return 'bg-red-50 text-red-700 border-red-100';
+            return 'border-red-100 bg-red-50 text-red-700';
 
         case 'high':
-            return 'bg-orange-50 text-orange-700 border-orange-100';
+            return 'border-orange-100 bg-orange-50 text-orange-700';
+
+        case 'medium':
+            return 'border-amber-100 bg-amber-50 text-amber-700';
 
         case 'normal':
-            return 'bg-blue-50 text-blue-700 border-blue-100';
+            return 'border-blue-100 bg-blue-50 text-blue-700';
 
         case 'low':
-            return 'bg-slate-100 text-slate-600 border-slate-200';
+            return 'border-slate-200 bg-slate-100 text-slate-600';
 
         default:
-            return 'bg-slate-100 text-slate-600 border-slate-200';
+            return 'border-slate-200 bg-slate-100 text-slate-600';
     }
 }
 
 export default function MaintenanceHistory({
-    records,
+    requests,
 }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
+
             <Head title="Maintenance History | CMMS" />
 
             <div className="flex flex-1 flex-col gap-6 p-6">
 
-                {/* ==========================================================
-                    HEADER
-                ========================================================== */}
+                {/* HEADER */}
 
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
 
                     <div className="flex items-center gap-3">
 
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+
                             <ClipboardList className="h-5 w-5" />
+
                         </div>
 
                         <div>
@@ -215,15 +208,13 @@ export default function MaintenanceHistory({
                 </div>
 
 
-                {/* ==========================================================
-                    SUMMARY
-                ========================================================== */}
+                {/* SUMMARY */}
 
                 <div className="grid gap-4 sm:grid-cols-3">
 
                     <SummaryCard
                         label="Completed Maintenance"
-                        value={records.total}
+                        value={requests.total}
                         icon={
                             <CheckCircle2 className="h-4 w-4" />
                         }
@@ -231,9 +222,7 @@ export default function MaintenanceHistory({
 
                     <SummaryCard
                         label="Showing"
-                        value={
-                            records.data.length
-                        }
+                        value={requests.data.length}
                         icon={
                             <ClipboardList className="h-4 w-4" />
                         }
@@ -241,9 +230,7 @@ export default function MaintenanceHistory({
 
                     <SummaryCard
                         label="Current Page"
-                        value={
-                            records.current_page
-                        }
+                        value={requests.current_page}
                         icon={
                             <CalendarDays className="h-4 w-4" />
                         }
@@ -252,18 +239,18 @@ export default function MaintenanceHistory({
                 </div>
 
 
-                {/* ==========================================================
-                    HISTORY TABLE
-                ========================================================== */}
+                {/* HISTORY */}
 
                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                    <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
 
                         <div className="flex items-center gap-3">
 
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+
                                 <CheckCircle2 className="h-4 w-4" />
+
                             </div>
 
                             <div>
@@ -273,7 +260,7 @@ export default function MaintenanceHistory({
                                 </h2>
 
                                 <p className="mt-0.5 text-[11px] text-slate-400">
-                                    Historical maintenance records for municipal assets.
+                                    Completed maintenance requests across municipal assets.
                                 </p>
 
                             </div>
@@ -281,16 +268,18 @@ export default function MaintenanceHistory({
                         </div>
 
                         <div className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-semibold text-slate-500">
-                            {records.total}{' '}
-                            {records.total === 1
+
+                            {requests.total}{' '}
+                            {requests.total === 1
                                 ? 'Record'
                                 : 'Records'}
+
                         </div>
 
                     </div>
 
 
-                    {records.data.length === 0 ? (
+                    {requests.data.length === 0 ? (
 
                         <div className="px-6 py-16 text-center">
 
@@ -305,7 +294,7 @@ export default function MaintenanceHistory({
                             </h3>
 
                             <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-400">
-                                Completed maintenance records will appear here once maintenance work has been completed.
+                                Completed maintenance requests will appear here.
                             </p>
 
                         </div>
@@ -314,9 +303,7 @@ export default function MaintenanceHistory({
 
                         <>
 
-                            {/* ==================================================
-                                DESKTOP TABLE
-                            ================================================== */}
+                            {/* DESKTOP */}
 
                             <div className="hidden overflow-x-auto lg:block">
 
@@ -327,7 +314,7 @@ export default function MaintenanceHistory({
                                         <tr className="border-b border-slate-100 bg-slate-50/60">
 
                                             <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                Maintenance
+                                                Request
                                             </th>
 
                                             <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -335,7 +322,7 @@ export default function MaintenanceHistory({
                                             </th>
 
                                             <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                Type
+                                                Maintenance
                                             </th>
 
                                             <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -344,10 +331,6 @@ export default function MaintenanceHistory({
 
                                             <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                                 Completed
-                                            </th>
-
-                                            <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                Cost
                                             </th>
 
                                             <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -360,32 +343,29 @@ export default function MaintenanceHistory({
 
                                     <tbody className="divide-y divide-slate-100">
 
-                                        {records.data.map(
-                                            (
-                                                record,
-                                            ) => (
+                                        {requests.data.map(
+                                            (request) => (
 
                                                 <tr
                                                     key={
-                                                        record.id
+                                                        request.id
                                                     }
                                                     className="transition hover:bg-slate-50/60"
                                                 >
 
-                                                    {/* MAINTENANCE */}
+                                                    {/* REQUEST */}
 
                                                     <td className="px-5 py-4">
 
-                                                        <div className="font-semibold text-sm text-slate-800">
+                                                        <div className="text-sm font-semibold text-slate-800">
                                                             {
-                                                                record.maintenance_code
+                                                                request.request_code
                                                             }
                                                         </div>
 
                                                         <div className="mt-1 max-w-xs truncate text-xs text-slate-400">
                                                             {
-                                                                record.problem ??
-                                                                'Maintenance activity'
+                                                                request.title
                                                             }
                                                         </div>
 
@@ -396,13 +376,13 @@ export default function MaintenanceHistory({
 
                                                     <td className="px-5 py-4">
 
-                                                        {record.asset ? (
+                                                        {request.asset ? (
 
                                                             <>
 
                                                                 <div className="text-sm font-semibold text-slate-700">
                                                                     {
-                                                                        record
+                                                                        request
                                                                             .asset
                                                                             .name
                                                                     }
@@ -410,7 +390,7 @@ export default function MaintenanceHistory({
 
                                                                 <div className="mt-1 text-xs text-slate-400">
                                                                     {
-                                                                        record
+                                                                        request
                                                                             .asset
                                                                             .asset_code
                                                                     }
@@ -429,29 +409,32 @@ export default function MaintenanceHistory({
                                                     </td>
 
 
-                                                    {/* TYPE */}
+                                                    {/* PM */}
 
                                                     <td className="px-5 py-4">
 
-                                                        <div className="text-sm text-slate-600">
-                                                            {
-                                                                record
-                                                                    .maintenanceType
-                                                                    ?.name ??
-                                                                '—'
-                                                            }
-                                                        </div>
+                                                        {request.preventiveMaintenanceSchedule ? (
 
-                                                        {record
-                                                            .maintenanceType
-                                                            ?.code && (
+                                                            <>
 
-                                                            <div className="mt-1 text-[10px] text-slate-400">
-                                                                {
-                                                                    record
-                                                                        .maintenanceType
-                                                                        .code
-                                                                }
+                                                                <div className="text-sm font-semibold text-slate-700">
+                                                                    {
+                                                                        request
+                                                                            .preventiveMaintenanceSchedule
+                                                                            .title
+                                                                    }
+                                                                </div>
+
+                                                                <div className="mt-1 text-[10px] text-blue-600">
+                                                                    Preventive Maintenance
+                                                                </div>
+
+                                                            </>
+
+                                                        ) : (
+
+                                                            <div className="text-sm text-slate-500">
+                                                                Regular Maintenance
                                                             </div>
 
                                                         )}
@@ -465,11 +448,11 @@ export default function MaintenanceHistory({
 
                                                         <span
                                                             className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize ${priorityClass(
-                                                                record.priority,
+                                                                request.priority,
                                                             )}`}
                                                         >
                                                             {
-                                                                record.priority
+                                                                request.priority
                                                             }
                                                         </span>
 
@@ -482,28 +465,17 @@ export default function MaintenanceHistory({
 
                                                         <div className="text-sm font-medium text-slate-700">
                                                             {formatDate(
-                                                                record.completed_at,
+                                                                request.completed_at,
                                                             )}
                                                         </div>
 
                                                         <div className="mt-1 text-[10px] text-slate-400">
-                                                            {formatDateTime(
-                                                                record.completed_at,
-                                                            )}
+                                                            {request.completedBy
+                                                                ? `By ${request.completedBy.name}`
+                                                                : formatDateTime(
+                                                                      request.completed_at,
+                                                                  )}
                                                         </div>
-
-                                                    </td>
-
-
-                                                    {/* COST */}
-
-                                                    <td className="px-5 py-4 text-right">
-
-                                                        <span className="text-sm font-semibold text-slate-700">
-                                                            {formatCurrency(
-                                                                record.actual_cost,
-                                                            )}
-                                                        </span>
 
                                                     </td>
 
@@ -513,7 +485,7 @@ export default function MaintenanceHistory({
                                                     <td className="px-5 py-4 text-right">
 
                                                         <Link
-                                                            href={`/maintenance/${record.id}`}
+                                                            href={`/maintenance-requests/${request.id}`}
                                                             className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                                                         >
 
@@ -537,33 +509,29 @@ export default function MaintenanceHistory({
                             </div>
 
 
-                            {/* ==================================================
-                                MOBILE / TABLET CARDS
-                            ================================================== */}
+                            {/* MOBILE */}
 
                             <div className="divide-y divide-slate-100 lg:hidden">
 
-                                {records.data.map(
-                                    (
-                                        record,
-                                    ) => (
+                                {requests.data.map(
+                                    (request) => (
 
                                         <div
                                             key={
-                                                record.id
+                                                request.id
                                             }
                                             className="p-5"
                                         >
 
                                             <div className="flex items-start justify-between gap-4">
 
-                                                <div className="min-w-0">
+                                                <div>
 
                                                     <div className="flex flex-wrap items-center gap-2">
 
                                                         <h3 className="text-sm font-bold text-slate-800">
                                                             {
-                                                                record.maintenance_code
+                                                                request.request_code
                                                             }
                                                         </h3>
 
@@ -573,19 +541,17 @@ export default function MaintenanceHistory({
 
                                                     </div>
 
-                                                    <p className="mt-1 truncate text-xs text-slate-400">
+                                                    <p className="mt-1 text-xs text-slate-400">
                                                         {
-                                                            record.problem ??
-                                                            'Maintenance activity'
+                                                            request.title
                                                         }
                                                     </p>
 
                                                 </div>
 
                                                 <Link
-                                                    href={`/maintenance/${record.id}`}
+                                                    href={`/maintenance-requests/${request.id}`}
                                                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50"
-                                                    title="View maintenance record"
                                                 >
 
                                                     <Eye className="h-4 w-4" />
@@ -600,43 +566,43 @@ export default function MaintenanceHistory({
                                                 <InfoItem
                                                     label="Asset"
                                                     value={
-                                                        record.asset
-                                                            ? record
-                                                                  .asset
-                                                                  .name
-                                                            : '—'
+                                                        request.asset
+                                                            ?.name ??
+                                                        '—'
                                                     }
                                                     secondary={
-                                                        record.asset
+                                                        request.asset
                                                             ?.asset_code
                                                     }
                                                 />
 
                                                 <InfoItem
-                                                    label="Type"
+                                                    label="Maintenance"
                                                     value={
-                                                        record
-                                                            .maintenanceType
-                                                            ?.name ??
-                                                        '—'
+                                                        request
+                                                            .preventiveMaintenanceSchedule
+                                                            ?.title ??
+                                                        'Regular Maintenance'
                                                     }
                                                 />
 
                                                 <InfoItem
                                                     label="Completed"
                                                     value={formatDate(
-                                                        record.completed_at,
+                                                        request.completed_at,
                                                     )}
-                                                    secondary={formatDateTime(
-                                                        record.completed_at,
-                                                    )}
+                                                    secondary={
+                                                        request.completedBy
+                                                            ? `By ${request.completedBy.name}`
+                                                            : undefined
+                                                    }
                                                 />
 
                                                 <InfoItem
-                                                    label="Cost"
-                                                    value={formatCurrency(
-                                                        record.actual_cost,
-                                                    )}
+                                                    label="Priority"
+                                                    value={
+                                                        request.priority
+                                                    }
                                                 />
 
                                             </div>
@@ -653,124 +619,33 @@ export default function MaintenanceHistory({
                     )}
 
 
-                    {/* ==========================================================
-                        PAGINATION
-                    ========================================================== */}
+                    {/* PAGINATION */}
 
-                    {records.last_page > 1 && (
+                    {requests.last_page > 1 && (
 
-                        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4 sm:px-6">
 
                             <p className="text-xs text-slate-400">
 
                                 Showing{' '}
 
                                 <span className="font-semibold text-slate-600">
-                                    {records.from ?? 0}
+                                    {requests.from ?? 0}
                                 </span>
 
                                 {' '}to{' '}
 
                                 <span className="font-semibold text-slate-600">
-                                    {records.to ?? 0}
+                                    {requests.to ?? 0}
                                 </span>
 
                                 {' '}of{' '}
 
                                 <span className="font-semibold text-slate-600">
-                                    {records.total}
+                                    {requests.total}
                                 </span>
 
                             </p>
-
-
-                            <div className="flex items-center gap-1">
-
-                                {records.links.map(
-                                    (
-                                        link,
-                                        index,
-                                    ) => {
-
-                                        if (
-                                            index ===
-                                            0
-                                        ) {
-
-                                            return (
-
-                                                <PaginationButton
-                                                    key={`previous-${index}`}
-                                                    href={
-                                                        link.url
-                                                    }
-                                                    disabled={
-                                                        !link.url
-                                                    }
-                                                    icon={
-                                                        <ChevronLeft className="h-3.5 w-3.5" />
-                                                    }
-                                                    label=""
-                                                />
-
-                                            );
-
-                                        }
-
-
-                                        if (
-                                            index ===
-                                            records.links.length -
-                                                1
-                                        ) {
-
-                                            return (
-
-                                                <PaginationButton
-                                                    key={`next-${index}`}
-                                                    href={
-                                                        link.url
-                                                    }
-                                                    disabled={
-                                                        !link.url
-                                                    }
-                                                    icon={
-                                                        <ChevronRight className="h-3.5 w-3.5" />
-                                                    }
-                                                    label=""
-                                                />
-
-                                            );
-
-                                        }
-
-
-                                        return (
-
-                                            <PaginationButton
-                                                key={
-                                                    link.label
-                                                }
-                                                href={
-                                                    link.url
-                                                }
-                                                disabled={
-                                                    !link.url
-                                                }
-                                                active={
-                                                    link.active
-                                                }
-                                                label={
-                                                    link.label
-                                                }
-                                            />
-
-                                        );
-
-                                    },
-                                )}
-
-                            </div>
 
                         </div>
 
@@ -779,6 +654,7 @@ export default function MaintenanceHistory({
                 </section>
 
             </div>
+
         </AppLayout>
     );
 }
@@ -856,51 +732,5 @@ function InfoItem({
             )}
 
         </div>
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| PAGINATION BUTTON
-|--------------------------------------------------------------------------
-*/
-
-function PaginationButton({
-    href,
-    label,
-    icon,
-    active = false,
-    disabled = false,
-}: {
-    href: string | null;
-    label: string;
-    icon?: React.ReactNode;
-    active?: boolean;
-    disabled?: boolean;
-}) {
-    if (
-        disabled ||
-        !href
-    ) {
-        return (
-            <span className="flex h-8 min-w-8 cursor-not-allowed items-center justify-center rounded-lg border border-slate-100 bg-slate-50 px-2 text-xs text-slate-300">
-                {icon ?? label}
-            </span>
-        );
-    }
-
-    return (
-        <Link
-            href={href}
-            preserveScroll
-            className={`flex h-8 min-w-8 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition ${
-                active
-                    ? 'border-blue-700 bg-blue-700 text-white'
-                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
-            }`}
-        >
-            {icon ?? label}
-        </Link>
     );
 }
