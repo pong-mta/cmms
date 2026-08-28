@@ -754,6 +754,59 @@ export function AppSidebar() {
 
                 </SidebarMenu>
 
+
+                {/* ====================================================== */}
+{/* DEPARTMENT */}
+{/* ====================================================== */}
+
+<div className="px-2 pb-2">
+
+    {/* ================================================== */}
+    {/* EXPANDED SIDEBAR */}
+    {/* ================================================== */}
+
+    <div className="group-data-[collapsible=icon]:hidden">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Department
+            </div>
+
+            <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">
+                {departmentName}
+            </div>
+
+            {departmentCode && (
+                <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                    {departmentCode}
+                </div>
+            )}
+
+            <div className="mt-1 text-[10px] font-medium text-blue-600">
+                {roleLabel}
+            </div>
+
+        </div>
+    </div>
+
+
+    {/* ================================================== */}
+    {/* COLLAPSED / ICON ONLY */}
+    {/* ================================================== */}
+
+    <div className="hidden group-data-[collapsible=icon]:flex justify-center">
+
+        <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50"
+            title={`${departmentName} — ${roleLabel}`}
+        >
+            <Building2 className="h-4 w-4 text-blue-600" />
+        </div>
+
+    </div>
+
+</div>
+
             </SidebarHeader>
 
 
