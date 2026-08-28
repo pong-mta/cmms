@@ -73,30 +73,32 @@ interface SharedProps {
 
 /*
 |--------------------------------------------------------------------------
-| ALL LGU DEPARTMENTS
+| DEPARTMENT CONFIGURATION
 |--------------------------------------------------------------------------
-|
-| These are the departments currently configured in the LGU system.
-|
 */
 
-const departments: Record<string, string> = {
+const departmentNames: Record<string, string> = {
     MAYOR: 'Office of the Municipal Mayor',
     VMAYOR: 'Office of the Municipal Vice Mayor',
     SB: 'Sangguniang Bayan',
+
     ADMIN: 'Municipal Administrator’s Office',
+
     ENGINEERING: 'Municipal Engineering Office',
     GSO: 'General Services Office',
     ACCOUNTING: 'Municipal Accounting Office',
     BUDGET: 'Municipal Budget Office',
     TREASURER: 'Municipal Treasurer’s Office',
+
     HRMO: 'Human Resource Management Office',
     MPDO: 'Municipal Planning and Development Office',
     MDRRMO: 'Municipal Disaster Risk Reduction and Management Office',
+
     HEALTH: 'Municipal Health Office',
     AGRICULTURE: 'Municipal Agriculture Office',
     ASSESSOR: 'Municipal Assessor’s Office',
     CIVIL_REGISTRAR: 'Municipal Civil Registrar’s Office',
+
     MSWDO: 'Municipal Social Welfare and Development Office',
     MENRO: 'Municipal Environment and Natural Resources Office',
     TOURISM: 'Municipal Tourism Office',
@@ -111,311 +113,502 @@ const departments: Record<string, string> = {
 
 /*
 |--------------------------------------------------------------------------
-| BASE DEPARTMENT NAVIGATION
+| ROLE HELPERS
 |--------------------------------------------------------------------------
-|
-| Every department initially receives the same core platform modules.
-|
-| Later we can customize these per department without rebuilding
-| the sidebar architecture.
-|
 */
 
-function departmentNavItems(): NavItem[] {
-    return [
-
-        /*
-        |--------------------------------------------------------------------------
-        | DASHBOARD
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Dashboard',
-            url: '/dashboard',
-            icon: LayoutGrid,
-        },
+function normalizeRole(role: string): string {
+    return role
+        .toLowerCase()
+        .replace(/-/g, '_')
+        .replace(/\s+/g, '_');
+}
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | ASSET MANAGEMENT
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Assets',
-            url: '#',
-            icon: Boxes,
-
-            items: [
-                {
-                    title: 'All Assets',
-                    url: '/assets',
-                    icon: Archive,
-                },
-
-                {
-                    title: 'Register Asset',
-                    url: '/assets/create',
-                    icon: Package,
-                },
-
-                {
-                    title: 'Asset Categories',
-                    url: '/asset-categories',
-                    icon: ClipboardList,
-                },
-
-                {
-                    title: 'Asset Locations',
-                    url: '/asset-locations',
-                    icon: Building2,
-                },
-
-                {
-                    title: 'Asset History',
-                    url: '/assets/history',
-                    icon: History,
-                },
-            ],
-        },
+function getRoleNames(user: AuthUser | null): string[] {
+    return (
+        user?.roles?.map((role) =>
+            normalizeRole(role.name),
+        ) ?? []
+    );
+}
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | MAINTENANCE
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Maintenance',
-            url: '#',
-            icon: Wrench,
-
-            items: [
-                {
-                    title: 'Maintenance Overview',
-                    url: '/maintenance',
-                    icon: Gauge,
-                },
-
-                {
-                    title: 'Maintenance Requests',
-                    url: '/maintenance-requests',
-                    icon: ClipboardList,
-                },
-
-                {
-                    title: 'Preventive Maintenance',
-                    url: '/preventive-maintenance',
-                    icon: CalendarClock,
-                },
-
-                {
-                    title: 'Maintenance Schedule',
-                    url: '/maintenance-calendar',
-                    icon: CalendarClock,
-                },
-
-                {
-                    title: 'Maintenance History',
-                    url: '/maintenance-history',
-                    icon: History,
-                },
-            ],
-        },
+function isHead(user: AuthUser | null): boolean {
+    return getRoleNames(user).some((role) =>
+        [
+            'head',
+            'department_head',
+            'office_head',
+        ].includes(role),
+    );
+}
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | WORK ORDERS
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Work Orders',
-            url: '#',
-            icon: ClipboardList,
-
-            items: [
-                {
-                    title: 'All Work Orders',
-                    url: '/work-orders',
-                    icon: ClipboardList,
-                },
-
-                {
-                    title: 'Create Work Order',
-                    url: '/work-orders/create',
-                    icon: FileText,
-                },
-
-                {
-                    title: 'My Work Orders',
-                    url: '/work-orders/my',
-                    icon: UserCog,
-                },
-
-                {
-                    title: 'Pending Approval',
-                    url: '/work-orders/pending',
-                    icon: Bell,
-                },
-
-                {
-                    title: 'Completed',
-                    url: '/work-orders/completed',
-                    icon: History,
-                },
-            ],
-        },
+function isSupervisor(user: AuthUser | null): boolean {
+    return getRoleNames(user).some((role) =>
+        [
+            'supervisor',
+            'department_supervisor',
+        ].includes(role),
+    );
+}
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | REQUESTS
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Requests',
-            url: '#',
-            icon: FileText,
-
-            items: [
-                {
-                    title: 'All Requests',
-                    url: '/requests',
-                },
-
-                {
-                    title: 'New Request',
-                    url: '/requests/create',
-                },
-
-                {
-                    title: 'My Requests',
-                    url: '/requests/my',
-                },
-
-                {
-                    title: 'Pending Requests',
-                    url: '/requests/pending',
-                },
-            ],
-        },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | INVENTORY
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Inventory',
-            url: '#',
-            icon: Package,
-
-            items: [
-                {
-                    title: 'Inventory Overview',
-                    url: '/inventory',
-                    icon: Boxes,
-                },
-
-                {
-                    title: 'Parts & Supplies',
-                    url: '/inventory/items',
-                    icon: Package,
-                },
-
-                {
-                    title: 'Stock Movement',
-                    url: '/inventory/movements',
-                    icon: History,
-                },
-
-                {
-                    title: 'Low Stock',
-                    url: '/inventory/low-stock',
-                    icon: Bell,
-                },
-
-                {
-                    title: 'Suppliers',
-                    url: '/suppliers',
-                    icon: Truck,
-                },
-            ],
-        },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | REPORTS
-        |--------------------------------------------------------------------------
-        */
-
-        {
-            title: 'Reports',
-            url: '#',
-            icon: BarChart3,
-
-            items: [
-                {
-                    title: 'Maintenance Reports',
-                    url: '/reports/maintenance',
-                    icon: FileBarChart,
-                },
-
-                {
-                    title: 'Asset Reports',
-                    url: '/reports/assets',
-                    icon: FileBarChart,
-                },
-
-                {
-                    title: 'Work Order Reports',
-                    url: '/reports/work-orders',
-                    icon: FileBarChart,
-                },
-
-                {
-                    title: 'Inventory Reports',
-                    url: '/reports/inventory',
-                    icon: FileBarChart,
-                },
-
-                {
-                    title: 'Cost Reports',
-                    url: '/reports/costs',
-                    icon: BarChart3,
-                },
-            ],
-        },
-    ];
+function isAdministrator(user: AuthUser | null): boolean {
+    return getRoleNames(user).some((role) =>
+        [
+            'admin',
+            'administrator',
+            'system_admin',
+            'super_admin',
+        ].includes(role),
+    );
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| ADMINISTRATION
+| DEPARTMENT NAME
+|--------------------------------------------------------------------------
+*/
+
+function getDepartmentName(
+    user: AuthUser | null,
+): string {
+
+    if (!user) {
+        return 'LGU Operations';
+    }
+
+    if (user.department?.name) {
+        return user.department.name;
+    }
+
+    if (
+        user.department?.code &&
+        departmentNames[user.department.code]
+    ) {
+        return departmentNames[
+            user.department.code
+        ];
+    }
+
+    return 'LGU Operations';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DEPARTMENT NAVIGATION
 |--------------------------------------------------------------------------
 |
-| Administration is kept separate from department operations.
+| This is the common operational navigation.
+|
+| The actual department determines the data shown inside
+| these modules.
 |
 */
 
-function administrationNavItems(): NavItem[] {
-    return [
-        {
+function getDepartmentNavigation(
+    departmentCode: string | null,
+    user: AuthUser | null,
+): NavItem[] {
+
+    const items: NavItem[] = [];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
+    items.push({
+        title: 'Dashboard',
+        url: '/dashboard',
+        icon: LayoutGrid,
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OPERATIONS
+    |--------------------------------------------------------------------------
+    */
+
+    items.push({
+        title: 'Operations',
+        url: '#',
+        icon: ClipboardList,
+
+        items: [
+
+            {
+                title: 'Documents',
+                url: '/documents',
+                icon: FileText,
+            },
+
+            {
+                title: 'Requests',
+                url: '/requests',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'Notifications',
+                url: '/notifications',
+                icon: Bell,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSETS
+    |--------------------------------------------------------------------------
+    |
+    | Every department can have assets.
+    |
+    */
+
+    items.push({
+        title: 'Assets',
+        url: '#',
+        icon: Boxes,
+
+        items: [
+
+            {
+                title: 'All Assets',
+                url: '/assets',
+                icon: Archive,
+            },
+
+            {
+                title: 'Register Asset',
+                url: '/assets/create',
+                icon: Package,
+            },
+
+            {
+                title: 'Asset Categories',
+                url: '/asset-categories',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'Asset Locations',
+                url: '/asset-locations',
+                icon: Building2,
+            },
+
+            {
+                title: 'Asset History',
+                url: '/assets/history',
+                icon: History,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MAINTENANCE
+    |--------------------------------------------------------------------------
+    |
+    | This is our CMMS module.
+    |
+    */
+
+    items.push({
+        title: 'Maintenance',
+        url: '#',
+        icon: Wrench,
+
+        items: [
+
+            {
+                title: 'Overview',
+                url: '/maintenance',
+                icon: Gauge,
+            },
+
+            {
+                title: 'Requests',
+                url: '/maintenance-requests',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'Preventive Maintenance',
+                url: '/preventive-maintenance',
+                icon: CalendarClock,
+            },
+
+            {
+                title: 'Schedule',
+                url: '/maintenance-calendar',
+                icon: CalendarClock,
+            },
+
+            {
+                title: 'History',
+                url: '/maintenance-history',
+                icon: History,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WORK
+    |--------------------------------------------------------------------------
+    */
+
+    items.push({
+        title: 'Work',
+        url: '#',
+        icon: Wrench,
+
+        items: [
+
+            {
+                title: 'Work Orders',
+                url: '/work-orders',
+                icon: ClipboardList,
+            },
+
+            {
+                title: 'My Work',
+                url: '/work-orders/my',
+                icon: UserCog,
+            },
+
+            {
+                title: 'Pending',
+                url: '/work-orders/pending',
+                icon: Bell,
+            },
+
+            {
+                title: 'Completed',
+                url: '/work-orders/completed',
+                icon: History,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | INVENTORY
+    |--------------------------------------------------------------------------
+    */
+
+    items.push({
+        title: 'Inventory',
+        url: '#',
+        icon: Package,
+
+        items: [
+
+            {
+                title: 'Overview',
+                url: '/inventory',
+                icon: Boxes,
+            },
+
+            {
+                title: 'Parts & Supplies',
+                url: '/inventory/items',
+                icon: Package,
+            },
+
+            {
+                title: 'Stock Movement',
+                url: '/inventory/movements',
+                icon: History,
+            },
+
+            {
+                title: 'Low Stock',
+                url: '/inventory/low-stock',
+                icon: Bell,
+            },
+
+            {
+                title: 'Suppliers',
+                url: '/suppliers',
+                icon: Truck,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REPORTS
+    |--------------------------------------------------------------------------
+    */
+
+    items.push({
+        title: 'Reports',
+        url: '#',
+        icon: BarChart3,
+
+        items: [
+
+            {
+                title: 'Department Reports',
+                url: '/reports/department',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Maintenance',
+                url: '/reports/maintenance',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Assets',
+                url: '/reports/assets',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Work Orders',
+                url: '/reports/work-orders',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Inventory',
+                url: '/reports/inventory',
+                icon: FileBarChart,
+            },
+
+            {
+                title: 'Costs',
+                url: '/reports/costs',
+                icon: BarChart3,
+            },
+
+        ],
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HEAD
+    |--------------------------------------------------------------------------
+    |
+    | Department Heads receive additional management navigation.
+    |
+    */
+
+    if (isHead(user)) {
+
+        items.push({
+            title: 'Management',
+            url: '#',
+            icon: ShieldCheck,
+
+            items: [
+
+                {
+                    title: 'Pending Approvals',
+                    url: '/approvals',
+                    icon: ClipboardList,
+                },
+
+                {
+                    title: 'Department Activity',
+                    url: '/department/activity',
+                    icon: History,
+                },
+
+                {
+                    title: 'Department Users',
+                    url: '/department/users',
+                    icon: Users,
+                },
+
+            ],
+        });
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUPERVISOR
+    |--------------------------------------------------------------------------
+    |
+    | Supervisors receive operational management tools.
+    |
+    */
+
+    if (isSupervisor(user)) {
+
+        items.push({
+            title: 'Supervision',
+            url: '#',
+            icon: UserCog,
+
+            items: [
+
+                {
+                    title: 'Team Work',
+                    url: '/work-orders/team',
+                    icon: ClipboardList,
+                },
+
+                {
+                    title: 'Pending Work',
+                    url: '/work-orders/pending',
+                    icon: Bell,
+                },
+
+                {
+                    title: 'Team Activity',
+                    url: '/department/activity',
+                    icon: History,
+                },
+
+            ],
+        });
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SYSTEM ADMINISTRATION
+    |--------------------------------------------------------------------------
+    |
+    | Only system administrators see this section.
+    |
+    */
+
+    if (isAdministrator(user)) {
+
+        items.push({
             title: 'Administration',
             url: '#',
             icon: ShieldCheck,
 
             items: [
+
                 {
                     title: 'Users',
                     url: '/admin/users',
@@ -445,62 +638,22 @@ function administrationNavItems(): NavItem[] {
                     url: '/admin/settings',
                     icon: Settings,
                 },
+
             ],
-        },
-    ];
-}
+        });
 
-
-/*
-|--------------------------------------------------------------------------
-| DEPARTMENT LABEL
-|--------------------------------------------------------------------------
-*/
-
-function getDepartmentName(
-    user: AuthUser | null,
-): string {
-    if (!user) {
-        return 'LGU Operations';
     }
 
-    if (user.department?.name) {
-        return user.department.name;
-    }
 
-    if (
-        user.department?.code &&
-        departments[user.department.code]
-    ) {
-        return departments[user.department.code];
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | KEEP TYPESCRIPT HAPPY
+    |--------------------------------------------------------------------------
+    */
 
-    return 'LGU Operations';
-}
+    void departmentCode;
 
-
-/*
-|--------------------------------------------------------------------------
-| ROLE CHECK
-|--------------------------------------------------------------------------
-*/
-
-function hasAdminRole(
-    user: AuthUser | null,
-): boolean {
-    if (!user?.roles) {
-        return false;
-    }
-
-    return user.roles.some((role) =>
-        [
-            'system_admin',
-            'admin',
-            'administrator',
-        ].includes(
-            role.name.toLowerCase(),
-        ),
-    );
+    return items;
 }
 
 
@@ -512,9 +665,18 @@ function hasAdminRole(
 
 export function AppSidebar() {
 
-    const { auth } = usePage<SharedProps>().props;
+    const { auth } =
+        usePage<SharedProps>().props;
 
-    const user = auth?.user ?? null;
+    const user =
+        auth?.user ?? null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
 
     const departmentName =
         getDepartmentName(user);
@@ -522,21 +684,41 @@ export function AppSidebar() {
     const departmentCode =
         user?.department?.code ?? null;
 
-    const departmentItems =
-        departmentNavItems();
 
-    const adminItems =
-        hasAdminRole(user)
-            ? administrationNavItems()
-            : [];
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE
+    |--------------------------------------------------------------------------
+    */
 
-    const navItems: NavItem[] = [
-        ...departmentItems,
-        ...adminItems,
-    ];
+    const roleNames =
+        getRoleNames(user);
+
+    const roleLabel =
+        isHead(user)
+            ? 'Head'
+            : isSupervisor(user)
+                ? 'Supervisor'
+                : roleNames.length > 0
+                    ? user?.roles?.[0]?.name ?? 'User'
+                    : 'User';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NAVIGATION
+    |--------------------------------------------------------------------------
+    */
+
+    const navItems =
+        getDepartmentNavigation(
+            departmentCode,
+            user,
+        );
 
 
     return (
+
         <Sidebar
             collapsible="icon"
             variant="inset"
@@ -585,15 +767,24 @@ export function AppSidebar() {
                             Department
                         </div>
 
+
                         <div className="mt-0.5 truncate text-xs font-semibold text-slate-700">
                             {departmentName}
                         </div>
 
+
                         {departmentCode && (
+
                             <div className="mt-0.5 text-[10px] font-medium text-slate-400">
                                 {departmentCode}
                             </div>
+
                         )}
+
+
+                        <div className="mt-1 text-[10px] font-medium text-blue-600">
+                            {roleLabel}
+                        </div>
 
                     </div>
 
@@ -603,7 +794,7 @@ export function AppSidebar() {
 
 
             {/* ========================================================== */}
-            {/* MAIN */}
+            {/* CONTENT */}
             {/* ========================================================== */}
 
             <SidebarContent>
