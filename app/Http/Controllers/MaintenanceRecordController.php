@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\PreventiveMaintenanceSchedule;
 
 class MaintenanceRecordController extends Controller
 {
@@ -396,6 +397,49 @@ class MaintenanceRecordController extends Controller
             'maintenance/show',
             [
                 'record' => $maintenanceRecord,
+            ]
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| SCHEDULE
+|--------------------------------------------------------------------------
+*/
+
+    public function schedule(): Response
+    {
+        $records = MaintenanceRecord::query()
+            ->with([
+                'asset:id,asset_code,name',
+                'maintenanceType:id,name,code',
+                'department:id,name,code',
+                'assignedTo:id,name',
+            ])
+            ->whereNotNull('scheduled_date')
+            ->whereNotIn('status', [
+                'cancelled',
+            ])
+            ->orderBy('scheduled_date')
+            ->get();
+
+        $preventiveSchedules =
+            PreventiveMaintenanceSchedule::query()
+            ->with([
+                'asset:id,asset_code,name,department_id',
+                'asset.department:id,name,code',
+                'assignedTo:id,name',
+            ])
+            ->where('status', 'active')
+            ->whereNotNull('next_due_date')
+            ->orderBy('next_due_date')
+            ->get();
+
+        return Inertia::render(
+            'maintenance/schedule',
+            [
+                'records' => $records,
+                'preventiveSchedules' => $preventiveSchedules,
             ]
         );
     }

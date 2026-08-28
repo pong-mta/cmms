@@ -448,6 +448,16 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'preventive-maintenance.history'
     );
+
+    Route::get(
+        '/maintenance/schedule',
+        [
+            MaintenanceRecordController::class,
+            'schedule',
+        ]
+    )->name(
+        'maintenance.schedule'
+    );
 });
 
 require __DIR__ . '/settings.php';
