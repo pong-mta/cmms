@@ -717,6 +717,72 @@ export default function MaintenanceIndex({
                 </div>
 
                 {/* ====================================================== */}
+                {/* MAINTENANCE STATUS */}
+                {/* ====================================================== */}
+
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                    <div className="mb-4">
+                        <h2 className="text-sm font-semibold text-slate-800">
+                            Maintenance Status
+                        </h2>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                            Maintenance records by current status
+                        </p>
+                    </div>
+
+                    <div className="h-72 w-full">
+
+                        <ResponsiveContainer
+                            width="100%"
+                            height="100%"
+                        >
+                            <PieChart>
+
+                                <Pie
+                                    data={maintenanceStatuses}
+                                    dataKey="total"
+                                    nameKey="status"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={65}
+                                    outerRadius={100}
+                                    paddingAngle={3}
+                                    label
+                                >
+
+                                    {maintenanceStatuses.map(
+                                        (_, index) => (
+                                            <Cell
+                                                key={`status-${index}`}
+                                                fill={
+                                                    [
+                                                        '#2563eb',
+                                                        '#f59e0b',
+                                                        '#10b981',
+                                                        '#ef4444',
+                                                        '#64748b',
+                                                    ][index % 5]
+                                                }
+                                            />
+                                        ),
+                                    )}
+
+                                </Pie>
+
+                                <Tooltip />
+
+                                <Legend />
+
+                            </PieChart>
+                        </ResponsiveContainer>
+
+                    </div>
+
+                </div>
+
+                {/* ====================================================== */}
                 {/* SEARCH / FILTER */}
                 {/* ====================================================== */}
 
