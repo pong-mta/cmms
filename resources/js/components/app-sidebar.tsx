@@ -138,7 +138,7 @@ const mainNavItems: NavItem[] = [
 
             {
                 title: 'Maintenance Schedule',
-                url: '/maintenance/schedule',
+                url: '/maintenance-calendar',
                 icon: CalendarClock,
             },
 
