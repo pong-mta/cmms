@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\MaintenanceWorkLog;
+use Carbon\Carbon;
 
 class MaintenanceRequestController extends Controller
 {
@@ -1468,34 +1469,33 @@ class MaintenanceRequestController extends Controller
         Request $request,
         MaintenanceRequest $maintenanceRequest
     ): RedirectResponse {
+
         $user = auth()->user();
 
-        /*
-    |--------------------------------------------------------------------------
-    | SUPERVISOR ONLY
-    |--------------------------------------------------------------------------
-    */
-
-        $isSupervisor = $user
+        $isTechnician = $user
             ->roles()
             ->where(
                 'name',
-                'maintenance_supervisor'
+                'technician'
             )
             ->exists();
 
-        if (!$isSupervisor) {
+        if (!$isTechnician) {
             abort(
                 403,
-                'Only the Maintenance Supervisor can complete work.'
+                'Only a Maintenance Technician can complete work.'
             );
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | STATUS CHECK
-    |--------------------------------------------------------------------------
-    */
+        if (
+            $maintenanceRequest->assigned_to !==
+            $user->id
+        ) {
+            abort(
+                403,
+                'This maintenance request is not assigned to you.'
+            );
+        }
 
         if (
             $maintenanceRequest->status !==
@@ -1507,25 +1507,7 @@ class MaintenanceRequestController extends Controller
             );
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | VALIDATE
-    |--------------------------------------------------------------------------
-    */
-
         $validated = $request->validate([
-            'work_performed' => [
-                'required',
-                'string',
-                'max:10000',
-            ],
-
-            'materials_used' => [
-                'nullable',
-                'string',
-                'max:10000',
-            ],
-
             'remarks' => [
                 'nullable',
                 'string',
@@ -1535,41 +1517,18 @@ class MaintenanceRequestController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | CREATE WORK LOG
+    | COMPLETE MAINTENANCE REQUEST
     |--------------------------------------------------------------------------
     */
 
-        $maintenanceRequest->workLogs()->create([
-            'performed_by' =>
-            $user->id,
-
-            'work_performed' =>
-            $validated['work_performed'],
-
-            'materials_used' =>
-            $validated['materials_used']
-                ?? null,
-
-            'remarks' =>
-            $validated['remarks']
-                ?? null,
-        ]);
-
-        /*
-    |--------------------------------------------------------------------------
-    | COMPLETE REQUEST
-    |--------------------------------------------------------------------------
-    */
+        $completedAt = now();
 
         $maintenanceRequest->update([
             'status' =>
             'completed',
 
             'completed_at' =>
-            now(),
-
-            'completed_by' =>
-            $user->id,
+            $completedAt,
 
             'remarks' =>
             $validated['remarks']
@@ -1578,13 +1537,72 @@ class MaintenanceRequestController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | SUCCESS
+    | UPDATE PREVENTIVE MAINTENANCE SCHEDULE
     |--------------------------------------------------------------------------
     */
 
+        $schedule =
+            $maintenanceRequest
+            ->preventiveMaintenanceSchedule;
+
+        if ($schedule) {
+
+            $currentDueDate = Carbon::parse(
+                $schedule->next_due_date
+            );
+
+            $nextDueDate = $currentDueDate->copy();
+
+            switch ($schedule->frequency_type) {
+
+                case 'days':
+
+                    $nextDueDate->addDays(
+                        $schedule->frequency_value
+                    );
+
+                    break;
+
+                case 'weeks':
+
+                    $nextDueDate->addWeeks(
+                        $schedule->frequency_value
+                    );
+
+                    break;
+
+                case 'months':
+
+                    $nextDueDate->addMonthsNoOverflow(
+                        $schedule->frequency_value
+                    );
+
+                    break;
+
+                case 'years':
+
+                    $nextDueDate->addYearsNoOverflow(
+                        $schedule->frequency_value
+                    );
+
+                    break;
+            }
+
+            $schedule->update([
+                'last_completed_at' =>
+                $completedAt,
+
+                'next_due_date' =>
+                $nextDueDate->toDateString(),
+
+                'status' =>
+                'active',
+            ]);
+        }
+
         return back()->with(
             'success',
-            'Maintenance work completed successfully.'
+            'Maintenance request completed successfully.'
         );
     }
     /*
