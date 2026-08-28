@@ -448,9 +448,8 @@ Route::middleware(['auth'])->group(function () {
     )->name(
         'preventive-maintenance.history'
     );
-
     Route::get(
-        '/maintenance/schedule',
+        '/maintenance-calendar',
         [
             MaintenanceRecordController::class,
             'schedule',
