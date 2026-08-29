@@ -1440,6 +1440,18 @@ class OperationsRequestController extends Controller
 
             'completedBy:id,name',
 
+            /*
+            |--------------------------------------------------------------------------
+            | SPECIALIZED REQUEST DETAILS
+            |--------------------------------------------------------------------------
+            */
+
+            'purchaseItems',
+
+            'reimbursementItems',
+
+            'travelDetails',
+
             'histories' => function ($query) {
 
                 $query
