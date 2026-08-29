@@ -26,162 +26,205 @@ class OperationRequestController extends Controller
      * A system administrator can see everything.
      */
     public function index(Request $request): Response
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        if (!$user) {
-            abort(403);
-        }
+    if (!$user) {
+        abort(403);
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | USER ROLES
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | USER ROLES
+    |--------------------------------------------------------------------------
+    */
 
-        $userRoleIds = $user->roles()
-            ->pluck('roles.id')
-            ->toArray();
+    $userRoleIds = $user->roles()
+        ->pluck('roles.id')
+        ->toArray();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SYSTEM ADMIN
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | SYSTEM ADMIN
+    |--------------------------------------------------------------------------
+    */
 
-        $isSystemAdmin = $user->roles()
-            ->where('name', 'system_admin')
-            ->exists();
+    $isSystemAdmin = $user->roles()
+        ->where('name', 'system_admin')
+        ->exists();
 
-        /*
-        |--------------------------------------------------------------------------
-        | BASE QUERY
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | BASE QUERY
+    |--------------------------------------------------------------------------
+    */
 
-        $query = OperationRequest::query()
-            ->with([
-                'user',
-                'department',
-                'purchaseRequest',
-                'workflow',
-                'currentWorkflowStep',
-            ]);
+    $query = OperationRequest::query()
+        ->with([
+            'user',
+            'department',
+            'purchaseRequest',
+            'workflow',
+            'currentWorkflowStep',
+        ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | REQUEST VISIBILITY
-        |--------------------------------------------------------------------------
-        |
-        | System administrators can see everything.
-        |
-        | Other users can only see:
-        |
-        | A. Requests they submitted.
-        |
-        | OR
-        |
-        | B. Requests currently assigned to them through
-        |    the current workflow step.
-        |
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST VISIBILITY
+    |--------------------------------------------------------------------------
+    |
+    | System administrators can see everything.
+    |
+    | Other users can see:
+    |
+    | A. Requests they submitted.
+    |
+    | B. Requests currently assigned to them through
+    |    the current workflow step.
+    |
+    | IMPORTANT:
+    |
+    | Draft / Returned requests must NOT appear in the
+    | workflow department's queue.
+    |
+    | Rejected requests must NOT appear in the
+    | workflow department's queue.
+    |
+    */
 
-        if (!$isSystemAdmin) {
+    if (!$isSystemAdmin) {
 
-            $query->where(function ($query) use (
+        $query->where(function ($query) use (
+            $user,
+            $userRoleIds
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | A. REQUESTS SUBMITTED BY THE USER
+            |--------------------------------------------------------------------------
+            |
+            | The requester can always see their own request,
+            | including Draft, Returned, Pending, Approved,
+            | Rejected, and Completed requests.
+            |
+            */
+
+            $query->where(
+                'operation_requests.user_id',
+                $user->id
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | B. REQUESTS CURRENTLY ASSIGNED TO THE USER
+            |--------------------------------------------------------------------------
+            |
+            | Only active workflow requests can appear here.
+            |
+            | Draft / Returned:
+            |     NOT visible to workflow departments.
+            |
+            | Rejected:
+            |     NOT visible to workflow departments.
+            |
+            */
+
+            $query->orWhere(function ($query) use (
                 $user,
                 $userRoleIds
             ) {
 
                 /*
                 |--------------------------------------------------------------------------
-                | A. REQUESTS SUBMITTED BY THE USER
+                | ONLY ACTIVE WORKFLOW REQUESTS
                 |--------------------------------------------------------------------------
                 */
 
-                $query->where(
-                    'operation_requests.user_id',
-                    $user->id
+                $query->whereIn(
+                    'operation_requests.status',
+                    [
+                        'pending',
+                        'approved',
+                        'completed',
+                    ]
                 );
 
                 /*
                 |--------------------------------------------------------------------------
-                | B. REQUESTS CURRENTLY ASSIGNED TO THE USER
+                | REQUEST MUST HAVE A CURRENT WORKFLOW STEP
                 |--------------------------------------------------------------------------
                 */
 
-                $query->orWhere(function ($query) use (
-                    $user,
-                    $userRoleIds
-                ) {
+                $query->whereNotNull(
+                    'operation_requests.current_workflow_step_id'
+                );
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | REQUEST MUST HAVE A CURRENT WORKFLOW STEP
-                    |--------------------------------------------------------------------------
-                    */
+                /*
+                |--------------------------------------------------------------------------
+                | CURRENT WORKFLOW STEP
+                |--------------------------------------------------------------------------
+                */
 
-                    $query->whereNotNull(
-                        'operation_requests.current_workflow_step_id'
-                    );
+                $query->whereHas(
+                    'currentWorkflowStep',
+                    function ($stepQuery) use (
+                        $user,
+                        $userRoleIds
+                    ) {
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | REQUESTING DEPARTMENT / FIXED DEPARTMENT
-                    |--------------------------------------------------------------------------
-                    */
+                        /*
+                        |--------------------------------------------------------------------------
+                        | REQUESTING DEPARTMENT
+                        |--------------------------------------------------------------------------
+                        |
+                        | Example:
+                        |
+                        | Engineering Supervisor
+                        |          ↓
+                        | Engineering Department Head
+                        |
+                        | Only users in the requesting department
+                        | with the required role can see this step.
+                        |
+                        */
 
-                    $query->whereHas(
-                        'currentWorkflowStep',
-                        function ($stepQuery) use (
+                        $stepQuery->where(function (
+                            $assignmentQuery
+                        ) use (
                             $user,
                             $userRoleIds
                         ) {
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | REQUESTING DEPARTMENT
-                            |--------------------------------------------------------------------------
-                            |
-                            | Example:
-                            |
-                            | Engineering Supervisor
-                            |          ↓
-                            | Engineering Department Head
-                            |
-                            | Only users in Engineering with the
-                            | required role can see this step.
-                            |
-                            */
-
-                            $stepQuery->where(function ($assignmentQuery) use (
-                                $user,
-                                $userRoleIds
-                            ) {
-
-                                $assignmentQuery->where(
+                            $assignmentQuery
+                                ->where(
                                     'assignment_type',
                                     'requesting_department'
                                 )
-                                ->where(function ($roleQuery) use (
+                                ->where(function (
+                                    $roleQuery
+                                ) use (
                                     $userRoleIds
                                 ) {
 
                                     /*
-                                    |------------------------------------------------------
-                                    | Step does not require a specific role
-                                    |------------------------------------------------------
+                                    |--------------------------------------------------------------------------
+                                    | STEP DOES NOT REQUIRE SPECIFIC ROLE
+                                    |--------------------------------------------------------------------------
                                     */
 
-                                    $roleQuery->whereNull('role_id');
+                                    $roleQuery->whereNull(
+                                        'role_id'
+                                    );
 
                                     /*
-                                    |------------------------------------------------------
-                                    | OR user's role matches the workflow step
-                                    |------------------------------------------------------
+                                    |--------------------------------------------------------------------------
+                                    | USER ROLE MATCHES WORKFLOW STEP
+                                    |--------------------------------------------------------------------------
                                     */
 
                                     if (!empty($userRoleIds)) {
+
                                         $roleQuery->orWhereIn(
                                             'role_id',
                                             $userRoleIds
@@ -189,169 +232,175 @@ class OperationRequestController extends Controller
                                     }
                                 });
 
-                            });
+                        });
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | FIXED DEPARTMENT
-                            |--------------------------------------------------------------------------
-                            |
-                            | Example:
-                            |
-                            | Engineering Department Head
-                            |          ↓
-                            | Budget Office
-                            |
-                            | Only Budget Office users with the
-                            | required role can see this step.
-                            |
-                            */
+                        /*
+                        |--------------------------------------------------------------------------
+                        | FIXED DEPARTMENT
+                        |--------------------------------------------------------------------------
+                        |
+                        | Example:
+                        |
+                        | Engineering Department Head
+                        |          ↓
+                        | Budget Office
+                        |
+                        | Only users belonging to the fixed department
+                        | with the required role can see this step.
+                        |
+                        */
 
-                            $stepQuery->orWhere(function ($assignmentQuery) use (
-                                $user,
-                                $userRoleIds
-                            ) {
+                        $stepQuery->orWhere(function (
+                            $assignmentQuery
+                        ) use (
+                            $user,
+                            $userRoleIds
+                        ) {
 
-                                $assignmentQuery
-                                    ->where(
-                                        'assignment_type',
-                                        'fixed'
-                                    )
-                                    ->where(
-                                        'department_id',
-                                        $user->department_id
-                                    )
-                                    ->where(function ($roleQuery) use (
-                                        $userRoleIds
-                                    ) {
+                            $assignmentQuery
+                                ->where(
+                                    'assignment_type',
+                                    'fixed'
+                                )
+                                ->where(
+                                    'department_id',
+                                    $user->department_id
+                                )
+                                ->where(function (
+                                    $roleQuery
+                                ) use (
+                                    $userRoleIds
+                                ) {
 
-                                        /*
-                                        |--------------------------------------------------
-                                        | Step does not require a specific role
-                                        |--------------------------------------------------
-                                        */
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | STEP DOES NOT REQUIRE SPECIFIC ROLE
+                                    |--------------------------------------------------------------------------
+                                    */
 
-                                        $roleQuery->whereNull('role_id');
+                                    $roleQuery->whereNull(
+                                        'role_id'
+                                    );
 
-                                        /*
-                                        |--------------------------------------------------
-                                        | OR user's role matches the workflow step
-                                        |--------------------------------------------------
-                                        */
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | USER ROLE MATCHES WORKFLOW STEP
+                                    |--------------------------------------------------------------------------
+                                    */
 
-                                        if (!empty($userRoleIds)) {
-                                            $roleQuery->orWhereIn(
-                                                'role_id',
-                                                $userRoleIds
-                                            );
-                                        }
-                                    });
+                                    if (!empty($userRoleIds)) {
 
-                            });
-                        }
-                    );
+                                        $roleQuery->orWhereIn(
+                                            'role_id',
+                                            $userRoleIds
+                                        );
+                                    }
+                                });
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | REQUESTING DEPARTMENT MUST MATCH USER DEPARTMENT
-                    |--------------------------------------------------------------------------
-                    |
-                    | This prevents a user from another department from seeing
-                    | a requesting_department step.
-                    |
-                    */
-
-                    $query->where(
-                        'operation_requests.department_id',
-                        $user->department_id
-                    );
-                });
-            });
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | SEARCH
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->filled('search')) {
-
-            $search = $request->input('search');
-
-            $query->where(function ($q) use ($search) {
-
-                $q->where(
-                    'request_no',
-                    'like',
-                    "%{$search}%"
-                )
-                ->orWhere(
-                    'title',
-                    'like',
-                    "%{$search}%"
-                )
-                ->orWhere(
-                    'type',
-                    'like',
-                    "%{$search}%"
+                        });
+                    }
                 );
 
+                /*
+                |--------------------------------------------------------------------------
+                | REQUESTING DEPARTMENT MUST MATCH USER DEPARTMENT
+                |--------------------------------------------------------------------------
+                |
+                | This prevents a user from another department from
+                | seeing a requesting_department workflow step.
+                |
+                */
+
+                $query->where(
+                    'operation_requests.department_id',
+                    $user->department_id
+                );
             });
-        }
+        });
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS FILTER
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH
+    |--------------------------------------------------------------------------
+    */
 
-        if ($request->filled('status')) {
+    if ($request->filled('search')) {
 
-            $query->where(
-                'status',
-                $request->input('status')
+        $search = $request->input('search');
+
+        $query->where(function ($q) use ($search) {
+
+            $q->where(
+                'request_no',
+                'like',
+                "%{$search}%"
+            )
+            ->orWhere(
+                'title',
+                'like',
+                "%{$search}%"
+            )
+            ->orWhere(
+                'type',
+                'like',
+                "%{$search}%"
             );
-        }
+        });
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PRIORITY FILTER
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS FILTER
+    |--------------------------------------------------------------------------
+    */
 
-        if ($request->filled('priority')) {
+    if ($request->filled('status')) {
 
-            $query->where(
-                'priority',
-                $request->input('priority')
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | PAGINATION
-        |--------------------------------------------------------------------------
-        */
-
-        $requests = $query
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE
-        |--------------------------------------------------------------------------
-        */
-
-        return Inertia::render(
-            'operations/requests/index',
-            [
-                'requests' => $requests,
-            ]
+        $query->where(
+            'status',
+            $request->input('status')
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRIORITY FILTER
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('priority')) {
+
+        $query->where(
+            'priority',
+            $request->input('priority')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAGINATION
+    |--------------------------------------------------------------------------
+    */
+
+    $requests = $query
+        ->latest()
+        ->paginate(15)
+        ->withQueryString();
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
+    return Inertia::render(
+        'operations/requests/index',
+        [
+            'requests' => $requests,
+        ]
+    );
+}
 
     /**
      * Show the create request form.
