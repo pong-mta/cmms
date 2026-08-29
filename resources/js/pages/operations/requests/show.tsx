@@ -301,7 +301,7 @@ export default function ShowRequest({ request }: PageProps) {
                         {/* PURCHASE INFORMATION */}
                         {/* ================================================== */}
 
-                        {request.type === 'purchase' && purchaseRequest && (
+                        {purchaseRequest && (
                             <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                                 <div className="border-b border-slate-100 px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -355,7 +355,7 @@ export default function ShowRequest({ request }: PageProps) {
                         {/* ITEMS */}
                         {/* ================================================== */}
 
-                        {request.type === 'purchase' && purchaseRequest && (
+                        {purchaseRequest && (
                             <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
