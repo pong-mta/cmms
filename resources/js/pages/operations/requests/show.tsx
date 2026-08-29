@@ -29,7 +29,6 @@ interface PurchaseRequest {
     purpose: string;
     justification: string;
     requested_date: string;
-
     items: PurchaseRequestItem[];
 }
 
@@ -50,7 +49,15 @@ interface OperationRequest {
     user?: User | null;
     department?: Department | null;
 
-    purchaseRequest?: PurchaseRequest | null;
+    /*
+    |--------------------------------------------------------------------------
+    | IMPORTANT
+    |--------------------------------------------------------------------------
+    | Laravel serializes the Eloquent relationship as purchase_request.
+    |--------------------------------------------------------------------------
+    */
+
+    purchase_request?: PurchaseRequest | null;
 }
 
 interface PageProps {
@@ -68,7 +75,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const statusConfig = {
+const statusConfig: Record<
+    string,
+    {
+        label: string;
+        className: string;
+    }
+> = {
     draft: {
         label: 'Draft',
         className: 'bg-slate-100 text-slate-600',
@@ -100,7 +113,13 @@ const statusConfig = {
     },
 };
 
-const priorityConfig = {
+const priorityConfig: Record<
+    string,
+    {
+        label: string;
+        className: string;
+    }
+> = {
     low: {
         label: 'Low',
         className: 'bg-slate-100 text-slate-600',
@@ -147,7 +166,7 @@ const requestTypeLabels: Record<string, string> = {
     other: 'Other Request',
 };
 
-function formatCurrency(value: number | string) {
+function formatCurrency(value: number | string): string {
     return new Intl.NumberFormat('en-PH', {
         style: 'currency',
         currency: 'PHP',
@@ -155,7 +174,7 @@ function formatCurrency(value: number | string) {
     }).format(Number(value) || 0);
 }
 
-function formatDate(date: string) {
+function formatDate(date: string): string {
     return new Intl.DateTimeFormat('en-PH', {
         year: 'numeric',
         month: 'long',
@@ -163,7 +182,7 @@ function formatDate(date: string) {
     }).format(new Date(date));
 }
 
-function formatDateTime(date: string) {
+function formatDateTime(date: string): string {
     return new Intl.DateTimeFormat('en-PH', {
         year: 'numeric',
         month: 'short',
@@ -174,17 +193,33 @@ function formatDateTime(date: string) {
 }
 
 export default function ShowRequest({ request }: PageProps) {
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST DATA
+    |--------------------------------------------------------------------------
+    */
+
     const status = statusConfig[request.status] ?? statusConfig.pending;
 
     const priority = priorityConfig[request.priority] ?? priorityConfig.normal;
 
     const requestType = requestTypeLabels[request.type] ?? request.type;
 
-    const purchaseRequest = request.purchaseRequest;
+    /*
+    |--------------------------------------------------------------------------
+    | PURCHASE REQUEST
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT:
+    | Laravel returns the relationship as purchase_request.
+    |
+    */
+
+    const purchaseRequest = request.purchase_request ?? null;
 
     const items = purchaseRequest?.items ?? [];
 
-    const totalEstimatedCost = items.reduce((total, item) => total + Number(item.estimated_amount || 0), 0);
+    const totalEstimatedCost = items.reduce((total, item) => total + Number(item.estimated_amount ?? 0), 0);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -293,7 +328,7 @@ export default function ShowRequest({ request }: PageProps) {
 
                 <div className="grid w-full gap-5 xl:grid-cols-3">
                     {/* ================================================== */}
-                    {/* LEFT CONTENT */}
+                    {/* LEFT */}
                     {/* ================================================== */}
 
                     <div className="space-y-5 xl:col-span-2">
@@ -352,7 +387,7 @@ export default function ShowRequest({ request }: PageProps) {
                         )}
 
                         {/* ================================================== */}
-                        {/* ITEMS */}
+                        {/* PURCHASE ITEMS */}
                         {/* ================================================== */}
 
                         {purchaseRequest && (
@@ -373,7 +408,9 @@ export default function ShowRequest({ request }: PageProps) {
 
                                 {items.length > 0 ? (
                                     <>
-                                        {/* Desktop */}
+                                        {/* ================================================== */}
+                                        {/* DESKTOP TABLE */}
+                                        {/* ================================================== */}
 
                                         <div className="hidden overflow-x-auto lg:block">
                                             <table className="w-full">
@@ -407,7 +444,7 @@ export default function ShowRequest({ request }: PageProps) {
 
                                                 <tbody className="divide-y divide-slate-100">
                                                     {items.map((item, index) => (
-                                                        <tr key={item.id} className="hover:bg-slate-50">
+                                                        <tr key={item.id} className="transition hover:bg-slate-50">
                                                             <td className="px-4 py-4 text-center text-xs font-medium text-slate-400">{index + 1}</td>
 
                                                             <td className="px-4 py-4">
@@ -446,7 +483,9 @@ export default function ShowRequest({ request }: PageProps) {
                                             </table>
                                         </div>
 
-                                        {/* Mobile */}
+                                        {/* ================================================== */}
+                                        {/* MOBILE ITEMS */}
+                                        {/* ================================================== */}
 
                                         <div className="divide-y divide-slate-100 lg:hidden">
                                             {items.map((item, index) => (
@@ -538,11 +577,13 @@ export default function ShowRequest({ request }: PageProps) {
 
                         <div className="p-6">
                             <div className="relative">
-                                {/* Vertical line */}
+                                {/* Vertical Line */}
 
                                 <div className="absolute top-3 left-3 h-[calc(100%-24px)] w-px bg-slate-200" />
 
-                                {/* Submitted */}
+                                {/* ================================================== */}
+                                {/* SUBMITTED */}
+                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white ring-4 ring-white">
@@ -556,7 +597,9 @@ export default function ShowRequest({ request }: PageProps) {
                                     </div>
                                 </div>
 
-                                {/* Department Review */}
+                                {/* ================================================== */}
+                                {/* DEPARTMENT REVIEW */}
+                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div
@@ -580,7 +623,9 @@ export default function ShowRequest({ request }: PageProps) {
                                     </div>
                                 </div>
 
-                                {/* Processing */}
+                                {/* ================================================== */}
+                                {/* PROCESSING */}
+                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div
