@@ -2291,6 +2291,7 @@ class OperationsRequestController extends Controller
                         [
                             'supervisor',
                             'department_supervisor',
+                            'maintenance_supervisor',
                         ],
                         true
                     );
