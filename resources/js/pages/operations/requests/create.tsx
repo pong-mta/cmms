@@ -68,22 +68,18 @@ const priorities = [
     {
         value: 'low',
         label: 'Low',
-        description: 'Can be handled normally',
     },
     {
         value: 'normal',
         label: 'Normal',
-        description: 'Regular priority',
     },
     {
         value: 'high',
         label: 'High',
-        description: 'Needs attention soon',
     },
     {
         value: 'urgent',
         label: 'Urgent',
-        description: 'Requires immediate attention',
     },
 ];
 
@@ -109,7 +105,7 @@ export default function CreateRequest() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="New Request" />
 
-            <div className="flex flex-1 flex-col gap-6 p-6">
+            <div className="flex w-full flex-1 flex-col gap-6 p-6">
                 {/* ====================================================== */}
                 {/* PAGE HEADER */}
                 {/* ====================================================== */}
@@ -117,7 +113,7 @@ export default function CreateRequest() {
                 <div className="flex items-start gap-3">
                     <Link
                         href="/operations/requests"
-                        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
@@ -140,12 +136,14 @@ export default function CreateRequest() {
                 {/* ====================================================== */}
 
                 <form onSubmit={submit} className="w-full">
-                    <div className="space-y-5">
+                    <div className="w-full space-y-5">
                         {/* ================================================== */}
                         {/* REQUESTER INFORMATION */}
                         {/* ================================================== */}
 
-                        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            {/* Section Header */}
+
                             <div className="border-b border-slate-100 px-6 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
@@ -162,25 +160,27 @@ export default function CreateRequest() {
                                 </div>
                             </div>
 
-                            <div className="grid gap-5 p-6 lg:grid-cols-2">
+                            {/* Requester Fields */}
+
+                            <div className="grid w-full gap-5 p-6 lg:grid-cols-2">
                                 {/* Requested By */}
 
-                                <div>
+                                <div className="w-full">
                                     <label className="text-xs font-semibold text-slate-600">Requested By</label>
 
-                                    <div className="mt-2 flex h-11 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3">
-                                        <UserRound className="h-4 w-4 text-slate-400" />
+                                    <div className="mt-2 flex h-11 w-full items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3">
+                                        <UserRound className="h-4 w-4 shrink-0 text-slate-400" />
 
-                                        <span className="text-sm font-medium text-slate-700">{user.name}</span>
+                                        <span className="truncate text-sm font-medium text-slate-700">{user.name}</span>
                                     </div>
                                 </div>
 
                                 {/* Department */}
 
-                                <div>
+                                <div className="w-full">
                                     <label className="text-xs font-semibold text-slate-600">Department</label>
 
-                                    <div className="mt-2 flex h-11 items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3">
+                                    <div className="mt-2 flex h-11 w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3">
                                         <div className="flex min-w-0 items-center gap-3">
                                             <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
 
@@ -205,7 +205,9 @@ export default function CreateRequest() {
                         {/* REQUEST DETAILS */}
                         {/* ================================================== */}
 
-                        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            {/* Section Header */}
+
                             <div className="border-b border-slate-100 px-6 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -220,15 +222,17 @@ export default function CreateRequest() {
                                 </div>
                             </div>
 
-                            <div className="space-y-6 p-6">
+                            {/* Request Fields */}
+
+                            <div className="w-full space-y-6 p-6">
                                 {/* ================================================== */}
-                                {/* TYPE + PRIORITY */}
+                                {/* REQUEST TYPE + PRIORITY */}
                                 {/* ================================================== */}
 
-                                <div className="grid gap-6 lg:grid-cols-2">
+                                <div className="grid w-full gap-6 lg:grid-cols-2">
                                     {/* Request Type */}
 
-                                    <div>
+                                    <div className="w-full">
                                         <label htmlFor="type" className="text-xs font-semibold text-slate-700">
                                             Request Type
                                             <span className="ml-1 text-red-500">*</span>
@@ -252,13 +256,13 @@ export default function CreateRequest() {
 
                                     {/* Priority */}
 
-                                    <div>
+                                    <div className="w-full">
                                         <label className="text-xs font-semibold text-slate-700">
                                             Priority
                                             <span className="ml-1 text-red-500">*</span>
                                         </label>
 
-                                        <div className="mt-2 grid grid-cols-4 gap-2">
+                                        <div className="mt-2 grid w-full grid-cols-4 gap-2">
                                             {priorities.map((priority) => {
                                                 const selected = data.priority === priority.value;
 
@@ -267,7 +271,7 @@ export default function CreateRequest() {
                                                         key={priority.value}
                                                         type="button"
                                                         onClick={() => setData('priority', priority.value)}
-                                                        className={`relative flex h-11 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition ${
+                                                        className={`flex h-11 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition ${
                                                             selected
                                                                 ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
                                                                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
@@ -289,7 +293,7 @@ export default function CreateRequest() {
                                 {/* TITLE */}
                                 {/* ================================================== */}
 
-                                <div>
+                                <div className="w-full">
                                     <label htmlFor="title" className="text-xs font-semibold text-slate-700">
                                         Request Title
                                         <span className="ml-1 text-red-500">*</span>
@@ -304,10 +308,12 @@ export default function CreateRequest() {
                                         className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 transition outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
                                     />
 
-                                    <div className="mt-1.5 flex items-center justify-between">
-                                        {errors.title ? <p className="text-xs text-red-600">{errors.title}</p> : <span />}
-
-                                        <span className="text-[10px] text-slate-400">Required</span>
+                                    <div className="mt-1.5 flex justify-between">
+                                        {errors.title ? (
+                                            <p className="text-xs text-red-600">{errors.title}</p>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-400">Required</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -315,7 +321,7 @@ export default function CreateRequest() {
                                 {/* DESCRIPTION */}
                                 {/* ================================================== */}
 
-                                <div>
+                                <div className="w-full">
                                     <label htmlFor="description" className="text-xs font-semibold text-slate-700">
                                         Description
                                     </label>
@@ -329,13 +335,13 @@ export default function CreateRequest() {
                                         className="mt-2 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 transition outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
                                     />
 
-                                    <div className="mt-1.5 flex justify-between">
+                                    <div className="mt-1.5 flex items-center justify-between">
                                         {errors.description ? (
                                             <p className="text-xs text-red-600">{errors.description}</p>
                                         ) : (
-                                            <span className="text-[10px] text-slate-400">
+                                            <p className="text-[10px] text-slate-400">
                                                 Include any relevant information that may help process your request.
-                                            </span>
+                                            </p>
                                         )}
 
                                         <span className="text-[10px] text-slate-400">Optional</span>
@@ -348,10 +354,14 @@ export default function CreateRequest() {
                         {/* ACTIONS */}
                         {/* ================================================== */}
 
-                        <div className="flex flex-col-reverse gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                            <p className="hidden text-xs text-slate-400 sm:block">Review your information before submitting.</p>
+                        <div className="flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-slate-600">Ready to submit?</p>
 
-                            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                                <p className="mt-0.5 text-[10px] text-slate-400">Review your information before submitting.</p>
+                            </div>
+
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                                 <Link
                                     href="/operations/requests"
                                     className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
