@@ -343,6 +343,8 @@ export default function ShowRequest({ request, auth }: PageProps) {
         isSameDepartment &&
         isDepartmentHead;
 
+    const canEditReturnedRequest = request.status === 'draft' && !!currentUser && Number(request.user?.id) === Number(currentUser.id);
+
     /*
     |--------------------------------------------------------------------------
     | APPROVE
@@ -481,6 +483,16 @@ export default function ShowRequest({ request, auth }: PageProps) {
                             <p className="mt-1 text-sm text-slate-500">Request Details</p>
                         </div>
                     </div>
+
+                    {canEditReturnedRequest && (
+                        <Link
+                            href={`/operations/requests/${request.id}/edit`}
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                        >
+                            <FileText className="h-3.5 w-3.5" />
+                            Edit Request
+                        </Link>
+                    )}
 
                     <Link
                         href="/operations/requests"
