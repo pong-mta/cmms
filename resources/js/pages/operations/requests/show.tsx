@@ -137,13 +137,19 @@ interface ServiceRequest {
 
     request_code: string;
 
-    request_type: string;
+    request_type?: string | {
+        id?: number;
+        code?: string;
+        name?: string;
+        category?: string | null;
+    } | null;
+
     request_type_id?: number | null;
 
     requestType?: {
-        id: number;
-        code: string;
-        name: string;
+        id?: number;
+        code?: string;
+        name?: string;
         category?: string | null;
     } | null;
 
@@ -273,8 +279,11 @@ function isHead(
 function formatStatus(
     status?: unknown,
 ): string {
-
-    if (status === null || status === undefined || status === '') {
+    if (
+        status === null ||
+        status === undefined ||
+        status === ''
+    ) {
         return '—';
     }
 
@@ -286,6 +295,37 @@ function formatStatus(
             (letter) =>
                 letter.toUpperCase(),
         );
+}
+
+
+function getRequestTypeName(
+    request: ServiceRequest,
+): string {
+    const relationship = request.requestType;
+
+    if (relationship?.name) {
+        return String(relationship.name);
+    }
+
+    if (relationship?.code) {
+        return formatStatus(relationship.code);
+    }
+
+    const raw = request.request_type;
+
+    if (typeof raw === 'string') {
+        return formatStatus(raw);
+    }
+
+    if (raw && typeof raw === 'object') {
+        return formatStatus(
+            raw.name ??
+            raw.code ??
+            raw.category,
+        );
+    }
+
+    return '—';
 }
 
 
@@ -746,9 +786,7 @@ export default function ShowRequest({
 
                             <p className="mt-1 text-sm text-slate-500">
 
-                                {formatStatus(
-                                    request.request_type,
-                                )}
+                                {getRequestTypeName(request)}
 
                                 {' • '}
 
@@ -856,9 +894,7 @@ export default function ShowRequest({
                                             <FileText className="h-4 w-4" />
                                         }
                                         label="Request Type"
-                                        value={formatStatus(
-                                            request.request_type,
-                                        )}
+                                        value={getRequestTypeName(request)}
                                     />
 
 
