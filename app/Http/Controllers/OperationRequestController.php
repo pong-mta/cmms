@@ -857,7 +857,8 @@ class OperationRequestController extends Controller
         DB::transaction(
             function () use (
                 $operationRequest,
-                $currentStep
+                $currentStep,
+                $user
             ) {
 
             $operationRequest->actions()->create([
