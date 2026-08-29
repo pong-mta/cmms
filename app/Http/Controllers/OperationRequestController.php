@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OperationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +19,7 @@ class OperationRequestController extends Controller
         $requests = OperationRequest::with([
             'user',
             'department',
+            'purchaseRequest',
         ])
             ->latest()
             ->paginate(15)
@@ -39,11 +41,13 @@ class OperationRequestController extends Controller
     /**
      * Display a specific request.
      */
-    public function show(OperationRequest $operationRequest): Response
-    {
+    public function show(
+        OperationRequest $operationRequest
+    ): Response {
         $operationRequest->load([
             'user',
             'department',
+            'purchaseRequest.items',
         ]);
 
         return Inertia::render('operations/requests/show', [
@@ -56,6 +60,12 @@ class OperationRequestController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        /*
+        |--------------------------------------------------------------------------
+        | COMMON REQUEST VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
         $validated = $request->validate([
             'type' => [
                 'required',
@@ -79,6 +89,67 @@ class OperationRequestController extends Controller
                 'in:low,normal,high,urgent',
             ],
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | PURCHASE REQUEST VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->input('type') === 'purchase') {
+            $purchaseValidated = $request->validate([
+                'purpose' => [
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+
+                'justification' => [
+                    'required',
+                    'string',
+                ],
+
+                'requested_date' => [
+                    'required',
+                    'date',
+                ],
+
+                'items' => [
+                    'required',
+                    'array',
+                    'min:1',
+                ],
+
+                'items.*.description' => [
+                    'required',
+                    'string',
+                    'max:1000',
+                ],
+
+                'items.*.quantity' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                ],
+
+                'items.*.unit' => [
+                    'required',
+                    'string',
+                    'max:50',
+                ],
+
+                'items.*.estimated_unit_cost' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                ],
+            ]);
+
+            $validated = array_merge(
+                $validated,
+                $purchaseValidated
+            );
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -108,27 +179,100 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE REQUEST
+        | DATABASE TRANSACTION
         |--------------------------------------------------------------------------
+        |
+        | Everything must succeed together.
+        |
         */
 
-        $operationRequest = OperationRequest::create([
-            'request_no' => $this->generateRequestNumber(),
+        $operationRequest = DB::transaction(function () use (
+            $validated,
+            $user
+        ) {
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE COMMON REQUEST
+            |--------------------------------------------------------------------------
+            */
 
-            'user_id' => $user->id,
+            $operationRequest = OperationRequest::create([
+                'request_no' => $this->generateRequestNumber(),
 
-            'department_id' => $user->department_id,
+                'user_id' => $user->id,
 
-            'type' => $validated['type'],
+                'department_id' => $user->department_id,
 
-            'title' => $validated['title'],
+                'type' => $validated['type'],
 
-            'description' => $validated['description'] ?? null,
+                'title' => $validated['title'],
 
-            'priority' => $validated['priority'],
+                'description' => $validated['description'] ?? null,
 
-            'status' => 'submitted',
-        ]);
+                'priority' => $validated['priority'],
+
+                'status' => 'submitted',
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | PURCHASE REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            if ($validated['type'] === 'purchase') {
+
+                $purchaseRequest =
+                    $operationRequest->purchaseRequest()->create([
+                        'purpose' => $validated['purpose'],
+
+                        'justification' =>
+                            $validated['justification'],
+
+                        'requested_date' =>
+                            $validated['requested_date'],
+                    ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | PURCHASE ITEMS
+                |--------------------------------------------------------------------------
+                */
+
+                foreach ($validated['items'] as $item) {
+
+                    $quantity = (float) $item['quantity'];
+
+                    $unitCost =
+                        (float) $item['estimated_unit_cost'];
+
+                    $estimatedAmount =
+                        round(
+                            $quantity * $unitCost,
+                            2
+                        );
+
+                    $purchaseRequest->items()->create([
+                        'description' =>
+                            $item['description'],
+
+                        'quantity' =>
+                            $quantity,
+
+                        'unit' =>
+                            $item['unit'],
+
+                        'estimated_unit_cost' =>
+                            $unitCost,
+
+                        'estimated_amount' =>
+                            $estimatedAmount,
+                    ]);
+                }
+            }
+
+            return $operationRequest;
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -153,7 +297,8 @@ class OperationRequestController extends Controller
     private function generateRequestNumber(): string
     {
         do {
-            $number = 'REQ-' .
+            $number =
+                'REQ-' .
                 now()->format('Y') .
                 '-' .
                 str_pad(
@@ -165,7 +310,7 @@ class OperationRequestController extends Controller
         } while (
             OperationRequest::where(
                 'request_no',
-                $number,
+                $number
             )->exists()
         );
 

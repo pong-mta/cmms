@@ -199,7 +199,9 @@ export default function CreateRequest() {
 
         setData('items', items);
 
-        post('/operations/requests');
+        post('/operations/requests', {
+            preserveScroll: true,
+        });
     }
 
     const isPurchaseRequest = data.type === 'purchase';

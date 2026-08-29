@@ -5,50 +5,48 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class OperationRequest extends Model
+class PurchaseRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'request_no',
-        'user_id',
-        'department_id',
-        'type',
-        'title',
-        'description',
-        'priority',
-        'status',
+        'operation_request_id',
+        'purpose',
+        'justification',
+        'requested_date',
+    ];
+
+    protected $casts = [
+        'requested_date' => 'date',
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | USER
+    | OPERATION REQUEST
     |--------------------------------------------------------------------------
     */
 
-    public function user(): BelongsTo
+    public function operationRequest(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            OperationRequest::class,
+            'operation_request_id'
+        );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | DEPARTMENT
+    | ITEMS
     |--------------------------------------------------------------------------
     */
 
-    public function department(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function purchaseRequest(): HasOne
-    {
-        return $this->hasOne(
-            PurchaseRequest::class,
-            'operation_request_id'
+        return $this->hasMany(
+            PurchaseRequestItem::class,
+            'purchase_request_id'
         );
     }
 }
