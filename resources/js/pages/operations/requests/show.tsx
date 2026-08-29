@@ -1,29 +1,21 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import {
-    Head,
-    Link,
-    useForm,
-    usePage,
-} from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 import {
-    AlertCircle,
+    AlertTriangle,
     ArrowLeft,
+    Building2,
     CalendarDays,
     CheckCircle2,
     ClipboardList,
     Clock3,
-    FileText,
-    MapPin,
-    Package,
-    Play,
-    Send,
     User,
-    XCircle,
+    Wrench,
+    ClipboardCheck,
+    Send,
 } from 'lucide-react';
-
-import type { ReactNode } from 'react';
 
 
 /*
@@ -32,255 +24,153 @@ import type { ReactNode } from 'react';
 |--------------------------------------------------------------------------
 */
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-}
-
-interface UserData {
-    id: number;
-    name: string;
-    phone?: string;
-    department_id?: number | null;
-    department?: Department | null;
-    roles?: Role[];
-}
-
-interface Role {
-    id: number;
-    name: string;
-}
-
 interface Asset {
     id: number;
     asset_code: string;
     name: string;
 }
 
-interface PurchaseItem {
+interface Department {
     id: number;
+    name: string;
+    code: string;
+}
+
+interface Technician {
+    id: number;
+    name: string;
+    phone?: string;
+    department_id: number;
+}
+
+interface UserInfo {
+    id: number;
+    name: string;
+    phone?: string;
+}
+
+interface RequestCostItem {
+    id?: number;
+    type: 'labor' | 'parts' | 'other';
     description: string;
     quantity: number | string;
-    unit?: string | null;
-    estimated_unit_price: number | string;
-    estimated_amount: number | string;
+    unit: string;
+    unit_cost: number | string;
+    total_cost: number | string;
     remarks?: string | null;
 }
 
-interface ReimbursementItem {
-    id: number;
-    expense_date?: string | null;
-    expense_type?: string | null;
-    description: string;
-    amount: number | string;
-    receipt_reference?: string | null;
-    remarks?: string | null;
-}
-
-interface TravelDetails {
-    id: number;
-    destination?: string | null;
-    purpose?: string | null;
-    departure_date?: string | null;
-    return_date?: string | null;
-    mode_of_travel?: string | null;
-    accommodation?: string | null;
-    estimated_transportation: number | string;
-    estimated_accommodation: number | string;
-    estimated_meals: number | string;
-    estimated_registration: number | string;
-    estimated_other: number | string;
-    estimated_total: number | string;
-    funding_source?: string | null;
-    remarks?: string | null;
-}
-
-interface History {
-    id: number;
-
-    action: string;
-
-    from_status?: string | null;
-
-    to_status?: string | null;
-
-    remarks?: string | null;
-
-    created_at: string;
-
-    user?: UserData | null;
-}
-
-interface Attachment {
-    id: number;
-
-    original_name: string;
-
-    file_name?: string | null;
-
-    path?: string | null;
-
-    mime_type?: string | null;
-
-    size?: number | null;
-
-    description?: string | null;
-
-    created_at: string;
-
-    uploaded_by?: UserData | null;
-}
-
-interface ServiceRequest {
+interface MaintenanceRequest {
     id: number;
 
     request_code: string;
 
-    request_type: string;
-    request_type_id?: number | null;
+    asset?: Asset | null;
 
-    requestType?: {
-        id: number;
-        code: string;
-        name: string;
-        category?: string | null;
-    } | null;
+    department?: Department | null;
 
-    subject: string;
+    requested_by?: UserInfo | null;
 
-    description?: string | null;
+    assessed_by?: UserInfo | null;
 
-    priority: string;
+    assigned_to?: UserInfo | null;
 
-    status: string;
+    head_reviewed_by?: UserInfo | null;
 
-    location?: string | null;
+    gso_reviewed_by?: UserInfo | null;
+
+    budget_reviewed_by?: UserInfo | null;
+
+    title: string;
+
+    description: string;
+
+    priority:
+        | 'low'
+        | 'normal'
+        | 'high'
+        | 'critical';
+
+    status:
+        | 'submitted'
+        | 'assessment'
+        | 'for_head_review'
+        | 'head_approved'
+        | 'for_gso_review'
+        | 'for_budget_review'
+        | 'budget_approved'
+        | 'ready_for_work'
+        | 'assigned'
+        | 'in_progress'
+        | 'completed'
+        | 'rejected'
+        | 'cancelled';
 
     requested_at?: string | null;
 
-    reviewed_at?: string | null;
+    assessed_at?: string | null;
+
+    assessment?: string | null;
+
+    work_scope?: string | null;
+
+    estimated_labor_cost?: number | string | null;
+
+    estimated_parts_cost?: number | string | null;
+
+    estimated_other_cost?: number | string | null;
+
+    estimated_total_cost?: number | string | null;
+
+    cost_items?: RequestCostItem[];
+
+    head_reviewed_at?: string | null;
+
+    head_remarks?: string | null;
+
+    gso_reviewed_at?: string | null;
+
+    gso_remarks?: string | null;
+
+    budget_reviewed_at?: string | null;
+
+    budget_remarks?: string | null;
+
+    funding_source?: string | null;
+
+    budget_amount?: number | string | null;
 
     approved_at?: string | null;
 
-    assigned_at?: string | null;
+    started_at?: string | null;
 
     completed_at?: string | null;
 
     remarks?: string | null;
 
-    department?: Department | null;
+    created_at: string;
 
-    requested_by?: UserData | null;
-
-    assigned_department?: Department | null;
-
-    assigned_to?: UserData | null;
-
-    asset?: Asset | null;
-
-    purchase_items?: PurchaseItem[];
-    reimbursement_items?: ReimbursementItem[];
-    travel_details?: TravelDetails | null;
-
-    reviewed_by?: UserData | null;
-
-    approved_by?: UserData | null;
-
-    completed_by?: UserData | null;
-
-    histories?: History[];
-
-    attachments?: Attachment[];
-}
-
-interface AuthData {
-    user: UserData;
-}
-
-interface PageProps {
-    auth: AuthData;
+    updated_at: string;
 }
 
 interface Props {
-    request: ServiceRequest;
-
-    user: UserData;
+    request: MaintenanceRequest;
+    technicians: Technician[];
+    userRoles: string[];
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| HELPERS
+| STATUS
 |--------------------------------------------------------------------------
 */
 
-function normalizeRole(
-    role: unknown,
-): string {
-
-    return String(role ?? '')
-        .toLowerCase()
-        .trim()
-        .replace(/[- ]/g, '_');
-}
-
-
-function getRoleNames(
-    user?: UserData | null,
-): string[] {
-
-    return (
-        user?.roles?.map(
-            (role) =>
-                normalizeRole(role.name),
-        ) ?? []
-    );
-}
-
-
-function isSupervisor(
-    user?: UserData | null,
-): boolean {
-
-    const roles =
-        getRoleNames(user);
-
-    return (
-        roles.includes('supervisor') ||
-        roles.includes(
-            'department_supervisor',
-        )
-    );
-}
-
-
-function isHead(
-    user?: UserData | null,
-): boolean {
-
-    const roles =
-        getRoleNames(user);
-
-    return (
-        roles.includes('head') ||
-        roles.includes('department_head') ||
-        roles.includes('office_head')
-    );
-}
-
-
-function formatStatus(
-    status?: unknown,
-): string {
-
-    if (status === null || status === undefined || status === '') {
-        return '—';
-    }
-
-    return String(status)
-        .replace(/_/g, ' ')
-        .replace(/-/g, ' ')
+function statusLabel(
+    status: MaintenanceRequest['status'],
+) {
+    return status
+        .replaceAll('_', ' ')
         .replace(
             /\b\w/g,
             (letter) =>
@@ -288,81 +178,74 @@ function formatStatus(
         );
 }
 
+function statusClass(
+    status: MaintenanceRequest['status'],
+) {
+    switch (status) {
+        case 'submitted':
+            return 'bg-blue-50 text-blue-700 ring-blue-200';
 
-function formatDate(
-    date?: string | null,
-): string {
+        case 'assessment':
+            return 'bg-amber-50 text-amber-700 ring-amber-200';
 
-    if (!date) {
-        return '—';
+        case 'for_head_review':
+            return 'bg-purple-50 text-purple-700 ring-purple-200';
+
+        case 'head_approved':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'for_gso_review':
+            return 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200';
+
+        case 'for_budget_review':
+            return 'bg-violet-50 text-violet-700 ring-violet-200';
+
+        case 'budget_approved':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+
+        case 'ready_for_work':
+            return 'bg-cyan-50 text-cyan-700 ring-cyan-200';
+
+        case 'assigned':
+            return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
+
+        case 'in_progress':
+            return 'bg-amber-50 text-amber-700 ring-amber-200';
+
+        case 'completed':
+            return 'bg-green-50 text-green-700 ring-green-200';
+
+        case 'rejected':
+            return 'bg-red-50 text-red-700 ring-red-200';
+
+        case 'cancelled':
+            return 'bg-slate-100 text-slate-600 ring-slate-200';
+
+        default:
+            return 'bg-slate-100 text-slate-600 ring-slate-200';
     }
-
-    return new Intl.DateTimeFormat(
-        'en-PH',
-        {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-        },
-    ).format(new Date(date));
 }
 
 
-function formatCurrency(
-    value?: number | string | null,
-): string {
+/*
+|--------------------------------------------------------------------------
+| PRIORITY
+|--------------------------------------------------------------------------
+*/
 
-    const amount = Number(value ?? 0);
-
-    if (!Number.isFinite(amount)) {
-        return '₱0.00';
-    }
-
-    return amount.toLocaleString(
-        'en-PH',
-        {
-            style: 'currency',
-            currency: 'PHP',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        },
+function priorityLabel(
+    priority: MaintenanceRequest['priority'],
+) {
+    return (
+        priority.charAt(0).toUpperCase() +
+        priority.slice(1)
     );
 }
 
-
-function formatFileSize(
-    bytes?: number | null,
-): string {
-
-    if (!bytes) {
-        return '';
-    }
-
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-
-    if (bytes < 1024 * 1024) {
-        return `${(
-            bytes / 1024
-        ).toFixed(1)} KB`;
-    }
-
-    return `${(
-        bytes /
-        (1024 * 1024)
-    ).toFixed(1)} MB`;
-}
-
-
-function priorityClasses(
-    priority?: string | null,
-): string {
-
+function priorityClass(
+    priority: MaintenanceRequest['priority'],
+) {
     switch (priority) {
-
         case 'critical':
             return 'bg-red-50 text-red-700 ring-red-200';
 
@@ -381,40 +264,57 @@ function priorityClasses(
 }
 
 
-function statusClasses(
-    status?: string | null,
-): string {
+/*
+|--------------------------------------------------------------------------
+| DATE
+|--------------------------------------------------------------------------
+*/
 
-    switch (status) {
-
-        case 'completed':
-            return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
-
-        case 'in_progress':
-        case 'assigned':
-            return 'bg-blue-50 text-blue-700 ring-blue-200';
-
-        case 'approved':
-            return 'bg-violet-50 text-violet-700 ring-violet-200';
-
-        case 'pending':
-        case 'for_head_review':
-        case 'for_budget_review':
-        case 'for_gso_review':
-        case 'for_accounting_review':
-        case 'for_mayor_review':
-            return 'bg-amber-50 text-amber-700 ring-amber-200';
-
-        case 'rejected':
-        case 'declined':
-            return 'bg-red-50 text-red-700 ring-red-200';
-
-        case 'archived':
-            return 'bg-slate-100 text-slate-600 ring-slate-200';
-
-        default:
-            return 'bg-slate-100 text-slate-600 ring-slate-200';
+function formatDate(
+    value?: string | null,
+) {
+    if (!value) {
+        return '—';
     }
+
+    return new Date(
+        value,
+    ).toLocaleDateString(
+        'en-PH',
+        {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        },
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DATE + TIME
+|--------------------------------------------------------------------------
+*/
+
+function formatDateTime(
+    value?: string | null,
+) {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(
+        value,
+    ).toLocaleString(
+        'en-PH',
+        {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        },
+    );
 }
 
 
@@ -424,256 +324,162 @@ function statusClasses(
 |--------------------------------------------------------------------------
 */
 
-export default function ShowRequest({
+export default function ShowMaintenanceRequest({
     request,
-    user,
+    technicians,
+    userRoles,
 }: Props) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | CURRENT AUTH USER
-    |--------------------------------------------------------------------------
-    */
+    const isDepartmentHead =
+        userRoles.includes('department_head');
 
-    const page =
-        usePage<PageProps>();
+    const isBudgetOfficer =
+        userRoles.includes('budget_officer');
 
-    const currentUser =
-        page.props.auth.user ?? user;
+    const isGso =
+        userRoles.includes('gso');
 
+    const isMaintenanceSupervisor =
+        userRoles.includes('maintenance_supervisor');
 
-    /*
-    |--------------------------------------------------------------------------
-    | ROLE
-    |--------------------------------------------------------------------------
-    */
+    const [
+        showRejectModal,
+        setShowRejectModal,
+    ] = useState(false);
 
-    const supervisor =
-        isSupervisor(currentUser);
+    const [
+        rejectReason,
+        setRejectReason,
+    ] = useState('');
 
-    const head =
-        isHead(currentUser);
+    const [
+        selectedTechnician,
+        setSelectedTechnician,
+    ] = useState('');
 
+    const [
+        assessment,
+        setAssessment,
+    ] = useState('');
 
-    /*
-    |--------------------------------------------------------------------------
-    | WORKFLOW FORMS
-    |--------------------------------------------------------------------------
-    */
+    const [
+        workScope,
+        setWorkScope,
+    ] = useState('');
 
-    const reviewForm =
-        useForm({
+    const [
+        costItems,
+        setCostItems,
+    ] = useState<RequestCostItem[]>([
+        {
+            type: 'parts',
+            description: '',
+            quantity: 1,
+            unit: 'pc',
+            unit_cost: '',
+            total_cost: 0,
             remarks: '',
-        });
+        },
+    ]);
 
+    const calculatedTotal = useMemo(
+        () =>
+            costItems.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(item.quantity || 0) *
+                        Number(item.unit_cost || 0),
+                0,
+            ),
+        [costItems],
+    );
 
-    const actionForm =
-        useForm({
-            remarks: '',
-        });
+    const updateCostItem = (
+        index: number,
+        field: keyof RequestCostItem,
+        value: string,
+    ) => {
+        setCostItems((current) =>
+            current.map((item, itemIndex) =>
+                itemIndex === index
+                    ? {
+                          ...item,
+                          [field]: value,
+                          total_cost:
+                              field === 'quantity' ||
+                              field === 'unit_cost'
+                                  ? Number(
+                                        field === 'quantity'
+                                            ? value || 0
+                                            : item.quantity || 0,
+                                    ) *
+                                    Number(
+                                        field === 'unit_cost'
+                                            ? value || 0
+                                            : item.unit_cost || 0,
+                                    )
+                                  : item.total_cost,
+                      }
+                    : item,
+            ),
+        );
+    };
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | WORKFLOW ACTIONS
-    |--------------------------------------------------------------------------
-    */
-
-    function reviewRequest() {
-
-        reviewForm.post(
-            `/operations/requests/${request.id}/review`,
+    const addCostItem = () => {
+        setCostItems((current) => [
+            ...current,
             {
-                preserveScroll: true,
+                type: 'parts',
+                description: '',
+                quantity: 1,
+                unit: 'pc',
+                unit_cost: '',
+                total_cost: 0,
+                remarks: '',
             },
+        ]);
+    };
+
+    const [budgetFundingSource, setBudgetFundingSource] =
+        useState('');
+
+    const [budgetAmount, setBudgetAmount] =
+        useState('');
+
+    const [budgetRemarks, setBudgetRemarks] =
+        useState('');
+
+    const removeCostItem = (index: number) => {
+        setCostItems((current) =>
+            current.length === 1
+                ? current
+                : current.filter(
+                      (_, itemIndex) =>
+                          itemIndex !== index,
+                  ),
         );
-    }
+    };
 
-
-    function approveRequest() {
-
-        actionForm.post(
-            `/operations/requests/${request.id}/approve`,
-            {
-                preserveScroll: true,
-            },
-        );
-    }
-
-
-    function rejectRequest() {
-
-        const remarks =
-            window.prompt(
-                'Please enter the reason for rejecting this request:',
-            );
-
-        if (!remarks?.trim()) {
-            return;
-        }
-
-        actionForm.setData(
-            'remarks',
-            remarks,
-        );
-
-        actionForm.post(
-            `/operations/requests/${request.id}/reject`,
-            {
-                preserveScroll: true,
-            },
-        );
-    }
-
-
-    function startRequest() {
-
-        actionForm.post(
-            `/operations/requests/${request.id}/start`,
-            {
-                preserveScroll: true,
-            },
-        );
-    }
-
-
-    function completeRequest() {
-
-        const remarks =
-            window.prompt(
-                'Enter completion remarks (optional):',
-            );
-
-        actionForm.setData(
-            'remarks',
-            remarks ?? '',
-        );
-
-        actionForm.post(
-            `/operations/requests/${request.id}/complete`,
-            {
-                preserveScroll: true,
-            },
-        );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DETERMINE AVAILABLE ACTION
-    |--------------------------------------------------------------------------
-    */
-
-    const canReview =
-        supervisor &&
-        request.status === 'pending';
-
-
-    const canApprove =
-        head &&
-        request.status ===
-            'for_head_review';
-
-
-    const canStart =
-        (supervisor || head) &&
-        (
-            request.status ===
-                'approved' ||
-            request.status ===
-                'assigned'
-        );
-
-
-    const canComplete =
-        (supervisor || head) &&
-        request.status ===
-            'in_progress';
-
-
-    const hasActions =
-        canReview ||
-        canApprove ||
-        canStart ||
-        canComplete;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | SPECIALIZED REQUEST DATA
-    |--------------------------------------------------------------------------
-    */
-
-    const purchaseItems =
-        request.purchase_items ?? [];
-
-    const reimbursementItems =
-        request.reimbursement_items ?? [];
-
-    const travelDetails =
-        request.travel_details ?? null;
-
-    const purchaseTotal =
-        purchaseItems.reduce(
-            (total, item) =>
-                total + Number(item.estimated_amount ?? 0),
-            0,
-        );
-
-    const reimbursementTotal =
-        reimbursementItems.reduce(
-            (total, item) =>
-                total + Number(item.amount ?? 0),
-            0,
-        );
-
-    const travelTotal =
-        travelDetails
-            ? Number(travelDetails.estimated_transportation ?? 0) +
-              Number(travelDetails.estimated_accommodation ?? 0) +
-              Number(travelDetails.estimated_meals ?? 0) +
-              Number(travelDetails.estimated_registration ?? 0) +
-              Number(travelDetails.estimated_other ?? 0)
-            : 0;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | BREADCRUMBS
-    |--------------------------------------------------------------------------
-    */
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Operations',
-            href: '/operations/requests',
-        },
-        {
-            title: 'Requests',
-            href: '/operations/requests',
+            title: 'Maintenance Requests',
+            href: '/maintenance-requests',
         },
         {
             title: request.request_code,
-            href:
-                `/operations/requests/${request.id}`,
+            href: `/maintenance-requests/${request.id}`,
         },
     ];
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RETURN
-    |--------------------------------------------------------------------------
-    */
-
     return (
-
         <AppLayout
             breadcrumbs={breadcrumbs}
         >
 
             <Head
-                title={`${request.request_code} | Request`}
+                title={`${request.request_code} | CMMS`}
             />
 
 
@@ -684,135 +490,62 @@ export default function ShowRequest({
                 {/* HEADER */}
                 {/* ====================================================== */}
 
-                <div>
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
 
-                    <Link
-                        href="/operations/requests"
-                        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-blue-600"
-                    >
+                    <div className="flex items-center gap-3">
 
-                        <ArrowLeft className="h-4 w-4" />
-
-                        Back to Requests
-
-                    </Link>
+                        <Link
+                            href="/maintenance-requests"
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-800"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </Link>
 
 
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                            <ClipboardList className="h-5 w-5" />
+                        </div>
+
 
                         <div>
 
                             <div className="flex flex-wrap items-center gap-2">
 
-                                <span className="text-sm font-bold text-blue-700">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                                     {request.request_code}
-                                </span>
+                                </h1>
 
 
                                 <span
-                                    className={[
-                                        'rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset',
-                                        statusClasses(
-                                            request.status,
-                                        ),
-                                    ].join(' ')}
-                                >
-                                    {formatStatus(
+                                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${statusClass(
                                         request.status,
-                                    )}
-                                </span>
-
-
-                                <span
-                                    className={[
-                                        'rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset',
-                                        priorityClasses(
-                                            request.priority,
-                                        ),
-                                    ].join(' ')}
+                                    )}`}
                                 >
-                                    {formatStatus(
-                                        request.priority,
+                                    {statusLabel(
+                                        request.status,
                                     )}
                                 </span>
 
                             </div>
 
 
-                            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                                {request.subject}
-                            </h1>
-
-
-                            <p className="mt-1 text-sm text-slate-500">
-
-                                {formatStatus(
-                                    request.request_type,
-                                )}
-
-                                {' • '}
-
-                                Requested{' '}
-
-                                {formatDate(
-                                    request.requested_at,
-                                )}
-
+                            <p className="mt-1 text-xs text-slate-500">
+                                Maintenance request details
                             </p>
 
                         </div>
 
                     </div>
 
-                </div>
 
+                    <Link
+                        href="/maintenance-requests"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
 
-                {/* ====================================================== */}
-                {/* DEPARTMENT BANNER */}
-                {/* ====================================================== */}
-
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
-
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                        <div className="flex items-center gap-3">
-
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-
-                                <ClipboardList className="h-5 w-5" />
-
-                            </div>
-
-
-                            <div>
-
-                                <p className="text-xs font-medium text-blue-600">
-                                    Requesting Department
-                                </p>
-
-
-                                <p className="text-sm font-semibold text-slate-800">
-                                    {request.department?.name ??
-                                        'No Department'}
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="text-xs text-slate-500">
-
-                            Requester:{' '}
-
-                            <span className="font-semibold text-slate-700">
-                                {request.requested_by?.name ??
-                                    'Unknown'}
-                            </span>
-
-                        </div>
-
-                    </div>
+                        Back to Requests
+                    </Link>
 
                 </div>
 
@@ -821,149 +554,108 @@ export default function ShowRequest({
                 {/* MAIN */}
                 {/* ====================================================== */}
 
-                <div className="grid gap-6 xl:grid-cols-3">
+                <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
 
 
                     {/* ================================================== */}
                     {/* LEFT */}
                     {/* ================================================== */}
 
-                    <div className="space-y-6 xl:col-span-2">
+                    <div className="space-y-6">
 
 
                         {/* ================================================== */}
-                        {/* REQUEST DETAILS */}
+                        {/* REQUEST */}
                         {/* ================================================== */}
 
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                            <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Request Details
-                                </h2>
+                                <div className="flex items-center gap-3">
 
-                            </div>
-
-
-                            <div className="p-5">
-
-                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                        <ClipboardList className="h-5 w-5" />
+                                    </div>
 
 
-                                    <InfoItem
-                                        icon={
-                                            <FileText className="h-4 w-4" />
-                                        }
-                                        label="Request Type"
-                                        value={formatStatus(
-                                            request.request_type,
-                                        )}
-                                    />
+                                    <div>
 
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Request Details
+                                        </h2>
 
-                                    <InfoItem
-                                        icon={
-                                            <Clock3 className="h-4 w-4" />
-                                        }
-                                        label="Status"
-                                        value={formatStatus(
-                                            request.status,
-                                        )}
-                                    />
-
-
-                                    <InfoItem
-                                        icon={
-                                            <User className="h-4 w-4" />
-                                        }
-                                        label="Requested By"
-                                        value={
-                                            request.requested_by?.name ??
-                                            '—'
-                                        }
-                                    />
-
-
-                                    <InfoItem
-                                        icon={
-                                            <CalendarDays className="h-4 w-4" />
-                                        }
-                                        label="Requested Date"
-                                        value={formatDate(
-                                            request.requested_at,
-                                        )}
-                                    />
-
-
-                                    <InfoItem
-                                        icon={
-                                            <MapPin className="h-4 w-4" />
-                                        }
-                                        label="Location"
-                                        value={
-                                            request.location ??
-                                            '—'
-                                        }
-                                    />
-
-
-                                    <InfoItem
-                                        icon={
-                                            <Package className="h-4 w-4" />
-                                        }
-                                        label="Related Asset"
-                                        value={
-                                            request.asset
-                                                ? `${request.asset.asset_code} — ${request.asset.name}`
-                                                : 'No related asset'
-                                        }
-                                    />
-
-                                </div>
-
-
-                                {/* DESCRIPTION */}
-
-                                <div className="mt-6 border-t border-slate-100 pt-5">
-
-                                    <p className="mb-2 text-xs font-semibold text-slate-500">
-                                        Description
-                                    </p>
-
-
-                                    <div className="rounded-xl bg-slate-50 px-4 py-3">
-
-                                        <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                            {request.description ||
-                                                'No description provided.'}
+                                        <p className="mt-0.5 text-[10px] text-slate-500">
+                                            Information submitted by the requester.
                                         </p>
 
                                     </div>
 
                                 </div>
 
+                            </div>
 
-                                {/* REMARKS */}
+
+                            <div className="p-5 sm:p-6">
+
+                                <h2 className="text-lg font-bold text-slate-900">
+                                    {request.title}
+                                </h2>
+
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+
+                                    <span
+                                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${priorityClass(
+                                            request.priority,
+                                        )}`}
+                                    >
+                                        {priorityLabel(
+                                            request.priority,
+                                        )}{' '}
+                                        Priority
+                                    </span>
+
+
+                                    <span
+                                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${statusClass(
+                                            request.status,
+                                        )}`}
+                                    >
+                                        {statusLabel(
+                                            request.status,
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div className="mt-6">
+
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Problem Description
+                                    </p>
+
+
+                                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                        {request.description}
+                                    </p>
+
+                                </div>
+
 
                                 {request.remarks && (
 
-                                    <div className="mt-5">
+                                    <div className="mt-6 border-t border-slate-100 pt-5">
 
-                                        <p className="mb-2 text-xs font-semibold text-slate-500">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                             Remarks
                                         </p>
 
 
-                                        <div className="rounded-xl bg-slate-50 px-4 py-3">
-
-                                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                                {
-                                                    request.remarks
-                                                }
-                                            </p>
-
-                                        </div>
+                                        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                            {request.remarks}
+                                        </p>
 
                                     </div>
 
@@ -975,535 +667,773 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* PURCHASE REQUEST */}
+                        {/* ASSET */}
                         {/* ================================================== */}
 
-                        {purchaseItems.length > 0 && (
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
 
-                                <div className="border-b border-slate-100 px-5 py-4">
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Purchase Request
-                                    </h2>
+                                <div className="flex items-center gap-3">
 
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Requested items and estimated costs
-                                    </p>
-                                </div>
-
-                                <div className="p-5">
-
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full min-w-[720px] text-left">
-                                            <thead>
-                                                <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wide text-slate-400">
-                                                    <th className="px-3 py-3 font-semibold">Item</th>
-                                                    <th className="px-3 py-3 font-semibold">Qty</th>
-                                                    <th className="px-3 py-3 font-semibold">Unit</th>
-                                                    <th className="px-3 py-3 font-semibold text-right">Unit Price</th>
-                                                    <th className="px-3 py-3 font-semibold text-right">Amount</th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                {purchaseItems.map((item) => (
-                                                    <tr
-                                                        key={item.id}
-                                                        className="border-b border-slate-50 last:border-0"
-                                                    >
-                                                        <td className="px-3 py-3">
-                                                            <p className="text-xs font-semibold text-slate-700">
-                                                                {item.description}
-                                                            </p>
-
-                                                            {item.remarks && (
-                                                                <p className="mt-1 text-[10px] text-slate-400">
-                                                                    {item.remarks}
-                                                                </p>
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-3 text-xs text-slate-600">
-                                                            {String(item.quantity ?? 0)}
-                                                        </td>
-
-                                                        <td className="px-3 py-3 text-xs text-slate-600">
-                                                            {item.unit ?? '—'}
-                                                        </td>
-
-                                                        <td className="px-3 py-3 text-right text-xs text-slate-600">
-                                                            {formatCurrency(item.estimated_unit_price)}
-                                                        </td>
-
-                                                        <td className="px-3 py-3 text-right text-xs font-semibold text-slate-800">
-                                                            {formatCurrency(item.estimated_amount)}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                        <Wrench className="h-5 w-5" />
                                     </div>
 
-                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
-                                        <span className="text-xs font-semibold text-slate-600">
-                                            Estimated Purchase Total
-                                        </span>
 
-                                        <span className="text-base font-bold text-blue-700">
-                                            {formatCurrency(purchaseTotal)}
-                                        </span>
+                                    <div>
+
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Asset
+                                        </h2>
+
+                                        <p className="mt-0.5 text-[10px] text-slate-500">
+                                            Asset associated with this request.
+                                        </p>
+
                                     </div>
 
                                 </div>
 
-                            </section>
-                        )}
+                            </div>
 
 
-                        {/* ================================================== */}
-                        {/* REIMBURSEMENT */}
-                        {/* ================================================== */}
+                            <div className="p-5 sm:p-6">
 
-                        {reimbursementItems.length > 0 && (
+                                {request.asset ? (
 
-                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                    <Link
+                                        href={`/assets/${request.asset.id}`}
+                                        className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50/30"
+                                    >
 
-                                <div className="border-b border-slate-100 px-5 py-4">
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Reimbursement
-                                    </h2>
+                                        <div className="flex items-center gap-3">
 
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Expenses submitted for reimbursement
-                                    </p>
-                                </div>
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                                <Wrench className="h-5 w-5" />
+                                            </div>
 
-                                <div className="p-5">
 
-                                    <div className="space-y-3">
+                                            <div>
 
-                                        {reimbursementItems.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                                            >
+                                                <p className="text-xs font-bold text-slate-800">
+                                                    {request.asset.asset_code}
+                                                </p>
 
-                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-
-                                                    <div className="min-w-0">
-
-                                                        <div className="flex flex-wrap items-center gap-2">
-
-                                                            <span className="text-xs font-semibold text-slate-800">
-                                                                {item.description}
-                                                            </span>
-
-                                                            {item.expense_type && (
-                                                                <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
-                                                                    {item.expense_type}
-                                                                </span>
-                                                            )}
-
-                                                        </div>
-
-                                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
-
-                                                            {item.expense_date && (
-                                                                <span>
-                                                                    {formatDate(item.expense_date)}
-                                                                </span>
-                                                            )}
-
-                                                            {item.receipt_reference && (
-                                                                <span>
-                                                                    Receipt: {item.receipt_reference}
-                                                                </span>
-                                                            )}
-
-                                                        </div>
-
-                                                        {item.remarks && (
-                                                            <p className="mt-2 text-[10px] text-slate-500">
-                                                                {item.remarks}
-                                                            </p>
-                                                        )}
-
-                                                    </div>
-
-                                                    <span className="shrink-0 text-sm font-bold text-slate-800">
-                                                        {formatCurrency(item.amount)}
-                                                    </span>
-
-                                                </div>
+                                                <p className="mt-1 text-[10px] text-slate-500">
+                                                    {request.asset.name}
+                                                </p>
 
                                             </div>
-                                        ))}
+
+                                        </div>
+
+
+                                        <span className="text-[10px] font-semibold text-blue-700 group-hover:text-blue-800">
+                                            View Asset
+                                        </span>
+
+                                    </Link>
+
+                                ) : (
+
+                                    <p className="text-sm text-slate-500">
+                                        No asset information available.
+                                    </p>
+
+                                )}
+
+                            </div>
+
+                        </section>
+
+
+                        {/* ================================================== */}
+                        {/* SUPERVISOR ASSESSMENT RESULT */}
+                        {/* ================================================== */}
+
+                        {request.assessment && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                            <ClipboardCheck className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Supervisor Assessment
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Technical assessment and estimated costing.
+                                            </p>
+
+                                        </div>
 
                                     </div>
 
-                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
-                                        <span className="text-xs font-semibold text-slate-600">
-                                            Total Reimbursement
-                                        </span>
+                                </div>
 
-                                        <span className="text-base font-bold text-blue-700">
-                                            {formatCurrency(reimbursementTotal)}
-                                        </span>
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div>
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Assessment
+                                        </p>
+
+                                        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                            {request.assessment}
+                                        </p>
+
                                     </div>
+
+
+                                    {request.work_scope && (
+
+                                        <div className="mt-6 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Work Scope
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.work_scope}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+
+                                    {request.cost_items &&
+                                        request.cost_items.length > 0 && (
+                                            <div className="mt-6">
+                                                <div className="mb-3 flex items-center justify-between">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                        Detailed Costing
+                                                    </p>
+
+                                                    <p className="text-xs font-bold text-slate-800">
+                                                        ₱
+                                                        {Number(
+                                                            request.estimated_total_cost ?? 0,
+                                                        ).toLocaleString(
+                                                            'en-PH',
+                                                            {
+                                                                minimumFractionDigits: 2,
+                                                            },
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                                                    <table className="w-full min-w-[720px] text-left text-xs">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Type
+                                                                </th>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Description
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Qty
+                                                                </th>
+                                                                <th className="px-3 py-2 font-semibold text-slate-500">
+                                                                    Unit
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Unit Cost
+                                                                </th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-slate-500">
+                                                                    Total
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+
+                                                        <tbody className="divide-y divide-slate-100">
+                                                            {request.cost_items.map(
+                                                                (item, index) => (
+                                                                    <tr
+                                                                        key={
+                                                                            item.id ??
+                                                                            index
+                                                                        }
+                                                                    >
+                                                                        <td className="px-3 py-2 font-semibold capitalize text-slate-700">
+                                                                            {item.type}
+                                                                        </td>
+
+                                                                        <td className="px-3 py-2 text-slate-600">
+                                                                            {item.description}
+                                                                        </td>
+
+                                                                        <td className="px-3 py-2 text-right text-slate-600">
+                                                                            {item.quantity}
+                                                                        </td>
+
+                                                                        <td className="px-3 py-2 text-slate-600">
+                                                                            {item.unit}
+                                                                        </td>
+
+                                                                        <td className="px-3 py-2 text-right text-slate-600">
+                                                                            ₱
+                                                                            {Number(
+                                                                                item.unit_cost ?? 0,
+                                                                            ).toLocaleString(
+                                                                                'en-PH',
+                                                                                {
+                                                                                    minimumFractionDigits: 2,
+                                                                                },
+                                                                            )}
+                                                                        </td>
+
+                                                                        <td className="px-3 py-2 text-right font-semibold text-slate-800">
+                                                                            ₱
+                                                                            {Number(
+                                                                                item.total_cost ?? 0,
+                                                                            ).toLocaleString(
+                                                                                'en-PH',
+                                                                                {
+                                                                                    minimumFractionDigits: 2,
+                                                                                },
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                    <CostItem
+                                                        label="Labor"
+                                                        value={request.estimated_labor_cost}
+                                                    />
+
+                                                    <CostItem
+                                                        label="Parts"
+                                                        value={request.estimated_parts_cost}
+                                                    />
+
+                                                    <CostItem
+                                                        label="Other"
+                                                        value={request.estimated_other_cost}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+
+                                    {request.assessed_by && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] text-slate-400">
+                                                Assessed by
+                                            </p>
+
+                                            <p className="mt-1 text-xs font-semibold text-slate-700">
+                                                {request.assessed_by.name}
+                                            </p>
+
+                                            <p className="mt-1 text-[10px] text-slate-400">
+                                                {formatDateTime(
+                                                    request.assessed_at,
+                                                )}
+                                            </p>
+
+                                        </div>
+
+                                    )}
 
                                 </div>
 
                             </section>
+
                         )}
 
 
                         {/* ================================================== */}
-                        {/* TRAVEL */}
+                        {/* HEAD REVIEW RESULT */}
                         {/* ================================================== */}
 
-                        {travelDetails && (
+                        {request.head_reviewed_by && (
 
                             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                                <div className="border-b border-slate-100 px-5 py-4">
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
 
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Travel Details
-                                    </h2>
+                                    <div className="flex items-center gap-3">
 
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Official travel information and estimated expenses
-                                    </p>
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-700">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Department Head Review
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Review decision and remarks.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
 
                                 </div>
 
-                                <div className="p-5">
 
-                                    <div className="grid gap-5 sm:grid-cols-2">
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="rounded-xl bg-slate-50 p-4">
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Reviewed By
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.head_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.head_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
+
+
+                                    {request.head_remarks && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Head Remarks
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.head_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* GSO VALIDATION RESULT */}
+                        {/* ================================================== */}
+
+                        {request.gso_reviewed_by && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-fuchsia-50 text-fuchsia-700">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                GSO Validation
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                General Services Office validation and remarks.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="rounded-xl bg-slate-50 p-4">
+
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Validated By
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.gso_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.gso_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
+
+
+                                    {request.gso_remarks && (
+
+                                        <div className="mt-4">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                GSO Remarks
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.gso_remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* BUDGET RESULT */}
+                        {/* ================================================== */}
+
+                        {request.budget_reviewed_by && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                                            <ClipboardCheck className="h-5 w-5" />
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="text-sm font-bold text-slate-900">
+                                                Budget Review
+                                            </h2>
+
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                Budget and funding information.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="p-5 sm:p-6">
+
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                                         <InfoItem
-                                            icon={
-                                                <MapPin className="h-4 w-4" />
-                                            }
-                                            label="Destination"
+                                            label="Funding Source"
                                             value={
-                                                travelDetails.destination ?? '—'
+                                                request.funding_source ??
+                                                '—'
                                             }
                                         />
 
                                         <InfoItem
-                                            icon={
-                                                <CalendarDays className="h-4 w-4" />
-                                            }
-                                            label="Travel Dates"
+                                            label="Budget Amount"
                                             value={
-                                                travelDetails.departure_date &&
-                                                travelDetails.return_date
-                                                    ? `${formatDate(travelDetails.departure_date)} — ${formatDate(travelDetails.return_date)}`
+                                                request.budget_amount !==
+                                                null &&
+                                                request.budget_amount !==
+                                                undefined
+                                                    ? `₱${Number(
+                                                          request.budget_amount,
+                                                      ).toLocaleString(
+                                                          'en-PH',
+                                                          {
+                                                              minimumFractionDigits: 2,
+                                                          },
+                                                      )}`
                                                     : '—'
                                             }
                                         />
 
-                                        <InfoItem
-                                            icon={
-                                                <ClipboardList className="h-4 w-4" />
-                                            }
-                                            label="Mode of Travel"
-                                            value={
-                                                travelDetails.mode_of_travel ?? '—'
-                                            }
-                                        />
+                                    </div>
 
-                                        <InfoItem
-                                            icon={
-                                                <Package className="h-4 w-4" />
-                                            }
-                                            label="Accommodation"
-                                            value={
-                                                travelDetails.accommodation ?? '—'
-                                            }
-                                        />
 
-                                        <div className="sm:col-span-2">
+                                    {request.budget_remarks && (
 
-                                            <p className="mb-2 text-xs font-semibold text-slate-500">
-                                                Purpose
+                                        <div className="mt-5 border-t border-slate-100 pt-5">
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Budget Remarks
                                             </p>
 
-                                            <div className="rounded-xl bg-slate-50 px-4 py-3">
-                                                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                                    {travelDetails.purpose || 'No purpose provided.'}
-                                                </p>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="mt-6 border-t border-slate-100 pt-5">
-
-                                        <p className="mb-3 text-xs font-semibold text-slate-500">
-                                            Estimated Travel Expenses
-                                        </p>
-
-                                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-
-                                            <CostItem
-                                                label="Transportation"
-                                                value={travelDetails.estimated_transportation}
-                                            />
-
-                                            <CostItem
-                                                label="Accommodation"
-                                                value={travelDetails.estimated_accommodation}
-                                            />
-
-                                            <CostItem
-                                                label="Meals"
-                                                value={travelDetails.estimated_meals}
-                                            />
-
-                                            <CostItem
-                                                label="Registration"
-                                                value={travelDetails.estimated_registration}
-                                            />
-
-                                            <CostItem
-                                                label="Other"
-                                                value={travelDetails.estimated_other}
-                                            />
-
-                                            <CostItem
-                                                label="Funding Source"
-                                                value={travelDetails.funding_source}
-                                                currency={false}
-                                            />
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
-
-                                        <span className="text-xs font-semibold text-slate-600">
-                                            Estimated Travel Total
-                                        </span>
-
-                                        <span className="text-base font-bold text-blue-700">
-                                            {formatCurrency(travelTotal)}
-                                        </span>
-
-                                    </div>
-
-
-                                    {travelDetails.remarks && (
-
-                                        <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-
-                                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                                                Travel Remarks
-                                            </p>
-
-                                            <p className="whitespace-pre-wrap text-xs leading-5 text-slate-600">
-                                                {travelDetails.remarks}
+                                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                                {request.budget_remarks}
                                             </p>
 
                                         </div>
 
                                     )}
+
+                                    <div className="mt-4">
+
+                                        <p className="text-[10px] text-slate-400">
+                                            Reviewed by
+                                        </p>
+
+                                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                                            {request.budget_reviewed_by.name}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-400">
+                                            {formatDateTime(
+                                                request.budget_reviewed_at,
+                                            )}
+                                        </p>
+
+                                    </div>
 
                                 </div>
 
                             </section>
+
                         )}
 
 
                         {/* ================================================== */}
-                        {/* ASSIGNMENT */}
+                        {/* WORKFLOW */}
                         {/* ================================================== */}
 
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                            <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Assignment
-                                </h2>
+                                <div className="flex items-center gap-3">
 
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Current responsibility for this request
-                                </p>
-
-                            </div>
-
-
-                            <div className="grid gap-5 p-5 sm:grid-cols-2">
-
-
-                                <InfoItem
-                                    icon={
-                                        <BuildingIcon />
-                                    }
-                                    label="Assigned Department"
-                                    value={
-                                        request.assigned_department?.name ??
-                                        'Not assigned'
-                                    }
-                                />
-
-
-                                <InfoItem
-                                    icon={
-                                        <User className="h-4 w-4" />
-                                    }
-                                    label="Assigned To"
-                                    value={
-                                        request.assigned_to?.name ??
-                                        'Not assigned'
-                                    }
-                                />
-
-
-                                <InfoItem
-                                    icon={
-                                        <CalendarDays className="h-4 w-4" />
-                                    }
-                                    label="Assigned Date"
-                                    value={formatDate(
-                                        request.assigned_at,
-                                    )}
-                                />
-
-                            </div>
-
-                        </section>
-
-
-                        {/* ================================================== */}
-                        {/* ATTACHMENTS */}
-                        {/* ================================================== */}
-
-                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-                            <div className="border-b border-slate-100 px-5 py-4">
-
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Attachments
-                                </h2>
-
-                            </div>
-
-
-                            <div className="p-5">
-
-                                {request.attachments &&
-                                request.attachments.length >
-                                    0 ? (
-
-                                    <div className="space-y-2">
-
-                                        {request.attachments.map(
-                                            (
-                                                attachment,
-                                            ) => (
-
-                                                <div
-                                                    key={
-                                                        attachment.id
-                                                    }
-                                                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                                                >
-
-                                                    <div className="flex min-w-0 items-center gap-3">
-
-                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600">
-
-                                                            <FileText className="h-4 w-4" />
-
-                                                        </div>
-
-
-                                                        <div className="min-w-0">
-
-                                                            <p className="truncate text-xs font-semibold text-slate-700">
-                                                                {
-                                                                    attachment.original_name
-                                                                }
-                                                            </p>
-
-
-                                                            <p className="mt-0.5 text-[10px] text-slate-400">
-
-                                                                {
-                                                                    attachment.uploaded_by?.name ??
-                                                                    'Unknown'
-                                                                }
-
-                                                                {' • '}
-
-                                                                {formatDate(
-                                                                    attachment.created_at,
-                                                                )}
-
-                                                                {attachment.size
-                                                                    ? ` • ${formatFileSize(attachment.size)}`
-                                                                    : ''}
-
-                                                            </p>
-
-                                                        </div>
-
-                                                    </div>
-
-
-                                                    {attachment.path && (
-
-                                                        <a
-                                                            href={
-                                                                attachment.path
-                                                            }
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="ml-3 shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                                                        >
-                                                            View
-                                                        </a>
-
-                                                    )}
-
-                                                </div>
-
-                                            ),
-                                        )}
-
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                                        <CheckCircle2 className="h-5 w-5" />
                                     </div>
 
-                                ) : (
+                                    <div>
 
-                                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Request Workflow
+                                        </h2>
 
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-
-                                            <FileText className="h-5 w-5" />
-
-                                        </div>
-
-
-                                        <p className="mt-3 text-xs font-semibold text-slate-700">
-                                            No attachments
-                                        </p>
-
-
-                                        <p className="mt-1 text-[10px] text-slate-400">
-                                            No files have been attached to this request.
+                                        <p className="mt-0.5 text-[10px] text-slate-500">
+                                            Current progress of this request.
                                         </p>
 
                                     </div>
 
-                                )}
+                                </div>
+
+                            </div>
+
+
+                            <div className="p-5 sm:p-6">
+
+                                <WorkflowStep
+                                    label="Submitted"
+                                    active={true}
+                                    completed={[
+                                        'assessment',
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.requested_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Supervisor Assessment"
+                                    active={[
+                                        'assessment',
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.assessed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Department Head Review"
+                                    active={[
+                                        'for_head_review',
+                                        'head_approved',
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'head_approved',
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.head_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="GSO Validation"
+                                    active={[
+                                        'for_gso_review',
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.gso_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Budget Review"
+                                    active={[
+                                        'for_budget_review',
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'budget_approved',
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    date={request.budget_reviewed_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Ready for Work"
+                                    active={[
+                                        'ready_for_work',
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Assigned"
+                                    active={[
+                                        'assigned',
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={[
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                />
+
+
+                                <WorkflowStep
+                                    label="In Progress"
+                                    active={[
+                                        'in_progress',
+                                        'completed',
+                                    ].includes(request.status)}
+                                    completed={
+                                        request.status ===
+                                        'completed'
+                                    }
+                                    date={request.started_at}
+                                />
+
+
+                                <WorkflowStep
+                                    label="Completed"
+                                    active={
+                                        request.status ===
+                                        'completed'
+                                    }
+                                    completed={
+                                        request.status ===
+                                        'completed'
+                                    }
+                                    date={request.completed_at}
+                                    last
+                                />
 
                             </div>
 
@@ -1520,226 +1450,402 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* WORKFLOW ACTIONS */}
+                        {/* STATUS */}
                         {/* ================================================== */}
 
-                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-                            <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="flex items-center gap-3">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Actions
-                                </h2>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                    <Clock3 className="h-5 w-5" />
+                                </div>
 
 
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Available workflow actions
-                                </p>
+                                <div>
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Current Status
+                                    </h2>
+
+                                    <p className="text-[10px] text-slate-500">
+                                        Request processing state
+                                    </p>
+
+                                </div>
 
                             </div>
 
 
-                            <div className="space-y-3 p-5">
+                            <div className="mt-5">
+
+                                <div className="rounded-xl bg-slate-50 p-4 text-center">
+
+                                    <span
+                                        className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${statusClass(
+                                            request.status,
+                                        )}`}
+                                    >
+                                        {statusLabel(
+                                            request.status,
+                                        )}
+                                    </span>
+
+                                </div>
 
 
                                 {/* ================================================== */}
-                                {/* SUPERVISOR REVIEW */}
+                                {/* DEPARTMENT HEAD ACTIONS */}
                                 {/* ================================================== */}
 
-                                {canReview && (
+                                {request.status === 'for_head_review' &&
+                                    isDepartmentHead && (
 
-                                    <>
+                                    <div className="mt-4 space-y-2">
 
                                         <button
                                             type="button"
-                                            disabled={
-                                                reviewForm.processing
-                                            }
-                                            onClick={
-                                                reviewRequest
-                                            }
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
+                                            onClick={() => {
+                                                if (
+                                                    !window.confirm(
+                                                        'Approve this maintenance request and send it to the General Services Office?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
 
-                                            <Send className="h-4 w-4" />
-
-                                            {reviewForm.processing
-                                                ? 'Reviewing...'
-                                                : 'Review & Forward to Head'}
-
-                                        </button>
-
-
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                actionForm.processing
-                                            }
-                                            onClick={
-                                                rejectRequest
-                                            }
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-
-                                            <XCircle className="h-4 w-4" />
-
-                                            Reject Request
-
-                                        </button>
-
-                                    </>
-
-                                )}
-
-
-                                {/* ================================================== */}
-                                {/* HEAD APPROVAL */}
-                                {/* ================================================== */}
-
-                                {canApprove && (
-
-                                    <>
-
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                actionForm.processing
-                                            }
-                                            onClick={
-                                                approveRequest
-                                            }
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/head-approve`,
+                                                );
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
                                         >
 
                                             <CheckCircle2 className="h-4 w-4" />
 
-                                            {actionForm.processing
-                                                ? 'Approving...'
-                                                : 'Approve Request'}
+                                            Approve & Send to GSO
 
                                         </button>
 
 
                                         <button
                                             type="button"
-                                            disabled={
-                                                actionForm.processing
-                                            }
-                                            onClick={
-                                                rejectRequest
-                                            }
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                            onClick={() => {
+
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to the Supervisor?',
+                                                    );
+
+                                                if (
+                                                    !remarks?.trim()
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/head-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
+
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
                                         >
 
-                                            <XCircle className="h-4 w-4" />
+                                            <ArrowLeft className="h-4 w-4" />
 
-                                            Reject Request
+                                            Return to Supervisor
 
                                         </button>
 
-                                    </>
+                                    </div>
 
+                                )}
+
+                                {request.status === 'for_head_review' &&
+                                    !isDepartmentHead && (
+                                    <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                                        <p className="text-xs font-semibold text-purple-800">
+                                            Waiting for Department Head review
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-purple-700">
+                                            The assessment and costing have been submitted. No action is required from you at this stage.
+                                        </p>
+                                    </div>
                                 )}
 
 
                                 {/* ================================================== */}
-                                {/* START */}
+                                {/* GENERAL SERVICES OFFICE */}
                                 {/* ================================================== */}
 
-                                {canStart && (
+                                {request.status === 'for_gso_review' &&
+                                    isGso && (
 
-                                    <button
-                                        type="button"
-                                        disabled={
-                                            actionForm.processing
-                                        }
-                                        onClick={
-                                            startRequest
-                                        }
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
+                                    <div className="mt-4 space-y-2">
 
-                                        <Play className="h-4 w-4" />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
 
-                                        {actionForm.processing
-                                            ? 'Starting...'
-                                            : 'Start Request'}
+                                                if (
+                                                    !window.confirm(
+                                                        'Validate this maintenance request and send it to the Budget Office?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
 
-                                    </button>
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/gso-approve`,
+                                                );
 
-                                )}
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                        >
+                                            <CheckCircle2 className="h-4 w-4" />
 
+                                            Validate & Send to Budget
 
-                                {/* ================================================== */}
-                                {/* COMPLETE */}
-                                {/* ================================================== */}
-
-                                {canComplete && (
-
-                                    <button
-                                        type="button"
-                                        disabled={
-                                            actionForm.processing
-                                        }
-                                        onClick={
-                                            completeRequest
-                                        }
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-
-                                        <CheckCircle2 className="h-4 w-4" />
-
-                                        {actionForm.processing
-                                            ? 'Completing...'
-                                            : 'Mark Completed'}
-
-                                    </button>
-
-                                )}
+                                        </button>
 
 
-                                {/* ================================================== */}
-                                {/* NO ACTION */}
-                                {/* ================================================== */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
 
-                                {!hasActions && (
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to the Supervisor?',
+                                                    );
 
-                                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3">
+                                                if (
+                                                    !remarks?.trim()
+                                                ) {
+                                                    return;
+                                                }
 
-                                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/gso-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
 
+                                            }}
+                                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
 
-                                        <div>
+                                            Return to Supervisor
 
-                                            <p className="text-xs font-semibold text-slate-700">
-                                                No action available
-                                            </p>
-
-
-                                            <p className="mt-1 text-xs leading-5 text-slate-500">
-
-                                                {request.status ===
-                                                    'pending' &&
-                                                !supervisor
-                                                    ? 'This request is waiting for the department supervisor.'
-                                                    : request.status ===
-                                                        'for_head_review' &&
-                                                      !head
-                                                    ? 'This request is waiting for the department head.'
-                                                    : request.status ===
-                                                        'completed'
-                                                    ? 'This request has already been completed.'
-                                                    : request.status ===
-                                                        'rejected'
-                                                    ? 'This request has been rejected.'
-                                                    : 'There is no workflow action available for your role at this stage.'}
-
-                                            </p>
-
-                                        </div>
+                                        </button>
 
                                     </div>
 
+                                )}
+
+
+                                {request.status === 'for_gso_review' &&
+                                    !isGso && (
+                                    <div className="mt-4 rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+                                        <p className="text-xs font-semibold text-fuchsia-800">
+                                            Waiting for GSO validation
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-fuchsia-700">
+                                            The Department Head has approved this request. It is now waiting for General Services Office validation.
+                                        </p>
+                                    </div>
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* BUDGET OFFICE */}
+                                {/* ================================================== */}
+
+                                {request.status === 'for_budget_review' &&
+                                    isBudgetOfficer && (
+                                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
+
+                                        <div className="mb-4">
+                                            <p className="text-xs font-semibold text-violet-800">
+                                                Budget Office Review
+                                            </p>
+
+                                            <p className="mt-1 text-[10px] leading-5 text-violet-700">
+                                                This request has been approved by the Department Head
+                                                and validated by GSO. Review the proposed budget before
+                                                sending the request to Accounting.
+                                            </p>
+                                        </div>
+
+                                        <form
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+
+                                                if (
+                                                    !window.confirm(
+                                                        'Approve this budget and send the maintenance request to Accounting?',
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/budget-approve`,
+                                                    {
+                                                        funding_source:
+                                                            budgetFundingSource,
+                                                        budget_amount:
+                                                            budgetAmount,
+                                                        remarks:
+                                                            budgetRemarks || null,
+                                                    },
+                                                );
+                                            }}
+                                            className="space-y-3"
+                                        >
+
+                                            {/* FUNDING SOURCE */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="funding_source"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Funding Source
+                                                </label>
+
+                                                <input
+                                                    id="funding_source"
+                                                    type="text"
+                                                    value={budgetFundingSource}
+                                                    onChange={(event) =>
+                                                        setBudgetFundingSource(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="e.g. General Fund"
+                                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* BUDGET AMOUNT */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="budget_amount"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Approved Budget Amount
+                                                </label>
+
+                                                <input
+                                                    id="budget_amount"
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={budgetAmount}
+                                                    onChange={(event) =>
+                                                        setBudgetAmount(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="0.00"
+                                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* REMARKS */}
+
+                                            <div>
+                                                <label
+                                                    htmlFor="budget_remarks"
+                                                    className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-900"
+                                                >
+                                                    Remarks
+                                                </label>
+
+                                                <textarea
+                                                    id="budget_remarks"
+                                                    rows={3}
+                                                    value={budgetRemarks}
+                                                    onChange={(event) =>
+                                                        setBudgetRemarks(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Budget review remarks..."
+                                                    className="w-full resize-none rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                />
+                                            </div>
+
+                                            {/* APPROVE */}
+
+                                            <button
+                                                type="submit"
+                                                disabled={
+                                                    !budgetFundingSource.trim() ||
+                                                    !budgetAmount ||
+                                                    Number(budgetAmount) < 0
+                                                }
+                                                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <CheckCircle2 className="h-4 w-4" />
+
+                                                Approve & Send to Accounting
+                                            </button>
+
+                                        </form>
+
+                                        {/* RETURN TO GSO */}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const remarks =
+                                                    window.prompt(
+                                                        'Why are you returning this request to GSO?',
+                                                    );
+
+                                                if (!remarks?.trim()) {
+                                                    return;
+                                                }
+
+                                                router.post(
+                                                    `/maintenance-requests/${request.id}/budget-return`,
+                                                    {
+                                                        remarks,
+                                                    },
+                                                );
+                                            }}
+                                            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+
+                                            Return to GSO
+                                        </button>
+
+                                    </div>
+                                )}
+
+                                {request.status === 'for_budget_review' &&
+                                    !isBudgetOfficer && (
+                                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                                        <p className="text-xs font-semibold text-violet-800">
+                                            Awaiting Budget Office review
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] leading-5 text-violet-700">
+                                            {isGso
+                                                ? 'GSO validation has been completed. This request is now with the Budget Office for funding review.'
+                                                : 'This request has been validated by GSO and is now waiting for Budget Office review. No action is required from you at this stage.'}
+                                        </p>
+                                    </div>
                                 )}
 
                             </div>
@@ -1748,139 +1854,672 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* REQUEST TIMELINE */}
+                        {/* REQUESTER */}
                         {/* ================================================== */}
 
-                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-                            <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="flex items-center gap-3">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Request Timeline
-                                </h2>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                    <User className="h-5 w-5" />
+                                </div>
 
 
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Request activity history
-                                </p>
+                                <div>
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        People
+                                    </h2>
+
+                                    <p className="text-[10px] text-slate-500">
+                                        Request responsibility
+                                    </p>
+
+                                </div>
 
                             </div>
 
 
-                            <div className="p-5">
+                            <div className="mt-5 space-y-4">
 
-                                {request.histories &&
-                                request.histories.length >
-                                    0 ? (
-
-                                    <div className="space-y-5">
-
-                                        {request.histories.map(
-                                            (
-                                                history,
-                                                index,
-                                            ) => (
-
-                                                <div
-                                                    key={
-                                                        history.id
-                                                    }
-                                                    className="relative flex gap-3"
-                                                >
-
-                                                    {index <
-                                                        request
-                                                            .histories!
-                                                            .length -
-                                                            1 && (
-
-                                                        <div className="absolute left-[11px] top-7 h-[calc(100%+8px)] w-px bg-slate-200" />
-
-                                                    )}
+                                <PersonItem
+                                    label="Requested By"
+                                    user={
+                                        request.requested_by
+                                    }
+                                />
 
 
-                                                    <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-
-                                                        <CheckCircle2 className="h-3.5 w-3.5" />
-
-                                                    </div>
-
-
-                                                    <div className="min-w-0 flex-1">
-
-                                                        <p className="text-xs font-semibold text-slate-800">
-                                                            {formatStatus(
-                                                                history.action,
-                                                            )}
-                                                        </p>
+                                <PersonItem
+                                    label="Assessed By"
+                                    user={
+                                        request.assessed_by
+                                    }
+                                />
 
 
-                                                        <p className="mt-0.5 text-[10px] text-slate-400">
-
-                                                            {history.user?.name ??
-                                                                'System'}
-
-                                                            {' • '}
-
-                                                            {formatDate(
-                                                                history.created_at,
-                                                            )}
-
-                                                        </p>
+                                <PersonItem
+                                    label="Head Reviewed By"
+                                    user={
+                                        request.head_reviewed_by
+                                    }
+                                />
 
 
-                                                        {history.from_status &&
-                                                        history.to_status && (
-
-                                                            <p className="mt-1 text-[10px] text-slate-400">
-
-                                                                {formatStatus(
-                                                                    history.from_status,
-                                                                )}
-
-                                                                {' → '}
-
-                                                                {formatStatus(
-                                                                    history.to_status,
-                                                                )}
-
-                                                            </p>
-
-                                                        )}
+                                <PersonItem
+                                    label="GSO Validated By"
+                                    user={
+                                        request.gso_reviewed_by
+                                    }
+                                />
 
 
-                                                        {history.remarks && (
+                                <PersonItem
+                                    label="Budget Reviewed By"
+                                    user={
+                                        request.budget_reviewed_by
+                                    }
+                                />
 
-                                                            <p className="mt-2 text-xs leading-5 text-slate-600">
-                                                                {
-                                                                    history.remarks
-                                                                }
-                                                            </p>
 
-                                                        )}
+                                <PersonItem
+                                    label="Assigned To"
+                                    user={
+                                        request.assigned_to
+                                    }
+                                />
 
-                                                    </div>
+                            </div>
 
-                                                </div>
+                        </section>
 
-                                            ),
-                                        )}
 
+                        {/* ================================================== */}
+                        {/* SUPERVISOR ASSESSMENT FORM */}
+                        {/* ================================================== */}
+
+                        {(request.status === 'submitted' ||
+                            request.status === 'assessment') &&
+                            isMaintenanceSupervisor && (
+
+                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                        <ClipboardCheck className="h-5 w-5" />
                                     </div>
 
-                                ) : (
 
-                                    <div className="py-6 text-center">
+                                    <div>
 
-                                        <Clock3 className="mx-auto h-5 w-5 text-slate-300" />
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Supervisor Assessment
+                                        </h2>
 
-
-                                        <p className="mt-2 text-xs text-slate-400">
-                                            No activity recorded yet.
+                                        <p className="text-[10px] text-slate-500">
+                                            Assess the request and prepare the estimated costing.
                                         </p>
 
                                     </div>
 
+                                </div>
+
+
+                                <div className="mt-5 space-y-4">
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                            Assessment
+                                        </label>
+
+                                        <textarea
+                                            value={assessment}
+                                            onChange={(event) =>
+                                                setAssessment(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={4}
+                                            placeholder="Describe the assessment and findings..."
+                                            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                            Work Scope
+                                        </label>
+
+                                        <textarea
+                                            value={workScope}
+                                            onChange={(event) =>
+                                                setWorkScope(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={4}
+                                            placeholder="Describe the work that needs to be performed..."
+                                            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+
+                                    <div>
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-700">
+                                                    Estimated Costing
+                                                </label>
+
+                                                <p className="mt-1 text-[10px] text-slate-400">
+                                                    Add the actual materials, labor, services, or other expenses needed for the work.
+                                                </p>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={addCostItem}
+                                                className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                                            >
+                                                + Add Item
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {costItems.map(
+                                                (item, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                                                    >
+                                                        <div className="mb-3 flex items-center justify-between">
+                                                            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                                                                Cost Item {index + 1}
+                                                            </span>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeCostItem(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    costItems.length ===
+                                                                    1
+                                                                }
+                                                                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                                            >
+                                                                × Remove
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_minmax(0,1fr)]">
+                                                            <div>
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                    Type
+                                                                </label>
+
+                                                                <select
+                                                                    value={
+                                                                        item.type
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'type',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-medium outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                >
+                                                                    <option value="labor">
+                                                                        Labor
+                                                                    </option>
+                                                                    <option value="parts">
+                                                                        Parts
+                                                                    </option>
+                                                                    <option value="other">
+                                                                        Other
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                    Description
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    value={
+                                                                        item.description
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'description',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="e.g. Engine oil, replacement bearing, technician labor"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                            <div>
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                    Quantity
+                                                                </label>
+
+                                                                <input
+                                                                    type="number"
+                                                                    min="0.01"
+                                                                    step="0.01"
+                                                                    value={
+                                                                        item.quantity
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'quantity',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                    Unit
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    value={
+                                                                        item.unit
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateCostItem(
+                                                                            index,
+                                                                            'unit',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="pc, liter, job"
+                                                                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                    Unit Cost
+                                                                </label>
+
+                                                                <div className="relative">
+                                                                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                                        ₱
+                                                                    </span>
+
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        value={
+                                                                            item.unit_cost
+                                                                        }
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            updateCostItem(
+                                                                                index,
+                                                                                'unit_cost',
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="0.00"
+                                                                        className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-7 pr-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-3 flex flex-col gap-2 rounded-lg bg-slate-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div className="text-[10px] text-slate-400">
+                                                                Quantity × Unit Cost
+                                                            </div>
+
+                                                            <div className="text-sm font-bold text-slate-800">
+                                                                Item Total: ₱
+                                                                {(
+                                                                    Number(
+                                                                        item.quantity ||
+                                                                            0,
+                                                                    ) *
+                                                                    Number(
+                                                                        item.unit_cost ||
+                                                                            0,
+                                                                    )
+                                                                ).toLocaleString(
+                                                                    'en-PH',
+                                                                    {
+                                                                        minimumFractionDigits: 2,
+                                                                    },
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-3">
+                                                            <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                                Item Remarks
+                                                            </label>
+
+                                                            <input
+                                                                type="text"
+                                                                value={
+                                                                    item.remarks ??
+                                                                    ''
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    updateCostItem(
+                                                                        index,
+                                                                        'remarks',
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder="Optional"
+                                                                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-semibold text-slate-600">
+                                                    Estimated Total
+                                                </span>
+
+                                                <span className="text-lg font-bold text-slate-900">
+                                                    ₱
+                                                    {calculatedTotal.toLocaleString(
+                                                        'en-PH',
+                                                        {
+                                                            minimumFractionDigits: 2,
+                                                        },
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            !assessment.trim() ||
+                                            !workScope.trim() ||
+                                            costItems.length === 0 ||
+                                            costItems.some(
+                                                (item) =>
+                                                    !item.description.trim() ||
+                                                    !item.unit.trim() ||
+                                                    Number(
+                                                        item.quantity || 0,
+                                                    ) <= 0 ||
+                                                    Number(
+                                                        item.unit_cost || 0,
+                                                    ) < 0,
+                                            )
+                                        }
+                                        onClick={() => {
+                                            router.post(
+                                                `/maintenance-requests/${request.id}/assess`,
+                                                {
+                                                    assessment,
+                                                    work_scope:
+                                                        workScope,
+                                                    cost_items:
+                                                        costItems.map(
+                                                            (item) => ({
+                                                                type:
+                                                                    item.type,
+                                                                description:
+                                                                    item.description,
+                                                                quantity:
+                                                                    Number(
+                                                                        item.quantity ||
+                                                                            0,
+                                                                    ),
+                                                                unit:
+                                                                    item.unit,
+                                                                unit_cost:
+                                                                    Number(
+                                                                        item.unit_cost ||
+                                                                            0,
+                                                                    ),
+                                                                remarks:
+                                                                    item.remarks ||
+                                                                    null,
+                                                            }),
+                                                        ),
+                                                },
+                                            );
+                                        }}
+                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <Send className="h-4 w-4" />
+
+                                        Send to Department Head
+
+                                    </button>
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* ASSIGN TECHNICIAN */}
+                        {/* ================================================== */}
+
+                        {request.status === 'ready_for_work' &&
+                            isMaintenanceSupervisor && (
+
+                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                                        <User className="h-5 w-5" />
+                                    </div>
+
+
+                                    <div>
+
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Assign Technician
+                                        </h2>
+
+                                        <p className="text-[10px] text-slate-500">
+                                            Select a technician for this maintenance request.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="mt-5">
+
+                                    <label
+                                        htmlFor="assigned_to"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                    >
+                                        Technician
+                                    </label>
+
+
+                                    <select
+                                        id="assigned_to"
+                                        value={
+                                            selectedTechnician
+                                        }
+                                        onChange={(event) =>
+                                            setSelectedTechnician(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    >
+
+                                        <option value="">
+                                            Select technician
+                                        </option>
+
+
+                                        {technicians.map(
+                                            (technician) => (
+                                                <option
+                                                    key={technician.id}
+                                                    value={technician.id}
+                                                >
+                                                    {technician.name}
+                                                    {technician.phone
+                                                        ? ` — ${technician.phone}`
+                                                        : ''}
+                                                </option>
+                                            ),
+                                        )}
+
+                                    </select>
+
+
+                                    {technicians.length === 0 && (
+
+                                        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+
+                                            <p className="text-[10px] font-semibold text-amber-800">
+                                                No technicians are currently assigned to this department.
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            !selectedTechnician ||
+                                            technicians.length === 0
+                                        }
+                                        onClick={() => {
+
+                                            router.post(
+                                                `/maintenance-requests/${request.id}/assign`,
+                                                {
+                                                    assigned_to:
+                                                        selectedTechnician,
+                                                },
+                                            );
+
+                                        }}
+                                        className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <User className="h-4 w-4" />
+
+                                        Assign Technician
+
+                                    </button>
+
+                                </div>
+
+                            </section>
+
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* DEPARTMENT */}
+                        {/* ================================================== */}
+
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                                    <Building2 className="h-5 w-5" />
+                                </div>
+
+
+                                <div>
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Department
+                                    </h2>
+
+                                    <p className="text-[10px] text-slate-500">
+                                        Responsible department
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <div className="mt-5">
+
+                                <p className="text-sm font-semibold text-slate-800">
+                                    {request.department?.name ??
+                                        'No department assigned'}
+                                </p>
+
+
+                                {request.department?.code && (
+
+                                    <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                                        {request.department.code}
+                                    </p>
+
                                 )}
 
                             </div>
@@ -1889,54 +2528,87 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* WORKFLOW INFORMATION */}
+                        {/* DATES */}
                         {/* ================================================== */}
 
-                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-                            <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="flex items-center gap-3">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Workflow Information
-                                </h2>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                                    <CalendarDays className="h-5 w-5" />
+                                </div>
+
+
+                                <div>
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Timeline
+                                    </h2>
+
+                                    <p className="text-[10px] text-slate-500">
+                                        Request timestamps
+                                    </p>
+
+                                </div>
 
                             </div>
 
 
-                            <div className="divide-y divide-slate-100">
+                            <div className="mt-5 space-y-3">
 
-
-                                <WorkflowItem
-                                    label="Supervisor Review"
+                                <DateItem
+                                    label="Requested"
                                     value={
-                                        request.reviewed_by?.name ??
-                                        'Not reviewed'
-                                    }
-                                    date={
-                                        request.reviewed_at
+                                        request.requested_at ??
+                                        request.created_at
                                     }
                                 />
 
 
-                                <WorkflowItem
-                                    label="Head Approval"
+                                <DateItem
+                                    label="Assessed"
                                     value={
-                                        request.approved_by?.name ??
-                                        'Not approved'
-                                    }
-                                    date={
-                                        request.approved_at
+                                        request.assessed_at
                                     }
                                 />
 
 
-                                <WorkflowItem
-                                    label="Completion"
+                                <DateItem
+                                    label="Head Reviewed"
                                     value={
-                                        request.completed_by?.name ??
-                                        'Not completed'
+                                        request.head_reviewed_at
                                     }
-                                    date={
+                                />
+
+
+                                <DateItem
+                                    label="GSO Validated"
+                                    value={
+                                        request.gso_reviewed_at
+                                    }
+                                />
+
+
+                                <DateItem
+                                    label="Budget Reviewed"
+                                    value={
+                                        request.budget_reviewed_at
+                                    }
+                                />
+
+
+                                <DateItem
+                                    label="Started"
+                                    value={
+                                        request.started_at
+                                    }
+                                />
+
+
+                                <DateItem
+                                    label="Completed"
+                                    value={
                                         request.completed_at
                                     }
                                 />
@@ -1951,6 +2623,118 @@ export default function ShowRequest({
 
             </div>
 
+
+            {/* ========================================================== */}
+            {/* OLD REJECT MODAL                                           */}
+            {/* ========================================================== */}
+
+            {showRejectModal && (
+
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+                        <div className="flex items-center gap-3">
+
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+
+                            <div>
+
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Reject Maintenance Request
+                                </h2>
+
+                                <p className="text-[10px] text-slate-500">
+                                    Please provide a reason for rejection.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="mt-5">
+
+                            <label
+                                htmlFor="reject_reason"
+                                className="mb-1.5 block text-xs font-semibold text-slate-700"
+                            >
+                                Rejection Reason
+                            </label>
+
+
+                            <textarea
+                                id="reject_reason"
+                                value={rejectReason}
+                                onChange={(event) =>
+                                    setRejectReason(
+                                        event.target.value,
+                                    )
+                                }
+                                rows={5}
+                                placeholder="Explain why this maintenance request is being rejected..."
+                                className="w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                            />
+
+                        </div>
+
+
+                        <div className="mt-5 flex gap-2">
+
+                            <button
+                                type="button"
+                                onClick={() => {
+
+                                    setShowRejectModal(
+                                        false,
+                                    );
+
+                                    setRejectReason('');
+
+                                }}
+                                className="h-10 flex-1 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                                Cancel
+                            </button>
+
+
+                            <button
+                                type="button"
+                                disabled={
+                                    !rejectReason.trim()
+                                }
+                                onClick={() => {
+
+                                    router.post(
+                                        `/maintenance-requests/${request.id}/cancel`,
+                                        {
+                                            remarks:
+                                                rejectReason,
+                                        },
+                                    );
+
+                                    setShowRejectModal(
+                                        false,
+                                    );
+
+                                    setRejectReason('');
+
+                                }}
+                                className="h-10 flex-1 rounded-xl bg-red-600 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Reject Request
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
         </AppLayout>
     );
 }
@@ -1958,43 +2742,133 @@ export default function ShowRequest({
 
 /*
 |--------------------------------------------------------------------------
-| INFO ITEM
+| WORKFLOW STEP
 |--------------------------------------------------------------------------
 */
 
-function InfoItem({
-    icon,
+function WorkflowStep({
     label,
-    value,
+    active,
+    completed,
+    date,
+    last = false,
 }: {
-    icon: ReactNode;
     label: string;
-    value: string;
+    active: boolean;
+    completed: boolean;
+    date?: string | null;
+    last?: boolean;
 }) {
 
     return (
 
         <div className="flex gap-3">
 
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+            <div className="flex flex-col items-center">
 
-                {icon}
+                <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${
+                        completed
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
+                            : active
+                              ? 'border-blue-500 bg-blue-50 text-blue-600'
+                              : 'border-slate-200 bg-white text-slate-300'
+                    }`}
+                >
+
+                    {completed ? (
+                        <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                        <span className="h-2 w-2 rounded-full bg-current" />
+                    )}
+
+                </div>
+
+
+                {!last && (
+
+                    <div
+                        className={`min-h-8 w-px ${
+                            completed
+                                ? 'bg-emerald-300'
+                                : 'bg-slate-200'
+                        }`}
+                    />
+
+                )}
 
             </div>
 
 
-            <div className="min-w-0">
+            <div className="pb-5">
 
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <p
+                    className={`text-xs font-semibold ${
+                        active
+                            ? 'text-slate-800'
+                            : 'text-slate-400'
+                    }`}
+                >
                     {label}
                 </p>
 
 
-                <p className="mt-1 break-words text-xs font-medium text-slate-700">
-                    {value}
-                </p>
+                {date && (
+
+                    <p className="mt-1 text-[10px] text-slate-400">
+                        {formatDateTime(
+                            date,
+                        )}
+                    </p>
+
+                )}
 
             </div>
+
+        </div>
+
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PERSON ITEM
+|--------------------------------------------------------------------------
+*/
+
+function PersonItem({
+    label,
+    user,
+}: {
+    label: string;
+    user?: UserInfo | null;
+}) {
+
+    return (
+
+        <div>
+
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                {label}
+            </p>
+
+
+            <p className="mt-1 text-xs font-semibold text-slate-700">
+
+                {user?.name ??
+                    'Not assigned'}
+
+            </p>
+
+
+            {user?.phone && (
+
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                    {user.phone}
+                </p>
+
+            )}
 
         </div>
 
@@ -2011,68 +2885,62 @@ function InfoItem({
 function CostItem({
     label,
     value,
-    currency = true,
 }: {
     label: string;
     value?: number | string | null;
-    currency?: boolean;
 }) {
 
     return (
-        <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
 
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                 {label}
             </p>
 
-            <p className="mt-1 text-sm font-semibold text-slate-700">
-                {currency
-                    ? formatCurrency(value)
-                    : String(value ?? '—')}
+            <p className="mt-1 text-sm font-bold text-slate-800">
+                ₱
+                {Number(
+                    value ?? 0,
+                ).toLocaleString(
+                    'en-PH',
+                    {
+                        minimumFractionDigits: 2,
+                    },
+                )}
             </p>
 
         </div>
+
     );
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| WORKFLOW ITEM
+| INFO ITEM
 |--------------------------------------------------------------------------
 */
 
-function WorkflowItem({
+function InfoItem({
     label,
     value,
-    date,
 }: {
     label: string;
     value: string;
-    date?: string | null;
 }) {
 
     return (
 
-        <div className="px-5 py-4">
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
 
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                 {label}
             </p>
 
-
-            <p className="mt-1 text-xs font-semibold text-slate-700">
+            <p className="mt-1 text-sm font-semibold text-slate-800">
                 {value}
             </p>
-
-
-            {date && (
-
-                <p className="mt-1 text-[10px] text-slate-400">
-                    {formatDate(date)}
-                </p>
-
-            )}
 
         </div>
 
@@ -2082,39 +2950,38 @@ function WorkflowItem({
 
 /*
 |--------------------------------------------------------------------------
-| BUILDING ICON
+| DATE ITEM
 |--------------------------------------------------------------------------
 */
 
-function BuildingIcon() {
+function DateItem({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string | null;
+}) {
 
     return (
 
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="h-4 w-4"
-        >
+        <div className="flex items-center justify-between gap-4">
 
-            <path d="M3 21h18" />
+            <span className="text-[10px] font-medium text-slate-400">
+                {label}
+            </span>
 
-            <path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
 
-            <path d="M9 7h2" />
+            <span className="text-right text-[10px] font-semibold text-slate-600">
 
-            <path d="M13 7h2" />
+                {value
+                    ? formatDateTime(
+                          value,
+                      )
+                    : '—'}
 
-            <path d="M9 11h2" />
+            </span>
 
-            <path d="M13 11h2" />
-
-            <path d="M9 15h2" />
-
-            <path d="M13 15h2" />
-
-        </svg>
+        </div>
 
     );
 }

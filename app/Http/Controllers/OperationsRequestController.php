@@ -1213,11 +1213,10 @@ class OperationsRequestController extends Controller
         | REVIEW AUTHORIZATION
         |--------------------------------------------------------------------------
         |
-        | Normal request:
-        | Staff → Supervisor → Head
-        |
-        | If the requester is already the supervisor:
-        | Supervisor → Head
+        | A supervisor reviews requests submitted by staff.
+        | A supervisor must never review their own request.
+        | If the requester is already a supervisor, the department head
+        | handles the request directly through HEAD APPROVAL.
         |
         */
 
@@ -1231,35 +1230,8 @@ class OperationsRequestController extends Controller
                 )
                 : false;
 
-        $isHead =
-            $this->userIsHead($user);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | NORMAL SUPERVISOR REVIEW
-        |--------------------------------------------------------------------------
-        */
-
-        $canReviewAsSupervisor =
-            $isSupervisor &&
-            ! $requesterIsSupervisor;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | HEAD MAY REVIEW SUPERVISOR'S OWN REQUEST
-        |--------------------------------------------------------------------------
-        */
-
-        $canReviewAsHead =
-            $isHead &&
-            $requesterIsSupervisor;
-
-
         abort_unless(
-            $canReviewAsSupervisor ||
-            $canReviewAsHead,
+            $isSupervisor && ! $requesterIsSupervisor,
             403,
             'You are not authorized to review this request.'
         );
@@ -1396,7 +1368,20 @@ class OperationsRequestController extends Controller
             'Only the department head can approve this request.'
         );
 
-        if ($serviceRequest->status !== 'for_head_review') {
+        $serviceRequest->loadMissing('requestedBy.roles', 'requestType');
+
+        $requesterIsSupervisor = $serviceRequest->requestedBy
+            ? $this->userIsSupervisor($serviceRequest->requestedBy)
+            : false;
+
+        $canApproveDirectly =
+            $serviceRequest->status === 'pending' &&
+            $requesterIsSupervisor;
+
+        if (
+            $serviceRequest->status !== 'for_head_review' &&
+            ! $canApproveDirectly
+        ) {
             return back()->withErrors([
                 'workflow' => 'This request is not waiting for head approval.',
             ]);
@@ -1406,7 +1391,6 @@ class OperationsRequestController extends Controller
             'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $serviceRequest->loadMissing('requestType');
         $requestType = $serviceRequest->requestType;
 
         $typeCode = strtoupper(trim((string) (
@@ -1553,22 +1537,30 @@ class OperationsRequestController extends Controller
         $allowed = false;
 
 
+        $serviceRequest->loadMissing('requestedBy.roles');
+
+        $requesterIsSupervisor = $serviceRequest->requestedBy
+            ? $this->userIsSupervisor($serviceRequest->requestedBy)
+            : false;
+
         if (
             $isSupervisor &&
-            $serviceRequest->status ===
-                'pending'
+            ! $requesterIsSupervisor &&
+            $serviceRequest->status === 'pending'
         ) {
-
             $allowed = true;
         }
 
-
         if (
             $isHead &&
-            $serviceRequest->status ===
-                'for_head_review'
+            (
+                $serviceRequest->status === 'for_head_review' ||
+                (
+                    $serviceRequest->status === 'pending' &&
+                    $requesterIsSupervisor
+                )
+            )
         ) {
-
             $allowed = true;
         }
 
