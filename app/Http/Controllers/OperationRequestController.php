@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\OperationRequest;
+use App\Models\Workflow;
+use App\Models\WorkflowStep;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +50,8 @@ class OperationRequestController extends Controller
             'user',
             'department',
             'purchaseRequest.items',
+            'workflow',
+            'currentWorkflowStep',
         ]);
 
         return Inertia::render('operations/requests/show', [
@@ -62,7 +66,7 @@ class OperationRequestController extends Controller
     {
         /*
         |--------------------------------------------------------------------------
-        | COMMON REQUEST VALIDATION
+        | COMMON VALIDATION
         |--------------------------------------------------------------------------
         */
 
@@ -174,7 +178,7 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | DATABASE TRANSACTION
+        | CREATE REQUEST
         |--------------------------------------------------------------------------
         */
 
@@ -185,10 +189,6 @@ class OperationRequestController extends Controller
                 |--------------------------------------------------------------------------
                 | REQUEST TITLE
                 |--------------------------------------------------------------------------
-                |
-                | Purchase Requests use the purpose as their title.
-                | Other request types receive a generic title for now.
-                |
                 */
 
                 $title = 'General Request';
@@ -202,36 +202,91 @@ class OperationRequestController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
+                | FIND WORKFLOW
+                |--------------------------------------------------------------------------
+                */
+
+                $workflow = null;
+
+                if ($validated['type'] === 'purchase') {
+                    $workflow = Workflow::query()
+                        ->where('code', 'PURCHASE_REQUEST')
+                        ->where('is_active', true)
+                        ->orderByDesc('version')
+                        ->first();
+
+                    if (!$workflow) {
+                        throw new \RuntimeException(
+                            'No active Purchase Request workflow is configured.'
+                        );
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | FIND FIRST ACTIONABLE STEP
+                |--------------------------------------------------------------------------
+                |
+                | Step 1 = Request Submission
+                | Step 2 = Department Head Review
+                |
+                | Once the requester submits the request, we start at
+                | Department Head Review.
+                |
+                */
+
+                $currentWorkflowStep = null;
+
+                if ($workflow) {
+                    $currentWorkflowStep = $workflow->steps()
+                        ->where('step_order', '>', 1)
+                        ->orderBy('step_order')
+                        ->first();
+
+                    if (!$currentWorkflowStep) {
+                        throw new \RuntimeException(
+                            'The Purchase Request workflow has no review step.'
+                        );
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
                 | CREATE OPERATION REQUEST
                 |--------------------------------------------------------------------------
                 */
 
-                $operationRequest =
-                    OperationRequest::create([
-                        'request_no' =>
-                            $this->generateRequestNumber(),
+                $operationRequest = OperationRequest::create([
+                    'request_no' =>
+                        $this->generateRequestNumber(),
 
-                        'user_id' =>
-                            $user->id,
+                    'user_id' =>
+                        $user->id,
 
-                        'department_id' =>
-                            $user->department_id,
+                    'department_id' =>
+                        $user->department_id,
 
-                        'type' =>
-                            $validated['type'],
+                    'type' =>
+                        $validated['type'],
 
-                        'title' =>
-                            $title,
+                    'title' =>
+                        $title,
 
-                        'description' =>
-                            $validated['description'] ?? null,
+                    'description' =>
+                        $validated['description'] ?? null,
 
-                        'priority' =>
-                            $validated['priority'],
+                    'priority' =>
+                        $validated['priority'],
 
-                        'status' =>
-                            'submitted',
-                    ]);
+                    'status' =>
+                        'pending',
+
+                    'workflow_id' =>
+                        $workflow?->id,
+
+                    'current_workflow_step_id' =>
+                        $currentWorkflowStep?->id,
+                ]);
 
                 /*
                 |--------------------------------------------------------------------------
@@ -242,7 +297,6 @@ class OperationRequestController extends Controller
                 if (
                     $validated['type'] === 'purchase'
                 ) {
-
                     $purchaseRequest =
                         $operationRequest
                             ->purchaseRequest()
@@ -267,7 +321,6 @@ class OperationRequestController extends Controller
                         $validated['items']
                         as $item
                     ) {
-
                         $quantity =
                             (float) $item['quantity'];
 
@@ -308,7 +361,7 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT TO SHOW PAGE
+        | REDIRECT TO SHOW
         |--------------------------------------------------------------------------
         */
 
@@ -321,6 +374,362 @@ class OperationRequestController extends Controller
                 'success',
                 'Request submitted successfully.'
             );
+    }
+
+    /**
+     * Approve the current workflow step.
+     */
+    public function approve(
+        Request $request,
+        OperationRequest $operationRequest
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD CURRENT STEP
+        |--------------------------------------------------------------------------
+        */
+
+        $operationRequest->load([
+            'workflow',
+            'currentWorkflowStep',
+        ]);
+
+        $currentStep =
+            $operationRequest->currentWorkflowStep;
+
+        if (!$currentStep) {
+            return back()->withErrors([
+                'workflow' =>
+                    'This request does not have an active workflow step.',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AUTHORIZATION
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !$this->userCanActOnStep(
+                $user,
+                $operationRequest,
+                $currentStep
+            )
+        ) {
+            abort(
+                403,
+                'You are not authorized to approve this request.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | APPROVE
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(function () use (
+            $operationRequest,
+            $currentStep
+        ) {
+            $nextStep =
+                $operationRequest
+                    ->workflow
+                    ->steps()
+                    ->where(
+                        'step_order',
+                        '>',
+                        $currentStep->step_order
+                    )
+                    ->orderBy('step_order')
+                    ->first();
+
+            /*
+            |--------------------------------------------------------------------------
+            | NO NEXT STEP
+            |--------------------------------------------------------------------------
+            */
+
+            if (!$nextStep) {
+                $operationRequest->update([
+                    'status' => 'completed',
+                    'current_workflow_step_id' => null,
+                ]);
+
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | COMPLETED STEP
+            |--------------------------------------------------------------------------
+            */
+
+            if ($nextStep->code === 'COMPLETED') {
+                $operationRequest->update([
+                    'status' => 'completed',
+                    'current_workflow_step_id' => $nextStep->id,
+                ]);
+
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | MOVE TO NEXT STEP
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->update([
+                'status' => 'pending',
+                'current_workflow_step_id' => $nextStep->id,
+            ]);
+        });
+
+        return redirect()
+            ->route(
+                'operations.requests.show',
+                $operationRequest
+            )
+            ->with(
+                'success',
+                'Request approved and forwarded to the next workflow step.'
+            );
+    }
+
+    /**
+     * Reject the current workflow step.
+     */
+    public function reject(
+        Request $request,
+        OperationRequest $operationRequest
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        $operationRequest->load([
+            'currentWorkflowStep',
+        ]);
+
+        $currentStep =
+            $operationRequest->currentWorkflowStep;
+
+        if (!$currentStep) {
+            return back()->withErrors([
+                'workflow' =>
+                    'This request does not have an active workflow step.',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AUTHORIZATION
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !$this->userCanActOnStep(
+                $user,
+                $operationRequest,
+                $currentStep
+            )
+        ) {
+            abort(
+                403,
+                'You are not authorized to reject this request.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | REJECT
+        |--------------------------------------------------------------------------
+        */
+
+        $operationRequest->update([
+            'status' => 'rejected',
+        ]);
+
+        return redirect()
+            ->route(
+                'operations.requests.show',
+                $operationRequest
+            )
+            ->with(
+                'success',
+                'Request rejected.'
+            );
+    }
+
+    /**
+     * Return the request to the previous workflow step.
+     */
+    public function returnRequest(
+        Request $request,
+        OperationRequest $operationRequest
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        $operationRequest->load([
+            'workflow',
+            'currentWorkflowStep',
+        ]);
+
+        $currentStep =
+            $operationRequest->currentWorkflowStep;
+
+        if (!$currentStep) {
+            return back()->withErrors([
+                'workflow' =>
+                    'This request does not have an active workflow step.',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AUTHORIZATION
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !$this->userCanActOnStep(
+                $user,
+                $operationRequest,
+                $currentStep
+            )
+        ) {
+            abort(
+                403,
+                'You are not authorized to return this request.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIND PREVIOUS STEP
+        |--------------------------------------------------------------------------
+        */
+
+        $previousStep =
+            $operationRequest
+                ->workflow
+                ->steps()
+                ->where(
+                    'step_order',
+                    '<',
+                    $currentStep->step_order
+                )
+                ->orderByDesc('step_order')
+                ->first();
+
+        if (!$previousStep) {
+            return back()->withErrors([
+                'workflow' =>
+                    'There is no previous workflow step.',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | RETURN
+        |--------------------------------------------------------------------------
+        */
+
+        $operationRequest->update([
+            'status' => 'draft',
+            'current_workflow_step_id' => $previousStep->id,
+        ]);
+
+        return redirect()
+            ->route(
+                'operations.requests.show',
+                $operationRequest
+            )
+            ->with(
+                'success',
+                'Request returned to the previous workflow step.'
+            );
+    }
+
+    /**
+     * Determine whether the authenticated user can act
+     * on the current workflow step.
+     */
+    private function userCanActOnStep(
+        $user,
+        OperationRequest $operationRequest,
+        WorkflowStep $step
+    ): bool {
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $step->assignment_type === 'requesting_department'
+        ) {
+            if (
+                (int) $user->department_id !==
+                (int) $operationRequest->department_id
+            ) {
+                return false;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIXED DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $step->assignment_type === 'fixed'
+        ) {
+            if (
+                !$step->department_id ||
+                (int) $user->department_id !==
+                (int) $step->department_id
+            ) {
+                return false;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROLE
+        |--------------------------------------------------------------------------
+        */
+
+        if ($step->role_id) {
+            $userHasRole =
+                $user->roles()
+                    ->where(
+                        'roles.id',
+                        $step->role_id
+                    )
+                    ->exists();
+
+            if (!$userHasRole) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
