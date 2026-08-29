@@ -73,8 +73,8 @@ function getRoleLabel(user: AuthUser | null): string {
 |--------------------------------------------------------------------------
 */
 
-function getNavigation(): NavItem[] {
-    return [
+function getNavigation(user: AuthUser | null): NavItem[] {
+    const navigation: NavItem[] = [
         {
             title: 'Dashboard',
             url: '/dashboard',
@@ -109,6 +109,76 @@ function getNavigation(): NavItem[] {
             ],
         },
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | BUDGET OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    const isBudgetDepartment = user?.department?.code?.toUpperCase() === 'BUDGET';
+
+    if (isBudgetDepartment) {
+        navigation.push(
+            {
+                title: 'Budget',
+                url: '#',
+                icon: ClipboardList,
+                items: [
+                    {
+                        title: 'Budget Dashboard',
+                        url: '/budget',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'For Budget Review',
+                        url: '/budget/reviews',
+                        icon: ClipboardList,
+                    },
+                    {
+                        title: 'Certifications',
+                        url: '/budget/certifications',
+                        icon: ClipboardList,
+                    },
+                    {
+                        title: 'Returned',
+                        url: '/budget/returned',
+                        icon: ClipboardList,
+                    },
+                    {
+                        title: 'Rejected',
+                        url: '/budget/rejected',
+                        icon: ClipboardList,
+                    },
+                ],
+            },
+
+            {
+                title: 'Budget Management',
+                url: '#',
+                icon: Building2,
+                items: [
+                    {
+                        title: 'Funds',
+                        url: '/budget/funds',
+                        icon: Building2,
+                    },
+                    {
+                        title: 'Budget Accounts',
+                        url: '/budget/accounts',
+                        icon: ClipboardList,
+                    },
+                    {
+                        title: 'Appropriations',
+                        url: '/budget/appropriations',
+                        icon: ClipboardList,
+                    },
+                ],
+            },
+        );
+    }
+
+    return navigation;
 }
 
 /*
@@ -128,7 +198,7 @@ export function AppSidebar() {
 
     const roleLabel = getRoleLabel(user);
 
-    const navItems = getNavigation();
+    const navItems = getNavigation(user);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
