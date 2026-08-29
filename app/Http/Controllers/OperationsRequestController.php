@@ -727,4 +727,756 @@ class OperationsRequestController extends Controller
 
         return $code;
     }
+
+
+    /*
+|--------------------------------------------------------------------------
+| SUPERVISOR REVIEW
+|--------------------------------------------------------------------------
+|
+| PENDING
+|     ↓
+| FOR HEAD REVIEW
+|
+*/
+
+public function review(
+    Request $request,
+    ServiceRequest $serviceRequest
+) {
+    $user = $request->user()->load([
+        'department',
+        'roles',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $serviceRequest->department_id ===
+            $user->department_id,
+        403
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $this->userIsSupervisor($user),
+        403,
+        'Only a department supervisor can review this request.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    if ($serviceRequest->status !== 'pending') {
+
+        return back()
+            ->withErrors([
+                'workflow' =>
+                    'This request is no longer waiting for supervisor review.',
+            ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'remarks' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+    ]);
+
+
+    DB::transaction(function () use (
+        $serviceRequest,
+        $user,
+        $validated
+    ) {
+
+        $oldStatus =
+            $serviceRequest->status;
+
+
+        $serviceRequest->update([
+            'status' =>
+                'for_head_review',
+
+            'reviewed_by' =>
+                $user->id,
+
+            'reviewed_at' =>
+                now(),
+
+            'remarks' =>
+                $validated['remarks']
+                    ?? $serviceRequest->remarks,
+        ]);
+
+
+        $serviceRequest
+            ->histories()
+            ->create([
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'supervisor_reviewed',
+
+                'from_status' =>
+                    $oldStatus,
+
+                'to_status' =>
+                    'for_head_review',
+
+                'remarks' =>
+                    $validated['remarks']
+                        ?? 'Request reviewed by supervisor.',
+            ]);
+    });
+
+
+    return back()
+        ->with(
+            'success',
+            'Request reviewed and forwarded to the department head.'
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| HEAD APPROVAL
+|--------------------------------------------------------------------------
+|
+| FOR HEAD REVIEW
+|       ↓
+| APPROVED
+|
+*/
+
+public function approve(
+    Request $request,
+    ServiceRequest $serviceRequest
+) {
+    $user = $request->user()->load([
+        'department',
+        'roles',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $serviceRequest->department_id ===
+            $user->department_id,
+        403
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $this->userIsHead($user),
+        403,
+        'Only the department head can approve this request.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $serviceRequest->status !==
+        'for_head_review'
+    ) {
+
+        return back()
+            ->withErrors([
+                'workflow' =>
+                    'This request is not waiting for head approval.',
+            ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'remarks' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+    ]);
+
+
+    DB::transaction(function () use (
+        $serviceRequest,
+        $user,
+        $validated
+    ) {
+
+        $oldStatus =
+            $serviceRequest->status;
+
+
+        $serviceRequest->update([
+            'status' =>
+                'approved',
+
+            'approved_by' =>
+                $user->id,
+
+            'approved_at' =>
+                now(),
+
+            'remarks' =>
+                $validated['remarks']
+                    ?? $serviceRequest->remarks,
+        ]);
+
+
+        $serviceRequest
+            ->histories()
+            ->create([
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'head_approved',
+
+                'from_status' =>
+                    $oldStatus,
+
+                'to_status' =>
+                    'approved',
+
+                'remarks' =>
+                    $validated['remarks']
+                        ?? 'Request approved by department head.',
+            ]);
+    });
+
+
+    return back()
+        ->with(
+            'success',
+            'Request approved successfully.'
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REJECT
+|--------------------------------------------------------------------------
+|
+| Supervisor can reject:
+|
+| PENDING
+|
+| Head can reject:
+|
+| FOR HEAD REVIEW
+|
+*/
+
+public function reject(
+    Request $request,
+    ServiceRequest $serviceRequest
+) {
+    $user = $request->user()->load([
+        'department',
+        'roles',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $serviceRequest->department_id ===
+            $user->department_id,
+        403
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'remarks' => [
+            'required',
+            'string',
+            'max:5000',
+        ],
+    ]);
+
+
+    $isSupervisor =
+        $this->userIsSupervisor($user);
+
+    $isHead =
+        $this->userIsHead($user);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETERMINE PERMITTED STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    $allowed = false;
+
+
+    if (
+        $isSupervisor &&
+        $serviceRequest->status === 'pending'
+    ) {
+        $allowed = true;
+    }
+
+
+    if (
+        $isHead &&
+        $serviceRequest->status === 'for_head_review'
+    ) {
+        $allowed = true;
+    }
+
+
+    abort_unless(
+        $allowed,
+        403,
+        'You are not authorized to reject this request.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
+    DB::transaction(function () use (
+        $serviceRequest,
+        $user,
+        $validated
+    ) {
+
+        $oldStatus =
+            $serviceRequest->status;
+
+
+        $serviceRequest->update([
+            'status' =>
+                'rejected',
+
+            'remarks' =>
+                $validated['remarks'],
+        ]);
+
+
+        $serviceRequest
+            ->histories()
+            ->create([
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'rejected',
+
+                'from_status' =>
+                    $oldStatus,
+
+                'to_status' =>
+                    'rejected',
+
+                'remarks' =>
+                    $validated['remarks'],
+            ]);
+    });
+
+
+    return back()
+        ->with(
+            'success',
+            'Request rejected.'
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| START REQUEST
+|--------------------------------------------------------------------------
+|
+| APPROVED
+|    ↓
+| IN PROGRESS
+|
+*/
+
+public function start(
+    Request $request,
+    ServiceRequest $serviceRequest
+) {
+    $user = $request->user()->load([
+        'department',
+        'roles',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $serviceRequest->department_id ===
+            $user->department_id,
+        403
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE SECURITY
+    |--------------------------------------------------------------------------
+    |
+    | For now supervisors can start work.
+    | Later we can introduce dedicated workers.
+    |
+    */
+
+    abort_unless(
+        $this->userIsSupervisor($user) ||
+        $this->userIsHead($user),
+        403,
+        'You are not authorized to start this request.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        !in_array(
+            $serviceRequest->status,
+            [
+                'approved',
+                'assigned',
+            ],
+            true
+        )
+    ) {
+
+        return back()
+            ->withErrors([
+                'workflow' =>
+                    'This request cannot be started from its current status.',
+            ]);
+    }
+
+
+    DB::transaction(function () use (
+        $serviceRequest,
+        $user
+    ) {
+
+        $oldStatus =
+            $serviceRequest->status;
+
+
+        $serviceRequest->update([
+            'status' =>
+                'in_progress',
+
+            'assigned_to' =>
+                $serviceRequest->assigned_to
+                    ?? $user->id,
+
+            'assigned_at' =>
+                $serviceRequest->assigned_at
+                    ?? now(),
+        ]);
+
+
+        $serviceRequest
+            ->histories()
+            ->create([
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'started',
+
+                'from_status' =>
+                    $oldStatus,
+
+                'to_status' =>
+                    'in_progress',
+
+                'remarks' =>
+                    'Request work started.',
+            ]);
+    });
+
+
+    return back()
+        ->with(
+            'success',
+            'Request is now in progress.'
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| COMPLETE REQUEST
+|--------------------------------------------------------------------------
+|
+| IN PROGRESS
+|      ↓
+| COMPLETED
+|
+*/
+
+public function complete(
+    Request $request,
+    ServiceRequest $serviceRequest
+) {
+    $user = $request->user()->load([
+        'department',
+        'roles',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $serviceRequest->department_id ===
+            $user->department_id,
+        403
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    abort_unless(
+        $this->userIsSupervisor($user) ||
+        $this->userIsHead($user),
+        403,
+        'You are not authorized to complete this request.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $serviceRequest->status !==
+        'in_progress'
+    ) {
+
+        return back()
+            ->withErrors([
+                'workflow' =>
+                    'Only requests currently in progress can be completed.',
+            ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'remarks' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+    ]);
+
+
+    DB::transaction(function () use (
+        $serviceRequest,
+        $user,
+        $validated
+    ) {
+
+        $oldStatus =
+            $serviceRequest->status;
+
+
+        $serviceRequest->update([
+            'status' =>
+                'completed',
+
+            'completed_by' =>
+                $user->id,
+
+            'completed_at' =>
+                now(),
+
+            'remarks' =>
+                $validated['remarks']
+                    ?? $serviceRequest->remarks,
+        ]);
+
+
+        $serviceRequest
+            ->histories()
+            ->create([
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'completed',
+
+                'from_status' =>
+                    $oldStatus,
+
+                'to_status' =>
+                    'completed',
+
+                'remarks' =>
+                    $validated['remarks']
+                        ?? 'Request completed.',
+            ]);
+    });
+
+
+    return back()
+        ->with(
+            'success',
+            'Request marked as completed.'
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ROLE: SUPERVISOR
+|--------------------------------------------------------------------------
+*/
+
+protected function userIsSupervisor($user): bool
+{
+    return $user->roles
+        ->contains(function ($role) {
+
+            $name = strtolower(
+                trim($role->name)
+            );
+
+            $name = str_replace(
+                ['-', ' '],
+                '_',
+                $name
+            );
+
+            return in_array(
+                $name,
+                [
+                    'supervisor',
+                    'department_supervisor',
+                ],
+                true
+            );
+        });
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ROLE: HEAD
+|--------------------------------------------------------------------------
+*/
+
+protected function userIsHead($user): bool
+{
+    return $user->roles
+        ->contains(function ($role) {
+
+            $name = strtolower(
+                trim($role->name)
+            );
+
+            $name = str_replace(
+                ['-', ' '],
+                '_',
+                $name
+            );
+
+            return in_array(
+                $name,
+                [
+                    'head',
+                    'department_head',
+                    'office_head',
+                ],
+                true
+            );
+        });
+}
+
 }

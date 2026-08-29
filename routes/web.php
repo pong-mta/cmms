@@ -34,37 +34,69 @@ Route::middleware(['auth'])->group(function () {
     )->name('dashboard');
 
 
-     /*
-    |--------------------------------------------------------------------------
-    | OPERATIONS → REQUESTS
-    |--------------------------------------------------------------------------
-    */
+   /*
+|--------------------------------------------------------------------------
+| OPERATIONS → REQUESTS
+|--------------------------------------------------------------------------
+*/
 
-    Route::prefix('operations/requests')
-        ->name('operations.requests.')
-        ->group(function () {
+Route::prefix('operations/requests')
+    ->name('operations.requests.')
+    ->group(function () {
 
-            Route::get(
-                '/',
-                [OperationsRequestController::class, 'index']
-            )->name('index');
+        Route::get(
+            '/',
+            [OperationsRequestController::class, 'index']
+        )->name('index');
 
-            Route::get(
-                '/create',
-                [OperationsRequestController::class, 'create']
-            )->name('create');
+        Route::get(
+            '/create',
+            [OperationsRequestController::class, 'create']
+        )->name('create');
 
-            Route::post(
-                '/',
-                [OperationsRequestController::class, 'store']
-            )->name('store');
+        Route::post(
+            '/',
+            [OperationsRequestController::class, 'store']
+        )->name('store');
 
-            Route::get(
-                '/{serviceRequest}',
-                [OperationsRequestController::class, 'show']
-            )->name('show');
+        Route::get(
+            '/{serviceRequest}',
+            [OperationsRequestController::class, 'show']
+        )->name('show');
 
-        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | WORKFLOW
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/{serviceRequest}/review',
+            [OperationsRequestController::class, 'review']
+        )->name('review');
+
+        Route::post(
+            '/{serviceRequest}/approve',
+            [OperationsRequestController::class, 'approve']
+        )->name('approve');
+
+        Route::post(
+            '/{serviceRequest}/reject',
+            [OperationsRequestController::class, 'reject']
+        )->name('reject');
+
+        Route::post(
+            '/{serviceRequest}/start',
+            [OperationsRequestController::class, 'start']
+        )->name('start');
+
+        Route::post(
+            '/{serviceRequest}/complete',
+            [OperationsRequestController::class, 'complete']
+        )->name('complete');
+
+    });
 
 
     //ASSETS

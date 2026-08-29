@@ -1,19 +1,36 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import {
+    Head,
+    Link,
+    useForm,
+    usePage,
+} from '@inertiajs/react';
 
 import {
+    AlertCircle,
     ArrowLeft,
     CalendarDays,
     CheckCircle2,
+    ClipboardList,
     Clock3,
     FileText,
     MapPin,
     Package,
+    Play,
+    Send,
     User,
-    Wrench,
+    XCircle,
 } from 'lucide-react';
 
+import type { ReactNode } from 'react';
+
+
+/*
+|--------------------------------------------------------------------------
+| TYPES
+|--------------------------------------------------------------------------
+*/
 
 interface Department {
     id: number;
@@ -21,10 +38,18 @@ interface Department {
     code: string;
 }
 
-interface User {
+interface UserData {
     id: number;
     name: string;
     phone?: string;
+    department_id?: number | null;
+    department?: Department | null;
+    roles?: Role[];
+}
+
+interface Role {
+    id: number;
+    name: string;
 }
 
 interface Asset {
@@ -35,77 +60,102 @@ interface Asset {
 
 interface History {
     id: number;
+
     action: string;
+
     from_status?: string | null;
+
     to_status?: string | null;
+
     remarks?: string | null;
+
     created_at: string;
-    user?: User | null;
+
+    user?: UserData | null;
 }
 
 interface Attachment {
     id: number;
+
     original_name: string;
-    file_name: string;
-    path: string;
+
+    file_name?: string | null;
+
+    path?: string | null;
+
     mime_type?: string | null;
+
     size?: number | null;
+
     description?: string | null;
+
     created_at: string;
-    uploaded_by?: User | null;
+
+    uploaded_by?: UserData | null;
 }
 
 interface ServiceRequest {
     id: number;
+
     request_code: string;
+
     request_type: string;
+
     subject: string;
+
     description?: string | null;
 
     priority: string;
+
     status: string;
 
     location?: string | null;
 
     requested_at?: string | null;
+
     reviewed_at?: string | null;
+
     approved_at?: string | null;
+
     assigned_at?: string | null;
+
     completed_at?: string | null;
 
     remarks?: string | null;
 
     department?: Department | null;
 
-    requested_by?: User | null;
+    requested_by?: UserData | null;
 
     assigned_department?: Department | null;
 
-    assigned_to?: User | null;
+    assigned_to?: UserData | null;
 
     asset?: Asset | null;
 
-    reviewed_by?: User | null;
+    reviewed_by?: UserData | null;
 
-    approved_by?: User | null;
+    approved_by?: UserData | null;
 
-    completed_by?: User | null;
+    completed_by?: UserData | null;
 
     histories?: History[];
 
     attachments?: Attachment[];
 }
 
+interface AuthData {
+    user: UserData;
+}
+
+interface PageProps {
+    auth: AuthData;
+}
+
 interface Props {
     request: ServiceRequest;
 
-    user: User & {
-        department?: Department | null;
-        roles?: {
-            id: number;
-            name: string;
-        }[];
-    };
+    user: UserData;
 }
 
 
@@ -114,6 +164,61 @@ interface Props {
 | HELPERS
 |--------------------------------------------------------------------------
 */
+
+function normalizeRole(
+    role: string,
+): string {
+
+    return role
+        .toLowerCase()
+        .trim()
+        .replace(/[- ]/g, '_');
+}
+
+
+function getRoleNames(
+    user?: UserData | null,
+): string[] {
+
+    return (
+        user?.roles?.map(
+            (role) =>
+                normalizeRole(role.name),
+        ) ?? []
+    );
+}
+
+
+function isSupervisor(
+    user?: UserData | null,
+): boolean {
+
+    const roles =
+        getRoleNames(user);
+
+    return (
+        roles.includes('supervisor') ||
+        roles.includes(
+            'department_supervisor',
+        )
+    );
+}
+
+
+function isHead(
+    user?: UserData | null,
+): boolean {
+
+    const roles =
+        getRoleNames(user);
+
+    return (
+        roles.includes('head') ||
+        roles.includes('department_head') ||
+        roles.includes('office_head')
+    );
+}
+
 
 function formatStatus(
     status?: string | null,
@@ -152,6 +257,31 @@ function formatDate(
             minute: '2-digit',
         },
     ).format(new Date(date));
+}
+
+
+function formatFileSize(
+    bytes?: number | null,
+): string {
+
+    if (!bytes) {
+        return '';
+    }
+
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${(
+            bytes / 1024
+        ).toFixed(1)} KB`;
+    }
+
+    return `${(
+        bytes /
+        (1024 * 1024)
+    ).toFixed(1)} MB`;
 }
 
 
@@ -224,7 +354,183 @@ function statusClasses(
 
 export default function ShowRequest({
     request,
+    user,
 }: Props) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENT AUTH USER
+    |--------------------------------------------------------------------------
+    */
+
+    const page =
+        usePage<PageProps>();
+
+    const currentUser =
+        page.props.auth.user ?? user;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE
+    |--------------------------------------------------------------------------
+    */
+
+    const supervisor =
+        isSupervisor(currentUser);
+
+    const head =
+        isHead(currentUser);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WORKFLOW FORMS
+    |--------------------------------------------------------------------------
+    */
+
+    const reviewForm =
+        useForm({
+            remarks: '',
+        });
+
+
+    const actionForm =
+        useForm({
+            remarks: '',
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WORKFLOW ACTIONS
+    |--------------------------------------------------------------------------
+    */
+
+    function reviewRequest() {
+
+        reviewForm.post(
+            `/operations/requests/${request.id}/review`,
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+
+    function approveRequest() {
+
+        actionForm.post(
+            `/operations/requests/${request.id}/approve`,
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+
+    function rejectRequest() {
+
+        const remarks =
+            window.prompt(
+                'Please enter the reason for rejecting this request:',
+            );
+
+        if (!remarks?.trim()) {
+            return;
+        }
+
+        actionForm.setData(
+            'remarks',
+            remarks,
+        );
+
+        actionForm.post(
+            `/operations/requests/${request.id}/reject`,
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+
+    function startRequest() {
+
+        actionForm.post(
+            `/operations/requests/${request.id}/start`,
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+
+    function completeRequest() {
+
+        const remarks =
+            window.prompt(
+                'Enter completion remarks (optional):',
+            );
+
+        actionForm.setData(
+            'remarks',
+            remarks ?? '',
+        );
+
+        actionForm.post(
+            `/operations/requests/${request.id}/complete`,
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETERMINE AVAILABLE ACTION
+    |--------------------------------------------------------------------------
+    */
+
+    const canReview =
+        supervisor &&
+        request.status === 'pending';
+
+
+    const canApprove =
+        head &&
+        request.status ===
+            'for_head_review';
+
+
+    const canStart =
+        (supervisor || head) &&
+        (
+            request.status ===
+                'approved' ||
+            request.status ===
+                'assigned'
+        );
+
+
+    const canComplete =
+        (supervisor || head) &&
+        request.status ===
+            'in_progress';
+
+
+    const hasActions =
+        canReview ||
+        canApprove ||
+        canStart ||
+        canComplete;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BREADCRUMBS
+    |--------------------------------------------------------------------------
+    */
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -237,13 +543,23 @@ export default function ShowRequest({
         },
         {
             title: request.request_code,
-            href: `/operations/requests/${request.id}`,
+            href:
+                `/operations/requests/${request.id}`,
         },
     ];
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | RETURN
+    |--------------------------------------------------------------------------
+    */
+
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+
+        <AppLayout
+            breadcrumbs={breadcrumbs}
+        >
 
             <Head
                 title={`${request.request_code} | Request`}
@@ -318,15 +634,19 @@ export default function ShowRequest({
 
 
                             <p className="mt-1 text-sm text-slate-500">
+
                                 {formatStatus(
                                     request.request_type,
                                 )}
+
                                 {' • '}
+
                                 Requested{' '}
+
                                 {formatDate(
-                                    request.requested_at ??
-                                    undefined,
+                                    request.requested_at,
                                 )}
+
                             </p>
 
                         </div>
@@ -337,30 +657,47 @@ export default function ShowRequest({
 
 
                 {/* ====================================================== */}
-                {/* STATUS BANNER */}
+                {/* DEPARTMENT BANNER */}
                 {/* ====================================================== */}
 
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                        <div className="flex items-center gap-3">
 
-                            <ClipboardIcon />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+
+                                <ClipboardList className="h-5 w-5" />
+
+                            </div>
+
+
+                            <div>
+
+                                <p className="text-xs font-medium text-blue-600">
+                                    Requesting Department
+                                </p>
+
+
+                                <p className="text-sm font-semibold text-slate-800">
+                                    {request.department?.name ??
+                                        'No Department'}
+                                </p>
+
+                            </div>
 
                         </div>
 
 
-                        <div>
+                        <div className="text-xs text-slate-500">
 
-                            <p className="text-xs font-medium text-blue-600">
-                                Requesting Department
-                            </p>
+                            Requester:{' '}
 
-                            <p className="text-sm font-semibold text-slate-800">
-                                {request.department?.name ??
-                                    '—'}
-                            </p>
+                            <span className="font-semibold text-slate-700">
+                                {request.requested_by?.name ??
+                                    'Unknown'}
+                            </span>
 
                         </div>
 
@@ -370,7 +707,7 @@ export default function ShowRequest({
 
 
                 {/* ====================================================== */}
-                {/* MAIN GRID */}
+                {/* MAIN */}
                 {/* ====================================================== */}
 
                 <div className="grid gap-6 xl:grid-cols-3">
@@ -431,9 +768,7 @@ export default function ShowRequest({
                                         }
                                         label="Requested By"
                                         value={
-                                            request
-                                                .requested_by
-                                                ?.name ??
+                                            request.requested_by?.name ??
                                             '—'
                                         }
                                     />
@@ -470,7 +805,7 @@ export default function ShowRequest({
                                         value={
                                             request.asset
                                                 ? `${request.asset.asset_code} — ${request.asset.name}`
-                                                : '—'
+                                                : 'No related asset'
                                         }
                                     />
 
@@ -540,10 +875,15 @@ export default function ShowRequest({
                                     Assignment
                                 </h2>
 
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Current responsibility for this request
+                                </p>
+
                             </div>
 
 
                             <div className="grid gap-5 p-5 sm:grid-cols-2">
+
 
                                 <InfoItem
                                     icon={
@@ -551,9 +891,7 @@ export default function ShowRequest({
                                     }
                                     label="Assigned Department"
                                     value={
-                                        request
-                                            .assigned_department
-                                            ?.name ??
+                                        request.assigned_department?.name ??
                                         'Not assigned'
                                     }
                                 />
@@ -565,9 +903,7 @@ export default function ShowRequest({
                                     }
                                     label="Assigned To"
                                     value={
-                                        request
-                                            .assigned_to
-                                            ?.name ??
+                                        request.assigned_to?.name ??
                                         'Not assigned'
                                     }
                                 />
@@ -623,18 +959,18 @@ export default function ShowRequest({
                                                     className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
                                                 >
 
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex min-w-0 items-center gap-3">
 
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-blue-600">
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600">
 
                                                             <FileText className="h-4 w-4" />
 
                                                         </div>
 
 
-                                                        <div>
+                                                        <div className="min-w-0">
 
-                                                            <p className="text-xs font-semibold text-slate-700">
+                                                            <p className="truncate text-xs font-semibold text-slate-700">
                                                                 {
                                                                     attachment.original_name
                                                                 }
@@ -642,18 +978,43 @@ export default function ShowRequest({
 
 
                                                             <p className="mt-0.5 text-[10px] text-slate-400">
-                                                                Uploaded by{' '}
+
                                                                 {
-                                                                    attachment
-                                                                        .uploaded_by
-                                                                        ?.name ??
+                                                                    attachment.uploaded_by?.name ??
                                                                     'Unknown'
                                                                 }
+
+                                                                {' • '}
+
+                                                                {formatDate(
+                                                                    attachment.created_at,
+                                                                )}
+
+                                                                {attachment.size
+                                                                    ? ` • ${formatFileSize(attachment.size)}`
+                                                                    : ''}
+
                                                             </p>
 
                                                         </div>
 
                                                     </div>
+
+
+                                                    {attachment.path && (
+
+                                                        <a
+                                                            href={
+                                                                attachment.path
+                                                            }
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="ml-3 shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                                                        >
+                                                            View
+                                                        </a>
+
+                                                    )}
 
                                                 </div>
 
@@ -701,7 +1062,235 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* WORKFLOW */}
+                        {/* WORKFLOW ACTIONS */}
+                        {/* ================================================== */}
+
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                            <div className="border-b border-slate-100 px-5 py-4">
+
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Actions
+                                </h2>
+
+
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Available workflow actions
+                                </p>
+
+                            </div>
+
+
+                            <div className="space-y-3 p-5">
+
+
+                                {/* ================================================== */}
+                                {/* SUPERVISOR REVIEW */}
+                                {/* ================================================== */}
+
+                                {canReview && (
+
+                                    <>
+
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                reviewForm.processing
+                                            }
+                                            onClick={
+                                                reviewRequest
+                                            }
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+
+                                            <Send className="h-4 w-4" />
+
+                                            {reviewForm.processing
+                                                ? 'Reviewing...'
+                                                : 'Review & Forward to Head'}
+
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                actionForm.processing
+                                            }
+                                            onClick={
+                                                rejectRequest
+                                            }
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+
+                                            <XCircle className="h-4 w-4" />
+
+                                            Reject Request
+
+                                        </button>
+
+                                    </>
+
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* HEAD APPROVAL */}
+                                {/* ================================================== */}
+
+                                {canApprove && (
+
+                                    <>
+
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                actionForm.processing
+                                            }
+                                            onClick={
+                                                approveRequest
+                                            }
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+
+                                            <CheckCircle2 className="h-4 w-4" />
+
+                                            {actionForm.processing
+                                                ? 'Approving...'
+                                                : 'Approve Request'}
+
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                actionForm.processing
+                                            }
+                                            onClick={
+                                                rejectRequest
+                                            }
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+
+                                            <XCircle className="h-4 w-4" />
+
+                                            Reject Request
+
+                                        </button>
+
+                                    </>
+
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* START */}
+                                {/* ================================================== */}
+
+                                {canStart && (
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            actionForm.processing
+                                        }
+                                        onClick={
+                                            startRequest
+                                        }
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <Play className="h-4 w-4" />
+
+                                        {actionForm.processing
+                                            ? 'Starting...'
+                                            : 'Start Request'}
+
+                                    </button>
+
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* COMPLETE */}
+                                {/* ================================================== */}
+
+                                {canComplete && (
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            actionForm.processing
+                                        }
+                                        onClick={
+                                            completeRequest
+                                        }
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+
+                                        <CheckCircle2 className="h-4 w-4" />
+
+                                        {actionForm.processing
+                                            ? 'Completing...'
+                                            : 'Mark Completed'}
+
+                                    </button>
+
+                                )}
+
+
+                                {/* ================================================== */}
+                                {/* NO ACTION */}
+                                {/* ================================================== */}
+
+                                {!hasActions && (
+
+                                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3">
+
+                                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+
+
+                                        <div>
+
+                                            <p className="text-xs font-semibold text-slate-700">
+                                                No action available
+                                            </p>
+
+
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">
+
+                                                {request.status ===
+                                                    'pending' &&
+                                                !supervisor
+                                                    ? 'This request is waiting for the department supervisor.'
+                                                    : request.status ===
+                                                        'for_head_review' &&
+                                                      !head
+                                                    ? 'This request is waiting for the department head.'
+                                                    : request.status ===
+                                                        'completed'
+                                                    ? 'This request has already been completed.'
+                                                    : request.status ===
+                                                        'rejected'
+                                                    ? 'This request has been rejected.'
+                                                    : 'There is no workflow action available for your role at this stage.'}
+
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                )}
+
+                            </div>
+
+                        </section>
+
+
+                        {/* ================================================== */}
+                        {/* REQUEST TIMELINE */}
                         {/* ================================================== */}
 
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -711,6 +1300,7 @@ export default function ShowRequest({
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Request Timeline
                                 </h2>
+
 
                                 <p className="mt-1 text-xs text-slate-500">
                                     Request activity history
@@ -768,16 +1358,37 @@ export default function ShowRequest({
 
 
                                                         <p className="mt-0.5 text-[10px] text-slate-400">
-                                                            {
-                                                                history
-                                                                    .user
-                                                                    ?.name
-                                                            }
+
+                                                            {history.user?.name ??
+                                                                'System'}
+
                                                             {' • '}
+
                                                             {formatDate(
                                                                 history.created_at,
                                                             )}
+
                                                         </p>
+
+
+                                                        {history.from_status &&
+                                                        history.to_status && (
+
+                                                            <p className="mt-1 text-[10px] text-slate-400">
+
+                                                                {formatStatus(
+                                                                    history.from_status,
+                                                                )}
+
+                                                                {' → '}
+
+                                                                {formatStatus(
+                                                                    history.to_status,
+                                                                )}
+
+                                                            </p>
+
+                                                        )}
 
 
                                                         {history.remarks && (
@@ -801,9 +1412,16 @@ export default function ShowRequest({
 
                                 ) : (
 
-                                    <p className="py-5 text-center text-xs text-slate-400">
-                                        No activity recorded.
-                                    </p>
+                                    <div className="py-6 text-center">
+
+                                        <Clock3 className="mx-auto h-5 w-5 text-slate-300" />
+
+
+                                        <p className="mt-2 text-xs text-slate-400">
+                                            No activity recorded yet.
+                                        </p>
+
+                                    </div>
 
                                 )}
 
@@ -813,7 +1431,7 @@ export default function ShowRequest({
 
 
                         {/* ================================================== */}
-                        {/* APPROVAL INFORMATION */}
+                        {/* WORKFLOW INFORMATION */}
                         {/* ================================================== */}
 
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -829,12 +1447,11 @@ export default function ShowRequest({
 
                             <div className="divide-y divide-slate-100">
 
+
                                 <WorkflowItem
-                                    label="Reviewed By"
+                                    label="Supervisor Review"
                                     value={
-                                        request
-                                            .reviewed_by
-                                            ?.name ??
+                                        request.reviewed_by?.name ??
                                         'Not reviewed'
                                     }
                                     date={
@@ -844,11 +1461,9 @@ export default function ShowRequest({
 
 
                                 <WorkflowItem
-                                    label="Approved By"
+                                    label="Head Approval"
                                     value={
-                                        request
-                                            .approved_by
-                                            ?.name ??
+                                        request.approved_by?.name ??
                                         'Not approved'
                                     }
                                     date={
@@ -858,11 +1473,9 @@ export default function ShowRequest({
 
 
                                 <WorkflowItem
-                                    label="Completed By"
+                                    label="Completion"
                                     value={
-                                        request
-                                            .completed_by
-                                            ?.name ??
+                                        request.completed_by?.name ??
                                         'Not completed'
                                     }
                                     date={
@@ -896,7 +1509,7 @@ function InfoItem({
     label,
     value,
 }: {
-    icon: React.ReactNode;
+    icon: ReactNode;
     label: string;
     value: string;
 }) {
@@ -977,47 +1590,14 @@ function WorkflowItem({
 
 /*
 |--------------------------------------------------------------------------
-| SMALL ICON COMPONENTS
+| BUILDING ICON
 |--------------------------------------------------------------------------
 */
-
-function ClipboardIcon() {
-
-    return (
-        <ClipboardListIcon />
-    );
-}
-
-
-function ClipboardListIcon() {
-
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="h-5 w-5"
-        >
-            <rect
-                x="4"
-                y="3"
-                width="16"
-                height="18"
-                rx="2"
-            />
-            <path d="M9 3h6" />
-            <path d="M9 8h6" />
-            <path d="M9 12h6" />
-            <path d="M9 16h4" />
-        </svg>
-    );
-}
-
 
 function BuildingIcon() {
 
     return (
+
         <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -1025,14 +1605,24 @@ function BuildingIcon() {
             strokeWidth="2"
             className="h-4 w-4"
         >
+
             <path d="M3 21h18" />
+
             <path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
+
             <path d="M9 7h2" />
+
             <path d="M13 7h2" />
+
             <path d="M9 11h2" />
+
             <path d="M13 11h2" />
+
             <path d="M9 15h2" />
+
             <path d="M13 15h2" />
+
         </svg>
+
     );
 }
