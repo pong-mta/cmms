@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\OperationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,6 +37,21 @@ class OperationRequestController extends Controller
     }
 
     /**
+     * Display a specific request.
+     */
+    public function show(OperationRequest $operationRequest): Response
+    {
+        $operationRequest->load([
+            'user',
+            'department',
+        ]);
+
+        return Inertia::render('operations/requests/show', [
+            'request' => $operationRequest,
+        ]);
+    }
+
+    /**
      * Store a new request.
      */
     public function store(Request $request): RedirectResponse
@@ -66,42 +80,88 @@ class OperationRequestController extends Controller
             ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | AUTHENTICATED USER
+        |--------------------------------------------------------------------------
+        */
+
         $user = $request->user();
 
-        if (!$user->department_id) {
-            return back()->withErrors([
-                'department' => 'Your account is not assigned to a department.',
-            ]);
+        if (!$user) {
+            abort(403);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT CHECK
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$user->department_id) {
+            return back()
+                ->withErrors([
+                    'department' => 'Your account is not assigned to a department.',
+                ])
+                ->withInput();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE REQUEST
+        |--------------------------------------------------------------------------
+        */
 
         $operationRequest = OperationRequest::create([
             'request_no' => $this->generateRequestNumber(),
+
             'user_id' => $user->id,
+
             'department_id' => $user->department_id,
+
             'type' => $validated['type'],
+
             'title' => $validated['title'],
+
             'description' => $validated['description'] ?? null,
+
             'priority' => $validated['priority'],
+
             'status' => 'submitted',
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT TO REQUEST DETAILS
+        |--------------------------------------------------------------------------
+        */
+
         return redirect()
-            ->route('operations.requests.index')
-            ->with('success', 'Request submitted successfully.');
+            ->route(
+                'operations.requests.show',
+                $operationRequest
+            )
+            ->with(
+                'success',
+                'Request submitted successfully.'
+            );
     }
 
     /**
-     * Generate request number.
+     * Generate a unique request number.
      */
     private function generateRequestNumber(): string
     {
         do {
-            $number = 'REQ-' . now()->format('Y') . '-' . str_pad(
-                (string) random_int(1, 999999),
-                6,
-                '0',
-                STR_PAD_LEFT,
-            );
+            $number = 'REQ-' .
+                now()->format('Y') .
+                '-' .
+                str_pad(
+                    (string) random_int(1, 999999),
+                    6,
+                    '0',
+                    STR_PAD_LEFT,
+                );
         } while (
             OperationRequest::where(
                 'request_no',

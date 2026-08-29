@@ -32,22 +32,31 @@ Route::middleware(['auth'])->group(function () {
     )->name('dashboard');
 
 
-    //REQUEST
-  
-    Route::get(
-        '/operations/requests',
-        [OperationRequestController::class, 'index']
-    )->name('operations.requests.index');
+    /*
+    |--------------------------------------------------------------------------
+    | LGU OPERATIONS - REQUESTS
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get(
-        '/operations/requests/create',
-        [OperationRequestController::class, 'create']
-    )->name('operations.requests.create');
+    Route::get('/operations/requests', [
+        OperationRequestController::class,
+        'index',
+    ])->name('operations.requests.index');
 
-    Route::post(
-        '/operations/requests',
-        [OperationRequestController::class, 'store']
-    )->name('operations.requests.store');
+    Route::get('/operations/requests/create', [
+        OperationRequestController::class,
+        'create',
+    ])->name('operations.requests.create');
+
+    Route::post('/operations/requests', [
+        OperationRequestController::class,
+        'store',
+    ])->name('operations.requests.store');
+
+    Route::get('/operations/requests/{operationRequest}', [
+        OperationRequestController::class,
+        'show',
+    ])->name('operations.requests.show');
 
 });
 
