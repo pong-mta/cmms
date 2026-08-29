@@ -18,17 +18,5 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
-    public function assets(): HasMany
-    {
-        return $this->hasMany(
-            Asset::class
-        );
-    }
-
-    public function maintenanceRecords(): HasMany
-    {
-        return $this->hasMany(
-            MaintenanceRecord::class
-        );
-    }
+ 
 }
