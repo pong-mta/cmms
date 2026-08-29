@@ -898,8 +898,8 @@ class OperationRequestController extends Controller
     }
 
     /**
-     * Reject the current workflow step.
-     */
+ * Reject the current workflow step.
+ */
     public function reject(
         Request $request,
         OperationRequest $operationRequest
@@ -912,7 +912,22 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | LOAD CURRENT STEP
+        | VALIDATE REJECTION REASON
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
+            'reason' => [
+                'required',
+                'string',
+                'min:5',
+                'max:2000',
+            ],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD CURRENT WORKFLOW STEP
         |--------------------------------------------------------------------------
         */
 
@@ -924,7 +939,6 @@ class OperationRequestController extends Controller
             $operationRequest->currentWorkflowStep;
 
         if (!$currentStep) {
-
             return back()
                 ->withErrors([
                     'workflow' =>
@@ -936,6 +950,10 @@ class OperationRequestController extends Controller
         |--------------------------------------------------------------------------
         | AUTHORIZATION
         |--------------------------------------------------------------------------
+        |
+        | Only the user assigned to the current workflow step
+        | can reject the request.
+        |
         */
 
         if (
@@ -945,7 +963,6 @@ class OperationRequestController extends Controller
                 $currentStep
             )
         ) {
-
             abort(
                 403,
                 'You are not authorized to reject this request.'
@@ -954,14 +971,47 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | REJECT
+        | RECORD REJECTION + UPDATE REQUEST
         |--------------------------------------------------------------------------
         */
 
-        $operationRequest->update([
-            'status' =>
-                'rejected',
-        ]);
+        DB::transaction(function () use (
+            $operationRequest,
+            $currentStep,
+            $user,
+            $validated
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE ACTION HISTORY
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->actions()->create([
+                'workflow_step_id' =>
+                    $currentStep->id,
+
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'rejected',
+
+                'reason' =>
+                    $validated['reason'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | REJECT REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->update([
+                'status' => 'rejected',
+            ]);
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -976,13 +1026,13 @@ class OperationRequestController extends Controller
             )
             ->with(
                 'success',
-                'Request rejected.'
+                'Request rejected successfully.'
             );
     }
 
     /**
-     * Return the request to the previous workflow step.
-     */
+ * Return the request to the previous workflow step.
+ */
     public function returnRequest(
         Request $request,
         OperationRequest $operationRequest
@@ -992,6 +1042,21 @@ class OperationRequestController extends Controller
         if (!$user) {
             abort(403);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATE RETURN REASON
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
+            'reason' => [
+                'required',
+                'string',
+                'min:5',
+                'max:2000',
+            ],
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -1008,7 +1073,6 @@ class OperationRequestController extends Controller
             $operationRequest->currentWorkflowStep;
 
         if (!$currentStep) {
-
             return back()
                 ->withErrors([
                     'workflow' =>
@@ -1020,6 +1084,10 @@ class OperationRequestController extends Controller
         |--------------------------------------------------------------------------
         | AUTHORIZATION
         |--------------------------------------------------------------------------
+        |
+        | Only the user assigned to the current workflow step
+        | can return the request.
+        |
         */
 
         if (
@@ -1029,7 +1097,6 @@ class OperationRequestController extends Controller
                 $currentStep
             )
         ) {
-
             abort(
                 403,
                 'You are not authorized to return this request.'
@@ -1038,7 +1105,7 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | FIND PREVIOUS STEP
+        | FIND PREVIOUS WORKFLOW STEP
         |--------------------------------------------------------------------------
         */
 
@@ -1057,7 +1124,6 @@ class OperationRequestController extends Controller
                 ->first();
 
         if (!$previousStep) {
-
             return back()
                 ->withErrors([
                     'workflow' =>
@@ -1067,17 +1133,52 @@ class OperationRequestController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | RETURN
+        | RECORD RETURN + UPDATE REQUEST
         |--------------------------------------------------------------------------
         */
 
-        $operationRequest->update([
-            'status' =>
-                'draft',
+        DB::transaction(function () use (
+            $operationRequest,
+            $currentStep,
+            $previousStep,
+            $user,
+            $validated
+        ) {
 
-            'current_workflow_step_id' =>
-                $previousStep->id,
-        ]);
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE ACTION HISTORY
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->actions()->create([
+                'workflow_step_id' =>
+                    $currentStep->id,
+
+                'user_id' =>
+                    $user->id,
+
+                'action' =>
+                    'returned',
+
+                'reason' =>
+                    $validated['reason'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | MOVE REQUEST BACK
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->update([
+                'status' =>
+                    'draft',
+
+                'current_workflow_step_id' =>
+                    $previousStep->id,
+            ]);
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -1092,10 +1193,9 @@ class OperationRequestController extends Controller
             )
             ->with(
                 'success',
-                'Request returned to the previous workflow step.'
+                'Request returned successfully.'
             );
     }
-
     /**
      * Determine whether the authenticated user can act
      * on the current workflow step.

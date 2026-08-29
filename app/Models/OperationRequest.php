@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OperationRequest extends Model
 {
@@ -68,5 +69,12 @@ class OperationRequest extends Model
             WorkflowStep::class,
             'current_workflow_step_id'
         );
+    }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(
+            RequestAction::class
+        )->latest();
     }
 }

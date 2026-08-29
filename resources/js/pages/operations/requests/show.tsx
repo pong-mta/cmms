@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Building2, CalendarDays, Check, CheckCircle2, Clock3, FileText, Package, RotateCcw, UserRound, XCircle } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarDays, Check, CheckCircle2, Clock3, FileText, Package, RotateCcw, UserRound, X, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 /*
 |--------------------------------------------------------------------------
@@ -85,10 +86,6 @@ interface OperationRequest {
     } | null;
 
     current_workflow_step?: WorkflowStep | null;
-}
-
-interface AuthProps {
-    user: User | null;
 }
 
 interface PageProps {
@@ -266,6 +263,18 @@ function formatDateTime(date: string): string {
 export default function ShowRequest({ request, auth }: PageProps) {
     /*
     |--------------------------------------------------------------------------
+    | STATE
+    |--------------------------------------------------------------------------
+    */
+
+    const [actionModal, setActionModal] = useState<'return' | 'reject' | null>(null);
+
+    const [reason, setReason] = useState('');
+
+    const [processing, setProcessing] = useState(false);
+
+    /*
+    |--------------------------------------------------------------------------
     | REQUEST DATA
     |--------------------------------------------------------------------------
     */
@@ -308,13 +317,6 @@ export default function ShowRequest({ request, auth }: PageProps) {
     |--------------------------------------------------------------------------
     | AUTHORIZATION FOR UI
     |--------------------------------------------------------------------------
-    |
-    | IMPORTANT:
-    | This only controls visibility.
-    |
-    | The Laravel controller remains the real
-    | authorization/security layer.
-    |
     */
 
     const isSameDepartment = !!currentUser && !!request.department && Number(currentUser.department_id) === Number(request.department.id);
@@ -330,7 +332,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
 
     /*
     |--------------------------------------------------------------------------
-    | ACTION HANDLERS
+    | APPROVE
     |--------------------------------------------------------------------------
     */
 
@@ -352,38 +354,83 @@ export default function ShowRequest({ request, auth }: PageProps) {
         );
     }
 
-    function returnRequest() {
+    /*
+    |--------------------------------------------------------------------------
+    | OPEN RETURN MODAL
+    |--------------------------------------------------------------------------
+    */
+
+    function openReturnModal() {
         if (!canReviewDepartment) {
             return;
         }
 
-        if (!confirm('Return this request to the previous workflow step?')) {
-            return;
-        }
-
-        router.post(
-            `/operations/requests/${request.id}/return`,
-            {},
-            {
-                preserveScroll: true,
-            },
-        );
+        setReason('');
+        setActionModal('return');
     }
 
-    function rejectRequest() {
+    /*
+    |--------------------------------------------------------------------------
+    | OPEN REJECT MODAL
+    |--------------------------------------------------------------------------
+    */
+
+    function openRejectModal() {
         if (!canReviewDepartment) {
             return;
         }
 
-        if (!confirm('Reject this Purchase Request?')) {
+        setReason('');
+        setActionModal('reject');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE ACTION MODAL
+    |--------------------------------------------------------------------------
+    */
+
+    function closeActionModal() {
+        if (processing) {
             return;
         }
 
+        setActionModal(null);
+        setReason('');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUBMIT ACTION
+    |--------------------------------------------------------------------------
+    */
+
+    function submitAction() {
+        if (!actionModal) {
+            return;
+        }
+
+        const trimmedReason = reason.trim();
+
+        if (trimmedReason.length < 5) {
+            return;
+        }
+
+        setProcessing(true);
+
+        const url = actionModal === 'return' ? `/operations/requests/${request.id}/return` : `/operations/requests/${request.id}/reject`;
+
         router.post(
-            `/operations/requests/${request.id}/reject`,
-            {},
+            url,
+            {
+                reason: trimmedReason,
+            },
             {
                 preserveScroll: true,
+
+                onFinish: () => {
+                    setProcessing(false);
+                },
             },
         );
     }
@@ -449,8 +496,9 @@ export default function ShowRequest({ request, auth }: PageProps) {
                             <div className="flex flex-col gap-2 sm:flex-row">
                                 <button
                                     type="button"
-                                    onClick={returnRequest}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                                    onClick={openReturnModal}
+                                    disabled={processing}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <RotateCcw className="h-3.5 w-3.5" />
                                     Return
@@ -458,8 +506,9 @@ export default function ShowRequest({ request, auth }: PageProps) {
 
                                 <button
                                     type="button"
-                                    onClick={rejectRequest}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                    onClick={openRejectModal}
+                                    disabled={processing}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <XCircle className="h-3.5 w-3.5" />
                                     Reject
@@ -468,7 +517,8 @@ export default function ShowRequest({ request, auth }: PageProps) {
                                 <button
                                     type="button"
                                     onClick={approveRequest}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                                    disabled={processing}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Check className="h-3.5 w-3.5" />
                                     Approve & Forward
@@ -543,10 +593,6 @@ export default function ShowRequest({ request, auth }: PageProps) {
                 {/* ====================================================== */}
 
                 <div className="grid w-full gap-5 xl:grid-cols-3">
-                    {/* ================================================== */}
-                    {/* LEFT */}
-                    {/* ================================================== */}
-
                     <div className="space-y-5 xl:col-span-2">
                         {/* ================================================== */}
                         {/* PURCHASE INFORMATION */}
@@ -895,6 +941,104 @@ export default function ShowRequest({ request, auth }: PageProps) {
                     Back to Requests
                 </Link>
             </div>
+
+            {/* ========================================================== */}
+            {/* ACTION REASON MODAL */}
+            {/* ========================================================== */}
+
+            {actionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true">
+                        {/* MODAL HEADER */}
+
+                        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                            <div className="flex items-start gap-3">
+                                <div
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                                        actionModal === 'reject' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                                    }`}
+                                >
+                                    {actionModal === 'reject' ? <XCircle className="h-5 w-5" /> : <RotateCcw className="h-5 w-5" />}
+                                </div>
+
+                                <div>
+                                    <h2 className="text-base font-semibold text-slate-900">
+                                        {actionModal === 'reject' ? 'Reject Purchase Request' : 'Return Purchase Request'}
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        {actionModal === 'reject'
+                                            ? 'Please provide the reason for rejecting this request.'
+                                            : 'Please provide the reason for returning this request.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={closeActionModal}
+                                disabled={processing}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        {/* MODAL BODY */}
+
+                        <div className="p-6">
+                            <label htmlFor="action-reason" className="text-xs font-semibold text-slate-700">
+                                Reason
+                            </label>
+
+                            <textarea
+                                id="action-reason"
+                                value={reason}
+                                onChange={(event) => setReason(event.target.value)}
+                                rows={5}
+                                maxLength={2000}
+                                autoFocus
+                                placeholder={
+                                    actionModal === 'reject' ? 'Enter the reason for rejection...' : 'Enter the reason for returning this request...'
+                                }
+                                className="mt-2 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 transition outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+
+                            <div className="mt-2 flex items-center justify-between">
+                                <p className="text-[10px] text-slate-400">Minimum 5 characters.</p>
+
+                                <p className="text-[10px] text-slate-400">{reason.length}/2000</p>
+                            </div>
+                        </div>
+
+                        {/* MODAL FOOTER */}
+
+                        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={closeActionModal}
+                                disabled={processing}
+                                className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={submitAction}
+                                disabled={processing || reason.trim().length < 5}
+                                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                    actionModal === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'
+                                }`}
+                            >
+                                {actionModal === 'reject' ? <XCircle className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
+
+                                {processing ? 'Processing...' : actionModal === 'reject' ? 'Reject Request' : 'Return Request'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
