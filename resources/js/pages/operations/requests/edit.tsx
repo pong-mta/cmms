@@ -54,7 +54,7 @@ interface OperationRequest {
     user?: User | null;
     department?: Department | null;
 
-    purchaseRequest?: PurchaseRequest | null;
+    purchase_request?: PurchaseRequest | null;
 }
 
 interface PageProps {
@@ -167,7 +167,7 @@ function formatCurrency(value: number) {
 */
 
 export default function EditRequest({ request }: PageProps) {
-    const purchaseRequest = request.purchaseRequest ?? null;
+    const purchaseRequest = request.purchase_request ?? null;
 
     /*
     |--------------------------------------------------------------------------
