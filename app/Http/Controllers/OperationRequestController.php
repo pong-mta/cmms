@@ -137,22 +137,7 @@ class OperationRequestController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | ONLY ACTIVE WORKFLOW REQUESTS
-                |--------------------------------------------------------------------------
-                */
-
-                $query->whereIn(
-                    'operation_requests.status',
-                    [
-                        'pending',
-                        'approved',
-                        'completed',
-                    ]
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | REQUEST MUST HAVE A CURRENT WORKFLOW STEP
+                | REQUEST MUST HAVE CURRENT WORKFLOW STEP
                 |--------------------------------------------------------------------------
                 */
 
@@ -162,7 +147,7 @@ class OperationRequestController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | CURRENT WORKFLOW STEP
+                | CURRENT WORKFLOW STEP MUST BELONG TO THIS USER
                 |--------------------------------------------------------------------------
                 */
 
@@ -178,59 +163,41 @@ class OperationRequestController extends Controller
                         | REQUESTING DEPARTMENT
                         |--------------------------------------------------------------------------
                         |
+                        | The request stays with its original department.
+                        |
                         | Example:
                         |
                         | Engineering Supervisor
-                        |          ↓
+                        |        ↓
                         | Engineering Department Head
-                        |
-                        | Only users in the requesting department
-                        | with the required role can see this step.
                         |
                         */
 
-                        $stepQuery->where(function (
-                            $assignmentQuery
-                        ) use (
+                        $stepQuery->where(function ($assignmentQuery) use (
                             $user,
                             $userRoleIds
                         ) {
 
-                            $assignmentQuery
-                                ->where(
-                                    'assignment_type',
-                                    'requesting_department'
-                                )
-                                ->where(function (
-                                    $roleQuery
-                                ) use (
-                                    $userRoleIds
-                                ) {
+                            $assignmentQuery->where(
+                                'assignment_type',
+                                'requesting_department'
+                            )
+                            ->where(function ($roleQuery) use (
+                                $userRoleIds
+                            ) {
 
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | STEP DOES NOT REQUIRE SPECIFIC ROLE
-                                    |--------------------------------------------------------------------------
-                                    */
+                                $roleQuery->whereNull(
+                                    'role_id'
+                                );
 
-                                    $roleQuery->whereNull(
-                                        'role_id'
+                                if (!empty($userRoleIds)) {
+
+                                    $roleQuery->orWhereIn(
+                                        'role_id',
+                                        $userRoleIds
                                     );
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | USER ROLE MATCHES WORKFLOW STEP
-                                    |--------------------------------------------------------------------------
-                                    */
-
-                                    if (!empty($userRoleIds)) {
-
-                                        $roleQuery->orWhereIn(
-                                            'role_id',
-                                            $userRoleIds
-                                        );
-                                    }
-                                });
+                                }
+                            });
 
                         });
 
@@ -239,14 +206,13 @@ class OperationRequestController extends Controller
                         | FIXED DEPARTMENT
                         |--------------------------------------------------------------------------
                         |
+                        | The workflow step itself determines the department.
+                        |
                         | Example:
                         |
                         | Engineering Department Head
-                        |          ↓
+                        |        ↓
                         | Budget Office
-                        |
-                        | Only users belonging to the fixed department
-                        | with the required role can see this step.
                         |
                         */
 
@@ -272,21 +238,9 @@ class OperationRequestController extends Controller
                                     $userRoleIds
                                 ) {
 
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | STEP DOES NOT REQUIRE SPECIFIC ROLE
-                                    |--------------------------------------------------------------------------
-                                    */
-
                                     $roleQuery->whereNull(
                                         'role_id'
                                     );
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | USER ROLE MATCHES WORKFLOW STEP
-                                    |--------------------------------------------------------------------------
-                                    */
 
                                     if (!empty($userRoleIds)) {
 
@@ -296,25 +250,25 @@ class OperationRequestController extends Controller
                                         );
                                     }
                                 });
-
                         });
                     }
                 );
 
                 /*
                 |--------------------------------------------------------------------------
-                | REQUESTING DEPARTMENT MUST MATCH USER DEPARTMENT
+                | IMPORTANT
                 |--------------------------------------------------------------------------
                 |
-                | This prevents a user from another department from
-                | seeing a requesting_department workflow step.
+                | DO NOT put:
+                |
+                | operation_requests.department_id = user.department_id
+                |
+                | here.
+                |
+                | That would prevent fixed departments such as Budget
+                | from receiving Engineering requests.
                 |
                 */
-
-                $query->where(
-                    'operation_requests.department_id',
-                    $user->department_id
-                );
             });
         });
     }
