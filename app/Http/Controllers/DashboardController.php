@@ -19,7 +19,6 @@ class DashboardController extends Controller
             'dashboard',
             [
 
-                'user' => $user,
             ]
         );
     }
