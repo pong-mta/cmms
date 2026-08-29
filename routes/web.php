@@ -98,6 +98,35 @@ Route::prefix('operations/requests')
 
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | OPERATIONS REQUEST WORKFLOW
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/operations/requests/{serviceRequest}/financial-review',
+        [OperationsRequestController::class, 'financialApprove']
+    )->name(
+        'operations.requests.financial-review'
+    );
+
+    Route::post(
+        '/operations/requests/{serviceRequest}/reimburse',
+        [OperationsRequestController::class, 'markReimbursed']
+    )->name(
+        'operations.requests.reimburse'
+    );
+
+
+
+
+
+
+
+
+
+
 
     //ASSETS
     Route::get('/assets', [

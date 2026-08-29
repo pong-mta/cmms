@@ -451,601 +451,248 @@ class OperationsRequestController extends Controller
     */
 
    public function store(Request $request)
-{
-    $user = $request->user();
-
-    /*
-    |--------------------------------------------------------------------------
-    | DEPARTMENT SECURITY
-    |--------------------------------------------------------------------------
-    */
-
-    if (!$user->department_id) {
-        return back()
-            ->withErrors([
-                'department' =>
-                    'Your account is not assigned to a department.',
-            ])
-            ->withInput();
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | VALIDATION
-    |--------------------------------------------------------------------------
-    */
-
-    $validated = $request->validate([
+    {
+        $user = $request->user();
 
         /*
         |--------------------------------------------------------------------------
-        | MAIN REQUEST
+        | DEPARTMENT SECURITY
         |--------------------------------------------------------------------------
         */
 
-        'request_type_id' => [
-            'required',
-            'integer',
-            'exists:request_types,id',
-        ],
-
-        'subject' => [
-            'required',
-            'string',
-            'max:255',
-        ],
-
-        'description' => [
-            'nullable',
-            'string',
-        ],
-
-        'priority' => [
-            'required',
-            'in:low,normal,high,critical',
-        ],
-
-        'location' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'asset_id' => [
-            'nullable',
-            'integer',
-            'exists:assets,id',
-        ],
-
-        'remarks' => [
-            'nullable',
-            'string',
-            'max:5000',
-        ],
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | PURCHASE ITEMS
-        |--------------------------------------------------------------------------
-        */
-
-        'items' => [
-            'nullable',
-            'array',
-        ],
-
-        'items.*.description' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'items.*.quantity' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'items.*.unit' => [
-            'nullable',
-            'string',
-            'max:50',
-        ],
-
-        'items.*.estimated_unit_price' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'items.*.remarks' => [
-            'nullable',
-            'string',
-            'max:1000',
-        ],
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | REIMBURSEMENT ITEMS
-        |--------------------------------------------------------------------------
-        */
-
-        'reimbursement_items' => [
-            'nullable',
-            'array',
-        ],
-
-        'reimbursement_items.*.expense_date' => [
-            'nullable',
-            'date',
-        ],
-
-        'reimbursement_items.*.expense_type' => [
-            'nullable',
-            'string',
-            'max:100',
-        ],
-
-        'reimbursement_items.*.description' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'reimbursement_items.*.amount' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'reimbursement_items.*.receipt_reference' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'reimbursement_items.*.remarks' => [
-            'nullable',
-            'string',
-            'max:1000',
-        ],
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | GENERIC COST
-        |--------------------------------------------------------------------------
-        */
-
-        'estimated_total_cost' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TRAVEL
-        |--------------------------------------------------------------------------
-        */
-
-        'travel' => [
-            'nullable',
-            'array',
-        ],
-
-        'travel.destination' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'travel.purpose' => [
-            'nullable',
-            'string',
-            'max:5000',
-        ],
-
-        'travel.departure_date' => [
-            'nullable',
-            'date',
-        ],
-
-        'travel.return_date' => [
-            'nullable',
-            'date',
-            'after_or_equal:travel.departure_date',
-        ],
-
-        'travel.mode_of_travel' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'travel.accommodation' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'travel.estimated_transportation' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'travel.estimated_accommodation' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'travel.estimated_meals' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'travel.estimated_registration' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'travel.estimated_other' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
-
-        'travel.funding_source' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'travel.remarks' => [
-            'nullable',
-            'string',
-            'max:5000',
-        ],
-    ]);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REQUEST TYPE
-    |--------------------------------------------------------------------------
-    */
-
-    $requestType = RequestType::query()
-        ->where('id', $validated['request_type_id'])
-        ->where('active', true)
-        ->first();
-
-
-    if (!$requestType) {
-        return back()
-            ->withErrors([
-                'request_type_id' =>
-                    'The selected request type is not available.',
-            ])
-            ->withInput();
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REQUEST TYPE CODE
-    |--------------------------------------------------------------------------
-    */
-
-    $typeCode = strtoupper(
-        trim($requestType->code)
-    );
-
-
-    $typeName = strtolower(
-        trim($requestType->name)
-    );
-
-
-    $typeCategory = strtolower(
-        trim($requestType->category)
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DETERMINE SPECIALIZED TYPE
-    |--------------------------------------------------------------------------
-    */
-
-    $isPurchase =
-        str_contains($typeCode, 'PURCHASE') ||
-        str_contains($typeCode, 'PROCUREMENT') ||
-        str_contains($typeCode, 'SUPPLIES') ||
-        str_contains($typeName, 'purchase') ||
-        str_contains($typeName, 'procurement') ||
-        str_contains($typeName, 'supplies');
-
-
-    $isReimbursement =
-        str_contains($typeCode, 'REIMBURSE') ||
-        str_contains($typeName, 'reimburse');
-
-
-    $isTravel =
-        $typeCategory === 'travel' ||
-        str_contains($typeCode, 'TRAVEL') ||
-        str_contains($typeName, 'travel');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | ASSET SECURITY
-    |--------------------------------------------------------------------------
-    */
-
-    if (!empty($validated['asset_id'])) {
-
-        $assetBelongsToDepartment =
-            Asset::query()
-                ->where(
-                    'id',
-                    $validated['asset_id']
-                )
-                ->where(
-                    'department_id',
-                    $user->department_id
-                )
-                ->exists();
-
-
-        if (!$assetBelongsToDepartment) {
+        if (!$user->department_id) {
             return back()
                 ->withErrors([
-                    'asset_id' =>
-                        'The selected asset does not belong to your department.',
+                    'department' =>
+                        'Your account is not assigned to a department.',
                 ])
                 ->withInput();
         }
-    }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | PURCHASE TOTAL
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | BASIC VALIDATION
+        |--------------------------------------------------------------------------
+        */
 
-    $purchaseTotal = 0;
+        $validated = $request->validate([
+            'request_type_id' => [
+                'required',
+                'integer',
+                'exists:request_types,id',
+            ],
 
+            'subject' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-    if ($isPurchase) {
+            'description' => [
+                'nullable',
+                'string',
+            ],
 
-        foreach (
-            $validated['items'] ?? []
-            as $item
-        ) {
+            'priority' => [
+                'required',
+                'in:low,normal,high,critical',
+            ],
 
-            $description =
-                trim(
-                    (string) (
-                        $item['description']
-                        ?? ''
-                    )
-                );
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
+            'asset_id' => [
+                'nullable',
+                'integer',
+                'exists:assets,id',
+            ],
 
-            if ($description === '') {
-                continue;
-            }
-
-
-            $quantity =
-                (float) (
-                    $item['quantity']
-                    ?? 0
-                );
-
-
-            $unitPrice =
-                (float) (
-                    $item['estimated_unit_price']
-                    ?? 0
-                );
-
-
-            $purchaseTotal +=
-                $quantity *
-                $unitPrice;
-        }
-
-
-        $purchaseTotal =
-            round(
-                $purchaseTotal,
-                2
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REIMBURSEMENT TOTAL
-    |--------------------------------------------------------------------------
-    */
-
-    $reimbursementTotal = 0;
-
-
-    if ($isReimbursement) {
-
-        foreach (
-            $validated['reimbursement_items'] ?? []
-            as $item
-        ) {
-
-            $description =
-                trim(
-                    (string) (
-                        $item['description']
-                        ?? ''
-                    )
-                );
-
-
-            if ($description === '') {
-                continue;
-            }
-
-
-            $amount =
-                (float) (
-                    $item['amount']
-                    ?? 0
-                );
-
-
-            $reimbursementTotal +=
-                $amount;
-        }
-
-
-        $reimbursementTotal =
-            round(
-                $reimbursementTotal,
-                2
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | TRAVEL TOTAL
-    |--------------------------------------------------------------------------
-    */
-
-    $travelTotal = 0;
-
-
-    if ($isTravel) {
-
-        $travel =
-            $validated['travel'] ?? [];
-
-
-        $travelTotal =
-            (
-                (float) (
-                    $travel['estimated_transportation']
-                    ?? 0
-                )
-            ) +
-            (
-                (float) (
-                    $travel['estimated_accommodation']
-                    ?? 0
-                )
-            ) +
-            (
-                (float) (
-                    $travel['estimated_meals']
-                    ?? 0
-                )
-            ) +
-            (
-                (float) (
-                    $travel['estimated_registration']
-                    ?? 0
-                )
-            ) +
-            (
-                (float) (
-                    $travel['estimated_other']
-                    ?? 0
-                )
-            );
-
-
-        $travelTotal =
-            round(
-                $travelTotal,
-                2
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DETERMINE TOTAL COST
-    |--------------------------------------------------------------------------
-    */
-
-    $estimatedTotalCost = null;
-
-
-    if ($isPurchase) {
-
-        $estimatedTotalCost =
-            $purchaseTotal;
-
-    } elseif ($isReimbursement) {
-
-        $estimatedTotalCost =
-            $reimbursementTotal;
-
-    } elseif ($isTravel) {
-
-        $estimatedTotalCost =
-            $travelTotal;
-
-    } elseif (
-        isset(
-            $validated['estimated_total_cost']
-        )
-    ) {
-
-        $estimatedTotalCost =
-            round(
-                (float)
-                $validated['estimated_total_cost'],
-                2
-            );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DATABASE TRANSACTION
-    |--------------------------------------------------------------------------
-    */
-
-    $serviceRequest = DB::transaction(
-        function () use (
-            $validated,
-            $user,
-            $requestType,
-            $isPurchase,
-            $isReimbursement,
-            $isTravel,
-            $estimatedTotalCost
-        ) {
+            'remarks' => [
+                'nullable',
+                'string',
+                'max:5000',
+            ],
 
             /*
             |--------------------------------------------------------------------------
-            | MAIN SERVICE REQUEST
+            | PURCHASE / REIMBURSEMENT ITEMS
             |--------------------------------------------------------------------------
             */
 
-            $serviceRequest =
-                ServiceRequest::create([
+            'items' => [
+                'nullable',
+                'array',
+            ],
+
+            'items.*.description' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'items.*.quantity' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'items.*.unit' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'items.*.estimated_unit_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'items.*.remarks' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | GENERAL COST
+            |--------------------------------------------------------------------------
+            */
+
+            'estimated_total_cost' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | TRAVEL
+            |--------------------------------------------------------------------------
+            */
+
+            'destination' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'travel_start_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'travel_end_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:travel_start_date',
+            ],
+
+            'purpose' => [
+                'nullable',
+                'string',
+                'max:5000',
+            ],
+
+            'funding_source' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REQUEST TYPE
+        |--------------------------------------------------------------------------
+        */
+
+        $requestType = RequestType::query()
+            ->where('id', $validated['request_type_id'])
+            ->where('active', true)
+            ->first();
+
+
+        if (!$requestType) {
+            return back()
+                ->withErrors([
+                    'request_type_id' =>
+                        'The selected request type is not available.',
+                ])
+                ->withInput();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ASSET SECURITY
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($validated['asset_id'])) {
+
+            $assetBelongsToDepartment =
+                Asset::query()
+                    ->where(
+                        'id',
+                        $validated['asset_id']
+                    )
+                    ->where(
+                        'department_id',
+                        $user->department_id
+                    )
+                    ->exists();
+
+
+            if (!$assetBelongsToDepartment) {
+                return back()
+                    ->withErrors([
+                        'asset_id' =>
+                            'The selected asset does not belong to your department.',
+                    ])
+                    ->withInput();
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | NORMALIZE REQUEST TYPE
+        |--------------------------------------------------------------------------
+        */
+
+        $typeCode = strtoupper(
+            trim($requestType->code)
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRANSACTION
+        |--------------------------------------------------------------------------
+        */
+
+        $serviceRequest = DB::transaction(
+            function () use (
+                $validated,
+                $user,
+                $requestType,
+                $typeCode
+            ) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | CREATE MAIN REQUEST
+                |--------------------------------------------------------------------------
+                */
+
+                $serviceRequest = ServiceRequest::create([
 
                     'request_code' =>
                         $this->generateRequestCode(),
@@ -1055,7 +702,7 @@ class OperationsRequestController extends Controller
 
                     /*
                     |--------------------------------------------------------------------------
-                    | KEEP LEGACY REQUEST TYPE
+                    | KEEP LEGACY FIELD
                     |--------------------------------------------------------------------------
                     */
 
@@ -1066,8 +713,7 @@ class OperationsRequestController extends Controller
                         $validated['subject'],
 
                     'description' =>
-                        $validated['description']
-                        ?? null,
+                        $validated['description'] ?? null,
 
                     'priority' =>
                         $validated['priority'],
@@ -1082,74 +728,77 @@ class OperationsRequestController extends Controller
                         $user->department_id,
 
                     'location' =>
-                        $validated['location']
-                        ?? null,
+                        $validated['location'] ?? null,
 
                     'asset_id' =>
-                        $validated['asset_id']
-                        ?? null,
+                        $validated['asset_id'] ?? null,
 
                     'requested_at' =>
                         now(),
 
                     'remarks' =>
-                        $validated['remarks']
-                        ?? null,
+                        $validated['remarks'] ?? null,
                 ]);
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | PURCHASE ITEMS
-            |--------------------------------------------------------------------------
-            */
+                /*
+                |--------------------------------------------------------------------------
+                | PURCHASE REQUEST
+                |--------------------------------------------------------------------------
+                */
 
-            if ($isPurchase) {
-
-                foreach (
-                    $validated['items'] ?? []
-                    as $item
+                if (
+                    $typeCode === 'PURCHASE' ||
+                    $typeCode === 'PROCUREMENT' ||
+                    $typeCode === 'SUPPLIES'
                 ) {
 
-                    $description =
-                        trim(
-                            (string) (
-                                $item['description']
-                                ?? ''
-                            )
-                        );
+                    $items =
+                        $validated['items'] ?? [];
 
 
-                    if ($description === '') {
-                        continue;
-                    }
+                    foreach ($items as $item) {
+
+                        $description =
+                            trim(
+                                (string) (
+                                    $item['description']
+                                    ?? ''
+                                )
+                            );
 
 
-                    $quantity =
-                        (float) (
-                            $item['quantity']
-                            ?? 0
-                        );
+                        if ($description === '') {
+                            continue;
+                        }
 
 
-                    $unitPrice =
-                        (float) (
-                            $item['estimated_unit_price']
-                            ?? 0
-                        );
+                        $quantity =
+                            (float) (
+                                $item['quantity']
+                                ?? 1
+                            );
 
 
-                    $amount =
-                        round(
-                            $quantity *
-                            $unitPrice,
-                            2
-                        );
+                        $unitPrice =
+                            (float) (
+                                $item['estimated_unit_price']
+                                ?? 0
+                            );
 
 
-                    $serviceRequest
-                        ->purchaseItems()
-                        ->create([
+                        $amount =
+                            round(
+                                $quantity *
+                                $unitPrice,
+                                2
+                            );
+
+
+                        PurchaseRequestItem::create([
+
+                            'service_request_id' =>
+                                $serviceRequest->id,
 
                             'description' =>
                                 $description,
@@ -1171,50 +820,69 @@ class OperationsRequestController extends Controller
                                 $item['remarks']
                                 ?? null,
                         ]);
+                    }
                 }
-            }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | REIMBURSEMENT ITEMS
-            |--------------------------------------------------------------------------
-            */
+                /*
+                |--------------------------------------------------------------------------
+                | REIMBURSEMENT
+                |--------------------------------------------------------------------------
+                */
 
-            if ($isReimbursement) {
-
-                foreach (
-                    $validated['reimbursement_items'] ?? []
-                    as $item
+                if (
+                    $typeCode === 'REIMBURSEMENT'
                 ) {
 
-                    $description =
-                        trim(
-                            (string) (
-                                $item['description']
-                                ?? ''
-                            )
-                        );
+                    $items =
+                        $validated['items'] ?? [];
 
 
-                    if ($description === '') {
-                        continue;
-                    }
+                    foreach ($items as $item) {
+
+                        $description =
+                            trim(
+                                (string) (
+                                    $item['description']
+                                    ?? ''
+                                )
+                            );
 
 
-                    $amount =
-                        round(
-                            (float) (
+                        if ($description === '') {
+                            continue;
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | IMPORTANT
+                        |--------------------------------------------------------------------------
+                        |
+                        | The current React form does not yet send:
+                        |
+                        | expense_date
+                        | expense_type
+                        | amount
+                        |
+                        | so we only create reimbursement rows once those
+                        | dedicated fields are added.
+                        |
+                        */
+
+                        if (
+                            !isset(
                                 $item['amount']
-                                ?? 0
-                            ),
-                            2
-                        );
+                            )
+                        ) {
+                            continue;
+                        }
 
 
-                    $serviceRequest
-                        ->reimbursementItems()
-                        ->create([
+                        ReimbursementItem::create([
+
+                            'service_request_id' =>
+                                $serviceRequest->id,
 
                             'expense_date' =>
                                 $item['expense_date']
@@ -1228,7 +896,7 @@ class OperationsRequestController extends Controller
                                 $description,
 
                             'amount' =>
-                                $amount,
+                                (float) $item['amount'],
 
                             'receipt_reference' =>
                                 $item['receipt_reference']
@@ -1238,148 +906,137 @@ class OperationsRequestController extends Controller
                                 $item['remarks']
                                 ?? null,
                         ]);
+                    }
                 }
-            }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | TRAVEL DETAILS
-            |--------------------------------------------------------------------------
-            */
+                /*
+                |--------------------------------------------------------------------------
+                | TRAVEL
+                |--------------------------------------------------------------------------
+                */
 
-            if ($isTravel) {
+                if (
+                    $typeCode === 'TRAVEL'
+                ) {
 
-                $travel =
-                    $validated['travel']
-                    ?? [];
+                    if (
+                        !empty(
+                            $validated['destination']
+                        ) &&
+                        !empty(
+                            $validated['travel_start_date']
+                        ) &&
+                        !empty(
+                            $validated['travel_end_date']
+                        )
+                    ) {
 
+                        TravelRequestDetail::create([
+
+                            'service_request_id' =>
+                                $serviceRequest->id,
+
+                            'destination' =>
+                                $validated['destination'],
+
+                            'purpose' =>
+                                $validated['purpose']
+                                ?? null,
+
+                            'departure_date' =>
+                                $validated['travel_start_date'],
+
+                            'return_date' =>
+                                $validated['travel_end_date'],
+
+                            'mode_of_travel' =>
+                                null,
+
+                            'accommodation' =>
+                                null,
+
+                            'estimated_transportation' =>
+                                0,
+
+                            'estimated_accommodation' =>
+                                0,
+
+                            'estimated_meals' =>
+                                0,
+
+                            'estimated_registration' =>
+                                0,
+
+                            'estimated_other' =>
+                                0,
+
+                            'estimated_total' =>
+                                (float) (
+                                    $validated['estimated_total_cost']
+                                    ?? 0
+                                ),
+
+                            'funding_source' =>
+                                $validated['funding_source']
+                                ?? null,
+
+                            'remarks' =>
+                                $validated['remarks']
+                                ?? null,
+                        ]);
+                    }
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | HISTORY
+                |--------------------------------------------------------------------------
+                */
 
                 $serviceRequest
-                    ->travelDetails()
+                    ->histories()
                     ->create([
 
-                        'destination' =>
-                            $travel['destination']
-                            ?? null,
+                        'user_id' =>
+                            $user->id,
 
-                        'purpose' =>
-                            $travel['purpose']
-                            ?? null,
+                        'action' =>
+                            'created',
 
-                        'departure_date' =>
-                            $travel['departure_date']
-                            ?? null,
+                        'from_status' =>
+                            null,
 
-                        'return_date' =>
-                            $travel['return_date']
-                            ?? null,
-
-                        'mode_of_travel' =>
-                            $travel['mode_of_travel']
-                            ?? null,
-
-                        'accommodation' =>
-                            $travel['accommodation']
-                            ?? null,
-
-                        'estimated_transportation' =>
-                            (float) (
-                                $travel[
-                                    'estimated_transportation'
-                                ] ?? 0
-                            ),
-
-                        'estimated_accommodation' =>
-                            (float) (
-                                $travel[
-                                    'estimated_accommodation'
-                                ] ?? 0
-                            ),
-
-                        'estimated_meals' =>
-                            (float) (
-                                $travel[
-                                    'estimated_meals'
-                                ] ?? 0
-                            ),
-
-                        'estimated_registration' =>
-                            (float) (
-                                $travel[
-                                    'estimated_registration'
-                                ] ?? 0
-                            ),
-
-                        'estimated_other' =>
-                            (float) (
-                                $travel[
-                                    'estimated_other'
-                                ] ?? 0
-                            ),
-
-                        'estimated_total' =>
-                            $estimatedTotalCost ?? 0,
-
-                        'funding_source' =>
-                            $travel['funding_source']
-                            ?? null,
+                        'to_status' =>
+                            'pending',
 
                         'remarks' =>
-                            $travel['remarks']
-                            ?? null,
+                            'Request created.',
                     ]);
+
+
+                return $serviceRequest;
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | HISTORY
-            |--------------------------------------------------------------------------
-            */
-
-            $serviceRequest
-                ->histories()
-                ->create([
-
-                    'user_id' =>
-                        $user->id,
-
-                    'action' =>
-                        'created',
-
-                    'from_status' =>
-                        null,
-
-                    'to_status' =>
-                        'pending',
-
-                    'remarks' =>
-                        'Request created.',
-                ]);
-
-
-            return $serviceRequest;
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REDIRECT
-    |--------------------------------------------------------------------------
-    */
-
-    return redirect()
-        ->route(
-            'operations.requests.show',
-            $serviceRequest
-        )
-        ->with(
-            'success',
-            'Request submitted successfully.'
         );
-}
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()
+            ->route(
+                'operations.requests.show',
+                $serviceRequest
+            )
+            ->with(
+                'success',
+                'Request submitted successfully.'
+            );
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -1439,17 +1096,8 @@ class OperationsRequestController extends Controller
             'approvedBy:id,name',
 
             'completedBy:id,name',
-
-            /*
-            |--------------------------------------------------------------------------
-            | SPECIALIZED REQUEST DETAILS
-            |--------------------------------------------------------------------------
-            */
-
             'purchaseItems',
-
             'reimbursementItems',
-
             'travelDetails',
 
             'histories' => function ($query) {
@@ -1688,31 +1336,15 @@ class OperationsRequestController extends Controller
         Request $request,
         ServiceRequest $serviceRequest
     ) {
-
         $user = $request->user()->load([
             'department',
             'roles',
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | DEPARTMENT SECURITY
-        |--------------------------------------------------------------------------
-        */
-
         abort_unless(
-            $serviceRequest->department_id ===
-                $user->department_id,
+            $serviceRequest->department_id === $user->department_id,
             403
         );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ROLE SECURITY
-        |--------------------------------------------------------------------------
-        */
 
         abort_unless(
             $this->userIsHead($user),
@@ -1720,107 +1352,94 @@ class OperationsRequestController extends Controller
             'Only the department head can approve this request.'
         );
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS SECURITY
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $serviceRequest->status !==
-            'for_head_review'
-        ) {
-
-            return back()
-                ->withErrors([
-                    'workflow' =>
-                        'This request is not waiting for head approval.',
-                ]);
+        if ($serviceRequest->status !== 'for_head_review') {
+            return back()->withErrors([
+                'workflow' => 'This request is not waiting for head approval.',
+            ]);
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
-            'remarks' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
+            'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
 
+        $serviceRequest->loadMissing('requestType');
+        $requestType = $serviceRequest->requestType;
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE
-        |--------------------------------------------------------------------------
-        */
+        $typeCode = strtoupper(trim((string) (
+            $requestType?->code ?? $serviceRequest->request_type ?? ''
+        )));
+        $typeName = strtolower(trim((string) ($requestType?->name ?? '')));
+        $typeCategory = strtolower(trim((string) ($requestType?->category ?? '')));
 
-        DB::transaction(
-            function () use (
-                $serviceRequest,
-                $user,
-                $validated
-            ) {
+        $isMaintenance =
+            str_contains($typeCode, 'MAINTENANCE') ||
+            str_contains($typeName, 'maintenance') ||
+            str_contains($typeCategory, 'maintenance');
 
-                $oldStatus =
-                    $serviceRequest->status;
+        $isPurchase =
+            str_contains($typeCode, 'PURCHASE') ||
+            str_contains($typeCode, 'PROCUREMENT') ||
+            str_contains($typeName, 'purchase') ||
+            str_contains($typeName, 'procurement') ||
+            str_contains($typeCategory, 'procurement');
 
+        $isReimbursement =
+            str_contains($typeCode, 'REIMBURSE') ||
+            str_contains($typeName, 'reimburse') ||
+            str_contains($typeCategory, 'reimbursement') ||
+            str_contains($typeCategory, 'finance');
 
-                $serviceRequest->update([
+        $isTravel =
+            str_contains($typeCode, 'TRAVEL') ||
+            str_contains($typeName, 'travel') ||
+            str_contains($typeCategory, 'travel');
 
-                    'status' =>
-                        'approved',
+        if ($isMaintenance) {
+            $nextStatus = 'for_gso_review';
+        } elseif ($isPurchase) {
+            $nextStatus = 'for_procurement';
+        } elseif ($isReimbursement) {
+            $nextStatus = 'for_financial_review';
+        } elseif ($isTravel) {
+            $nextStatus = 'for_travel_authorization';
+        } else {
+            $nextStatus = 'approved';
+        }
 
-                    'approved_by' =>
-                        $user->id,
+        DB::transaction(function () use (
+            $serviceRequest,
+            $user,
+            $validated,
+            $nextStatus
+        ) {
+            $oldStatus = $serviceRequest->status;
 
-                    'approved_at' =>
-                        now(),
+            $serviceRequest->update([
+                'status' => $nextStatus,
+                'approved_by' => $user->id,
+                'approved_at' => now(),
+                'remarks' => $validated['remarks'] ?? $serviceRequest->remarks,
+            ]);
 
-                    'remarks' =>
-                        $validated['remarks']
-                            ?? $serviceRequest->remarks,
-                ]);
+            $serviceRequest->histories()->create([
+                'user_id' => $user->id,
+                'action' => 'head_approved',
+                'from_status' => $oldStatus,
+                'to_status' => $nextStatus,
+                'remarks' => $validated['remarks'] ?? 'Request approved by department head.',
+            ]);
+        });
 
+        $message = match ($nextStatus) {
+            'for_gso_review' => 'Request approved and forwarded to GSO review.',
+            'for_procurement' => 'Purchase request approved and forwarded for procurement.',
+            'for_financial_review' => 'Reimbursement approved and forwarded for financial processing.',
+            'for_travel_authorization' => 'Travel request approved and forwarded for travel authorization.',
+            default => 'Request approved successfully.',
+        };
 
-                $serviceRequest
-                    ->histories()
-                    ->create([
-
-                        'user_id' =>
-                            $user->id,
-
-                        'action' =>
-                            'head_approved',
-
-                        'from_status' =>
-                            $oldStatus,
-
-                        'to_status' =>
-                            'approved',
-
-                        'remarks' =>
-                            $validated['remarks']
-                                ??
-                                'Request approved by department head.',
-                    ]);
-            }
-        );
-
-
-        return back()
-            ->with(
-                'success',
-                'Request approved successfully.'
-            );
+        return back()->with('success', $message);
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -2007,6 +1626,26 @@ class OperationsRequestController extends Controller
             $serviceRequest->department_id ===
                 $user->department_id,
             403
+        );
+
+        $serviceRequest->loadMissing('requestType');
+        $requestType = $serviceRequest->requestType;
+
+        $typeCode = strtoupper(trim((string) (
+            $requestType?->code ?? $serviceRequest->request_type ?? ''
+        )));
+        $typeName = strtolower(trim((string) ($requestType?->name ?? '')));
+        $typeCategory = strtolower(trim((string) ($requestType?->category ?? '')));
+
+        $isMaintenance =
+            str_contains($typeCode, 'MAINTENANCE') ||
+            str_contains($typeName, 'maintenance') ||
+            str_contains($typeCategory, 'maintenance');
+
+        abort_unless(
+            $isMaintenance,
+            403,
+            'This request type does not use the maintenance work workflow.'
         );
 
 
@@ -2261,6 +1900,127 @@ class OperationsRequestController extends Controller
                 'success',
                 'Request marked as completed.'
             );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT - FINANCIAL REVIEW
+    |--------------------------------------------------------------------------
+    */
+
+    public function financialApprove(
+        Request $request,
+        ServiceRequest $serviceRequest
+    ) {
+        $user = $request->user()->load(['department', 'roles']);
+
+        abort_unless(
+            $serviceRequest->department_id === $user->department_id,
+            403
+        );
+
+        $isAccounting = $user->roles->contains(function ($role) {
+            return strtolower(trim($role->name)) === 'accounting_officer';
+        });
+
+        abort_unless(
+            $isAccounting,
+            403,
+            'Only the Accounting Officer can process this reimbursement.'
+        );
+
+        abort_unless(
+            $serviceRequest->status === 'for_financial_review',
+            422,
+            'This reimbursement is not waiting for financial review.'
+        );
+
+        $validated = $request->validate([
+            'accounting_reference_no' => ['nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        DB::transaction(function () use ($serviceRequest, $user, $validated) {
+            $oldStatus = $serviceRequest->status;
+
+            $serviceRequest->update([
+                'status' => 'for_disbursement',
+                'accounting_reviewed_by' => $user->id,
+                'accounting_reviewed_at' => now(),
+                'accounting_reference_no' => $validated['accounting_reference_no'] ?? null,
+                'accounting_remarks' => $validated['remarks'] ?? null,
+            ]);
+
+            $serviceRequest->histories()->create([
+                'user_id' => $user->id,
+                'action' => 'financial_reviewed',
+                'from_status' => $oldStatus,
+                'to_status' => 'for_disbursement',
+                'remarks' => $validated['remarks'] ?? 'Financial review completed. Request sent for disbursement.',
+            ]);
+        });
+
+        return back()->with('success', 'Financial review completed. Request sent for disbursement.');
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT - MARK REIMBURSED
+    |--------------------------------------------------------------------------
+    */
+
+    public function markReimbursed(
+        Request $request,
+        ServiceRequest $serviceRequest
+    ) {
+        $user = $request->user()->load(['department', 'roles']);
+
+        abort_unless(
+            $serviceRequest->department_id === $user->department_id,
+            403
+        );
+
+        $isAuthorized = $user->roles->contains(function ($role) {
+            return in_array(
+                strtolower(trim($role->name)),
+                ['accounting_officer', 'system_admin'],
+                true
+            );
+        });
+
+        abort_unless(
+            $isAuthorized,
+            403,
+            'You are not authorized to process this reimbursement.'
+        );
+
+        abort_unless(
+            $serviceRequest->status === 'for_disbursement',
+            422,
+            'This reimbursement is not ready for disbursement.'
+        );
+
+        DB::transaction(function () use ($serviceRequest, $user) {
+            $oldStatus = $serviceRequest->status;
+
+            $serviceRequest->update([
+                'status' => 'reimbursed',
+                'completed_by' => $user->id,
+                'completed_at' => now(),
+            ]);
+
+            $serviceRequest->histories()->create([
+                'user_id' => $user->id,
+                'action' => 'reimbursed',
+                'from_status' => $oldStatus,
+                'to_status' => 'reimbursed',
+                'remarks' => 'Reimbursement paid.',
+            ]);
+        });
+
+        return back()->with('success', 'Reimbursement marked as paid.');
     }
 
 
