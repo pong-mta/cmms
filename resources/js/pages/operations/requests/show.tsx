@@ -58,6 +58,44 @@ interface Asset {
     name: string;
 }
 
+interface PurchaseItem {
+    id: number;
+    description: string;
+    quantity: number | string;
+    unit?: string | null;
+    estimated_unit_price: number | string;
+    estimated_amount: number | string;
+    remarks?: string | null;
+}
+
+interface ReimbursementItem {
+    id: number;
+    expense_date?: string | null;
+    expense_type?: string | null;
+    description: string;
+    amount: number | string;
+    receipt_reference?: string | null;
+    remarks?: string | null;
+}
+
+interface TravelDetails {
+    id: number;
+    destination?: string | null;
+    purpose?: string | null;
+    departure_date?: string | null;
+    return_date?: string | null;
+    mode_of_travel?: string | null;
+    accommodation?: string | null;
+    estimated_transportation: number | string;
+    estimated_accommodation: number | string;
+    estimated_meals: number | string;
+    estimated_registration: number | string;
+    estimated_other: number | string;
+    estimated_total: number | string;
+    funding_source?: string | null;
+    remarks?: string | null;
+}
+
 interface History {
     id: number;
 
@@ -100,6 +138,14 @@ interface ServiceRequest {
     request_code: string;
 
     request_type: string;
+    request_type_id?: number | null;
+
+    requestType?: {
+        id: number;
+        code: string;
+        name: string;
+        category?: string | null;
+    } | null;
 
     subject: string;
 
@@ -132,6 +178,10 @@ interface ServiceRequest {
     assigned_to?: UserData | null;
 
     asset?: Asset | null;
+
+    purchase_items?: PurchaseItem[];
+    reimbursement_items?: ReimbursementItem[];
+    travel_details?: TravelDetails | null;
 
     reviewed_by?: UserData | null;
 
@@ -166,10 +216,10 @@ interface Props {
 */
 
 function normalizeRole(
-    role: string,
+    role: unknown,
 ): string {
 
-    return role
+    return String(role ?? '')
         .toLowerCase()
         .trim()
         .replace(/[- ]/g, '_');
@@ -221,14 +271,14 @@ function isHead(
 
 
 function formatStatus(
-    status?: string | null,
+    status?: unknown,
 ): string {
 
-    if (!status) {
+    if (status === null || status === undefined || status === '') {
         return '—';
     }
 
-    return status
+    return String(status)
         .replace(/_/g, ' ')
         .replace(/-/g, ' ')
         .replace(
@@ -257,6 +307,28 @@ function formatDate(
             minute: '2-digit',
         },
     ).format(new Date(date));
+}
+
+
+function formatCurrency(
+    value?: number | string | null,
+): string {
+
+    const amount = Number(value ?? 0);
+
+    if (!Number.isFinite(amount)) {
+        return '₱0.00';
+    }
+
+    return amount.toLocaleString(
+        'en-PH',
+        {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        },
+    );
 }
 
 
@@ -524,6 +596,45 @@ export default function ShowRequest({
         canApprove ||
         canStart ||
         canComplete;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SPECIALIZED REQUEST DATA
+    |--------------------------------------------------------------------------
+    */
+
+    const purchaseItems =
+        request.purchase_items ?? [];
+
+    const reimbursementItems =
+        request.reimbursement_items ?? [];
+
+    const travelDetails =
+        request.travel_details ?? null;
+
+    const purchaseTotal =
+        purchaseItems.reduce(
+            (total, item) =>
+                total + Number(item.estimated_amount ?? 0),
+            0,
+        );
+
+    const reimbursementTotal =
+        reimbursementItems.reduce(
+            (total, item) =>
+                total + Number(item.amount ?? 0),
+            0,
+        );
+
+    const travelTotal =
+        travelDetails
+            ? Number(travelDetails.estimated_transportation ?? 0) +
+              Number(travelDetails.estimated_accommodation ?? 0) +
+              Number(travelDetails.estimated_meals ?? 0) +
+              Number(travelDetails.estimated_registration ?? 0) +
+              Number(travelDetails.estimated_other ?? 0)
+            : 0;
 
 
     /*
@@ -861,6 +972,353 @@ export default function ShowRequest({
                             </div>
 
                         </section>
+
+
+                        {/* ================================================== */}
+                        {/* PURCHASE REQUEST */}
+                        {/* ================================================== */}
+
+                        {purchaseItems.length > 0 && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 px-5 py-4">
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Purchase Request
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Requested items and estimated costs
+                                    </p>
+                                </div>
+
+                                <div className="p-5">
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full min-w-[720px] text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wide text-slate-400">
+                                                    <th className="px-3 py-3 font-semibold">Item</th>
+                                                    <th className="px-3 py-3 font-semibold">Qty</th>
+                                                    <th className="px-3 py-3 font-semibold">Unit</th>
+                                                    <th className="px-3 py-3 font-semibold text-right">Unit Price</th>
+                                                    <th className="px-3 py-3 font-semibold text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {purchaseItems.map((item) => (
+                                                    <tr
+                                                        key={item.id}
+                                                        className="border-b border-slate-50 last:border-0"
+                                                    >
+                                                        <td className="px-3 py-3">
+                                                            <p className="text-xs font-semibold text-slate-700">
+                                                                {item.description}
+                                                            </p>
+
+                                                            {item.remarks && (
+                                                                <p className="mt-1 text-[10px] text-slate-400">
+                                                                    {item.remarks}
+                                                                </p>
+                                                            )}
+                                                        </td>
+
+                                                        <td className="px-3 py-3 text-xs text-slate-600">
+                                                            {String(item.quantity ?? 0)}
+                                                        </td>
+
+                                                        <td className="px-3 py-3 text-xs text-slate-600">
+                                                            {item.unit ?? '—'}
+                                                        </td>
+
+                                                        <td className="px-3 py-3 text-right text-xs text-slate-600">
+                                                            {formatCurrency(item.estimated_unit_price)}
+                                                        </td>
+
+                                                        <td className="px-3 py-3 text-right text-xs font-semibold text-slate-800">
+                                                            {formatCurrency(item.estimated_amount)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
+                                        <span className="text-xs font-semibold text-slate-600">
+                                            Estimated Purchase Total
+                                        </span>
+
+                                        <span className="text-base font-bold text-blue-700">
+                                            {formatCurrency(purchaseTotal)}
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                            </section>
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* REIMBURSEMENT */}
+                        {/* ================================================== */}
+
+                        {reimbursementItems.length > 0 && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 px-5 py-4">
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Reimbursement
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Expenses submitted for reimbursement
+                                    </p>
+                                </div>
+
+                                <div className="p-5">
+
+                                    <div className="space-y-3">
+
+                                        {reimbursementItems.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                                            >
+
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+
+                                                    <div className="min-w-0">
+
+                                                        <div className="flex flex-wrap items-center gap-2">
+
+                                                            <span className="text-xs font-semibold text-slate-800">
+                                                                {item.description}
+                                                            </span>
+
+                                                            {item.expense_type && (
+                                                                <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
+                                                                    {item.expense_type}
+                                                                </span>
+                                                            )}
+
+                                                        </div>
+
+                                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+
+                                                            {item.expense_date && (
+                                                                <span>
+                                                                    {formatDate(item.expense_date)}
+                                                                </span>
+                                                            )}
+
+                                                            {item.receipt_reference && (
+                                                                <span>
+                                                                    Receipt: {item.receipt_reference}
+                                                                </span>
+                                                            )}
+
+                                                        </div>
+
+                                                        {item.remarks && (
+                                                            <p className="mt-2 text-[10px] text-slate-500">
+                                                                {item.remarks}
+                                                            </p>
+                                                        )}
+
+                                                    </div>
+
+                                                    <span className="shrink-0 text-sm font-bold text-slate-800">
+                                                        {formatCurrency(item.amount)}
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+                                        ))}
+
+                                    </div>
+
+                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
+                                        <span className="text-xs font-semibold text-slate-600">
+                                            Total Reimbursement
+                                        </span>
+
+                                        <span className="text-base font-bold text-blue-700">
+                                            {formatCurrency(reimbursementTotal)}
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                            </section>
+                        )}
+
+
+                        {/* ================================================== */}
+                        {/* TRAVEL */}
+                        {/* ================================================== */}
+
+                        {travelDetails && (
+
+                            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                                <div className="border-b border-slate-100 px-5 py-4">
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Travel Details
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Official travel information and estimated expenses
+                                    </p>
+
+                                </div>
+
+                                <div className="p-5">
+
+                                    <div className="grid gap-5 sm:grid-cols-2">
+
+                                        <InfoItem
+                                            icon={
+                                                <MapPin className="h-4 w-4" />
+                                            }
+                                            label="Destination"
+                                            value={
+                                                travelDetails.destination ?? '—'
+                                            }
+                                        />
+
+                                        <InfoItem
+                                            icon={
+                                                <CalendarDays className="h-4 w-4" />
+                                            }
+                                            label="Travel Dates"
+                                            value={
+                                                travelDetails.departure_date &&
+                                                travelDetails.return_date
+                                                    ? `${formatDate(travelDetails.departure_date)} — ${formatDate(travelDetails.return_date)}`
+                                                    : '—'
+                                            }
+                                        />
+
+                                        <InfoItem
+                                            icon={
+                                                <ClipboardList className="h-4 w-4" />
+                                            }
+                                            label="Mode of Travel"
+                                            value={
+                                                travelDetails.mode_of_travel ?? '—'
+                                            }
+                                        />
+
+                                        <InfoItem
+                                            icon={
+                                                <Package className="h-4 w-4" />
+                                            }
+                                            label="Accommodation"
+                                            value={
+                                                travelDetails.accommodation ?? '—'
+                                            }
+                                        />
+
+                                        <div className="sm:col-span-2">
+
+                                            <p className="mb-2 text-xs font-semibold text-slate-500">
+                                                Purpose
+                                            </p>
+
+                                            <div className="rounded-xl bg-slate-50 px-4 py-3">
+                                                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                                    {travelDetails.purpose || 'No purpose provided.'}
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div className="mt-6 border-t border-slate-100 pt-5">
+
+                                        <p className="mb-3 text-xs font-semibold text-slate-500">
+                                            Estimated Travel Expenses
+                                        </p>
+
+                                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+                                            <CostItem
+                                                label="Transportation"
+                                                value={travelDetails.estimated_transportation}
+                                            />
+
+                                            <CostItem
+                                                label="Accommodation"
+                                                value={travelDetails.estimated_accommodation}
+                                            />
+
+                                            <CostItem
+                                                label="Meals"
+                                                value={travelDetails.estimated_meals}
+                                            />
+
+                                            <CostItem
+                                                label="Registration"
+                                                value={travelDetails.estimated_registration}
+                                            />
+
+                                            <CostItem
+                                                label="Other"
+                                                value={travelDetails.estimated_other}
+                                            />
+
+                                            <CostItem
+                                                label="Funding Source"
+                                                value={travelDetails.funding_source}
+                                                currency={false}
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
+
+                                        <span className="text-xs font-semibold text-slate-600">
+                                            Estimated Travel Total
+                                        </span>
+
+                                        <span className="text-base font-bold text-blue-700">
+                                            {formatCurrency(travelTotal)}
+                                        </span>
+
+                                    </div>
+
+
+                                    {travelDetails.remarks && (
+
+                                        <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
+
+                                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                                Travel Remarks
+                                            </p>
+
+                                            <p className="whitespace-pre-wrap text-xs leading-5 text-slate-600">
+                                                {travelDetails.remarks}
+                                            </p>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                            </section>
+                        )}
 
 
                         {/* ================================================== */}
@@ -1540,6 +1998,40 @@ function InfoItem({
 
         </div>
 
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| COST ITEM
+|--------------------------------------------------------------------------
+*/
+
+function CostItem({
+    label,
+    value,
+    currency = true,
+}: {
+    label: string;
+    value?: number | string | null;
+    currency?: boolean;
+}) {
+
+    return (
+        <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                {label}
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+                {currency
+                    ? formatCurrency(value)
+                    : String(value ?? '—')}
+            </p>
+
+        </div>
     );
 }
 
