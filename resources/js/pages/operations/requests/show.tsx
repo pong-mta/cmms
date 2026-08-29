@@ -67,7 +67,7 @@ interface RequestAction {
 
     user?: User | null;
 
-    workflowStep?: WorkflowStep | null;
+    workflow_step?: WorkflowStep | null;
 }
 
 interface OperationRequest {
@@ -833,14 +833,14 @@ export default function ShowRequest({ request, auth }: PageProps) {
                         {/* REQUEST HISTORY */}
                         {/* ====================================================== */}
 
-                        {request.actions && request.actions.length > 0 && (
-                            <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                <div className="border-b border-slate-100 px-6 py-4">
-                                    <h2 className="text-sm font-semibold text-slate-900">Request History</h2>
+                        <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 px-6 py-4">
+                                <h2 className="text-sm font-semibold text-slate-900">Request History</h2>
 
-                                    <p className="mt-0.5 text-xs text-slate-500">Actions and decisions made during the request.</p>
-                                </div>
+                                <p className="mt-0.5 text-xs text-slate-500">Actions and decisions made during the request.</p>
+                            </div>
 
+                            {request.actions && request.actions.length > 0 ? (
                                 <div className="divide-y divide-slate-100">
                                     {request.actions.map((action) => {
                                         const actionLabel =
@@ -887,7 +887,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
                                                         )}
                                                     </div>
 
-                                                    {/* ACTION CONTENT */}
+                                                    {/* ACTION DETAILS */}
 
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -909,7 +909,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
                                                                 <p className="mt-0.5 text-xs text-slate-500">
                                                                     {action.user?.name ?? 'System'}
 
-                                                                    {action.workflowStep?.name ? ` • ${action.workflowStep.name}` : ''}
+                                                                    {action.workflow_step?.name ? ` • ${action.workflow_step.name}` : ''}
                                                                 </p>
                                                             </div>
 
@@ -935,8 +935,16 @@ export default function ShowRequest({ request, auth }: PageProps) {
                                         );
                                     })}
                                 </div>
-                            </section>
-                        )}
+                            ) : (
+                                <div className="p-6">
+                                    <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                                        <FileText className="mx-auto h-6 w-6 text-slate-300" />
+
+                                        <p className="mt-2 text-sm font-medium text-slate-500">No request history yet.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
                     </div>
 
                     {/* ================================================== */}
