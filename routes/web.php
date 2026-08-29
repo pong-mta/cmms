@@ -39,6 +39,16 @@ Route::middleware(['auth'])->group(function () {
         [OperationRequestController::class, 'index']
     )->name('operations.requests.index');
 
+    Route::get(
+        '/operations/requests/create',
+        [OperationRequestController::class, 'create']
+    )->name('operations.requests.create');
+
+    Route::post(
+        '/operations/requests',
+        [OperationRequestController::class, 'store']
+    )->name('operations.requests.store');
+
 });
 
 require __DIR__ . '/settings.php';

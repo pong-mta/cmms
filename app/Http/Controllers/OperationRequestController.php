@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\OperationRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-
 
 class OperationRequestController extends Controller
 {
     /**
-     * Display requests.
+     * Display all requests.
      */
     public function index(Request $request): Response
     {
@@ -26,5 +27,88 @@ class OperationRequestController extends Controller
         return Inertia::render('operations/requests/index', [
             'requests' => $requests,
         ]);
+    }
+
+    /**
+     * Show the create request form.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('operations/requests/create');
+    }
+
+    /**
+     * Store a new request.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'type' => [
+                'required',
+                'string',
+                'max:50',
+            ],
+
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'priority' => [
+                'required',
+                'in:low,normal,high,urgent',
+            ],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user->department_id) {
+            return back()->withErrors([
+                'department' => 'Your account is not assigned to a department.',
+            ]);
+        }
+
+        $operationRequest = OperationRequest::create([
+            'request_no' => $this->generateRequestNumber(),
+            'user_id' => $user->id,
+            'department_id' => $user->department_id,
+            'type' => $validated['type'],
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'priority' => $validated['priority'],
+            'status' => 'submitted',
+        ]);
+
+        return redirect()
+            ->route('operations.requests.index')
+            ->with('success', 'Request submitted successfully.');
+    }
+
+    /**
+     * Generate request number.
+     */
+    private function generateRequestNumber(): string
+    {
+        do {
+            $number = 'REQ-' . now()->format('Y') . '-' . str_pad(
+                (string) random_int(1, 999999),
+                6,
+                '0',
+                STR_PAD_LEFT,
+            );
+        } while (
+            OperationRequest::where(
+                'request_no',
+                $number,
+            )->exists()
+        );
+
+        return $number;
     }
 }
