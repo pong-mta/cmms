@@ -72,6 +72,26 @@ Route::middleware(['auth'])->group(function () {
         '/operations/requests/{operationRequest}/reject',
         [OperationRequestController::class, 'reject']
     )->name('operations.requests.reject');
+    Route::get(
+        '/operations/requests/{operationRequest}/edit',
+        [OperationRequestController::class, 'edit']
+    )->name(
+        'operations.requests.edit'
+    );
+
+    Route::put(
+        '/operations/requests/{operationRequest}',
+        [OperationRequestController::class, 'update']
+    )->name(
+        'operations.requests.update'
+    );
+
+    Route::post(
+        '/operations/requests/{operationRequest}/resubmit',
+        [OperationRequestController::class, 'resubmit']
+    )->name(
+        'operations.requests.resubmit'
+    );
 
 });
 

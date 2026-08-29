@@ -899,6 +899,473 @@ class OperationRequestController extends Controller
             );
     }
 
+
+    /**
+ * Show the edit form for a returned request.
+ */
+public function edit(
+    Request $request,
+    OperationRequest $operationRequest
+): Response {
+    $user = $request->user();
+
+    if (!$user) {
+        abort(403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY RETURNED/DRAFT REQUESTS
+    |--------------------------------------------------------------------------
+    */
+
+    if ($operationRequest->status !== 'draft') {
+        abort(
+            403,
+            'Only returned requests can be edited.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY REQUESTER
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        (int) $operationRequest->user_id !==
+        (int) $user->id
+    ) {
+        abort(
+            403,
+            'Only the requester can edit this request.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD DATA
+    |--------------------------------------------------------------------------
+    */
+
+    $operationRequest->load([
+        'department',
+        'purchaseRequest.items',
+    ]);
+
+    return Inertia::render(
+        'operations/requests/edit',
+        [
+            'request' => $operationRequest,
+        ]
+    );
+}
+
+
+/**
+ * Update a returned request.
+ */
+public function update(
+    Request $request,
+    OperationRequest $operationRequest
+): RedirectResponse {
+    $user = $request->user();
+
+    if (!$user) {
+        abort(403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY RETURNED/DRAFT REQUESTS
+    |--------------------------------------------------------------------------
+    */
+
+    if ($operationRequest->status !== 'draft') {
+        abort(
+            403,
+            'Only returned requests can be edited.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONLY REQUESTER
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        (int) $operationRequest->user_id !==
+        (int) $user->id
+    ) {
+        abort(
+            403,
+            'Only the requester can edit this request.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE COMMON REQUEST DATA
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'description' => [
+            'nullable',
+            'string',
+        ],
+
+        'priority' => [
+            'required',
+            'in:low,normal,high,urgent',
+        ],
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | PURCHASE REQUEST VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if ($operationRequest->type === 'purchase') {
+
+        $purchaseValidated =
+            $request->validate([
+                'purpose' => [
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+
+                'justification' => [
+                    'required',
+                    'string',
+                ],
+
+                'requested_date' => [
+                    'required',
+                    'date',
+                ],
+
+                'items' => [
+                    'required',
+                    'array',
+                    'min:1',
+                ],
+
+                'items.*.description' => [
+                    'required',
+                    'string',
+                    'max:1000',
+                ],
+
+                'items.*.quantity' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                ],
+
+                'items.*.unit' => [
+                    'required',
+                    'string',
+                    'max:50',
+                ],
+
+                'items.*.estimated_unit_cost' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                ],
+            ]);
+
+        $validated = array_merge(
+            $validated,
+            $purchaseValidated
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATABASE
+    |--------------------------------------------------------------------------
+    */
+
+    DB::transaction(
+        function () use (
+            $operationRequest,
+            $validated
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE OPERATION REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            $operationRequest->update([
+                'title' =>
+                    $validated['purpose']
+                    ?? $operationRequest->title,
+
+                'description' =>
+                    $validated['description']
+                    ?? null,
+
+                'priority' =>
+                    $validated['priority'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE PURCHASE REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $operationRequest->type ===
+                'purchase'
+            ) {
+
+                $purchaseRequest =
+                    $operationRequest
+                        ->purchaseRequest;
+
+                if (!$purchaseRequest) {
+                    throw new \RuntimeException(
+                        'Purchase request details were not found.'
+                    );
+                }
+
+                $purchaseRequest->update([
+                    'purpose' =>
+                        $validated['purpose'],
+
+                    'justification' =>
+                        $validated['justification'],
+
+                    'requested_date' =>
+                        $validated['requested_date'],
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | REPLACE PURCHASE ITEMS
+                |--------------------------------------------------------------------------
+                |
+                | Since this is still a draft, we can safely
+                | replace the existing requested items.
+                |
+                */
+
+                $purchaseRequest
+                    ->items()
+                    ->delete();
+
+                foreach (
+                    $validated['items']
+                    as $item
+                ) {
+
+                    $quantity =
+                        (float) $item['quantity'];
+
+                    $unitCost =
+                        (float) $item[
+                            'estimated_unit_cost'
+                        ];
+
+                    $purchaseRequest
+                        ->items()
+                        ->create([
+                            'description' =>
+                                $item[
+                                    'description'
+                                ],
+
+                            'quantity' =>
+                                $quantity,
+
+                            'unit' =>
+                                $item['unit'],
+
+                            'estimated_unit_cost' =>
+                                $unitCost,
+
+                            'estimated_amount' =>
+                                $quantity *
+                                $unitCost,
+                        ]);
+                }
+            }
+        }
+    );
+
+    return redirect()
+        ->route(
+            'operations.requests.show',
+            $operationRequest
+        )
+        ->with(
+            'success',
+            'Request updated successfully.'
+        );
+}
+
+
+    /**
+     * Resubmit a returned request.
+     */
+    public function resubmit(
+        Request $request,
+        OperationRequest $operationRequest
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY DRAFT / RETURNED REQUESTS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($operationRequest->status !== 'draft') {
+            abort(
+                403,
+                'Only returned requests can be resubmitted.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY REQUESTER
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            (int) $operationRequest->user_id !==
+            (int) $user->id
+        ) {
+            abort(
+                403,
+                'Only the requester can resubmit this request.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD WORKFLOW
+        |--------------------------------------------------------------------------
+        */
+
+        $operationRequest->load([
+            'workflow',
+            'currentWorkflowStep',
+        ]);
+
+        if (!$operationRequest->workflow) {
+            abort(
+                422,
+                'This request has no workflow configured.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIND FIRST REVIEW STEP
+        |--------------------------------------------------------------------------
+        |
+        | Step 1 = Submission
+        | Step 2 = Department Head Review
+        |
+        */
+
+        $reviewStep =
+            $operationRequest
+                ->workflow
+                ->steps()
+                ->where(
+                    'step_order',
+                    '>',
+                    1
+                )
+                ->orderBy(
+                    'step_order'
+                )
+                ->first();
+
+        if (!$reviewStep) {
+            abort(
+                422,
+                'The request workflow has no review step.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESUBMIT
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(
+            function () use (
+                $operationRequest,
+                $reviewStep,
+                $user
+            ) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | RECORD HISTORY
+                |--------------------------------------------------------------------------
+                */
+
+                $operationRequest
+                    ->actions()
+                    ->create([
+                        'workflow_step_id' =>
+                            $reviewStep->id,
+
+                        'user_id' =>
+                            $user->id,
+
+                        'action' =>
+                            'resubmitted',
+
+                        'reason' =>
+                            'Request corrected and resubmitted.',
+                    ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | MOVE BACK TO DEPARTMENT HEAD
+                |--------------------------------------------------------------------------
+                */
+
+                $operationRequest->update([
+                    'status' =>
+                        'pending',
+
+                    'current_workflow_step_id' =>
+                        $reviewStep->id,
+                ]);
+            }
+        );
+
+        return redirect()
+            ->route(
+                'operations.requests.show',
+                $operationRequest
+            )
+            ->with(
+                'success',
+                'Request resubmitted successfully and forwarded to Department Head Review.'
+            );
+    }
+
     /**
  * Reject the current workflow step.
  */
