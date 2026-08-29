@@ -108,6 +108,7 @@ interface OperationRequest {
         name: string;
         code: string;
         version: number;
+        steps: WorkflowStep[];
     } | null;
 
     current_workflow_step?: WorkflowStep | null;
@@ -339,6 +340,32 @@ export default function ShowRequest({ request, auth }: PageProps) {
     */
 
     const currentStep = request.current_workflow_step ?? null;
+
+    const workflowSteps = request.workflow?.steps ?? [];
+
+    const sortedWorkflowSteps = [...workflowSteps].sort((a, b) => a.step_order - b.step_order);
+
+    const currentStepOrder = currentStep?.step_order ?? null;
+
+    function getStepState(step: WorkflowStep) {
+        if (request.status === 'completed') {
+            return 'completed';
+        }
+
+        if (currentStepOrder === null) {
+            return step.step_order === 1 ? 'completed' : 'pending';
+        }
+
+        if (step.step_order < currentStepOrder) {
+            return 'completed';
+        }
+
+        if (step.step_order === currentStepOrder) {
+            return 'current';
+        }
+
+        return 'pending';
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -997,9 +1024,9 @@ export default function ShowRequest({ request, auth }: PageProps) {
                         </section>
                     </div>
 
-                    {/* ================================================== */}
+                    {/* ====================================================== */}
                     {/* RIGHT - STATUS */}
-                    {/* ================================================== */}
+                    {/* ====================================================== */}
 
                     <section className="h-fit w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div className="border-b border-slate-100 px-6 py-4">
@@ -1009,75 +1036,66 @@ export default function ShowRequest({ request, auth }: PageProps) {
                         </div>
 
                         <div className="p-6">
-                            <div className="relative">
-                                <div className="absolute top-3 left-3 h-[calc(100%-24px)] w-px bg-slate-200" />
+                            {sortedWorkflowSteps.length > 0 ? (
+                                <div className="relative">
+                                    {/* VERTICAL LINE */}
+                                    <div className="absolute top-3 left-3 h-[calc(100%-24px)] w-px bg-slate-200" />
 
-                                {/* SUBMITTED */}
+                                    {sortedWorkflowSteps.map((step, index) => {
+                                        const state = getStepState(step);
 
-                                <div className="relative flex gap-4">
-                                    <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white ring-4 ring-white">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                    </div>
+                                        const isCompleted = state === 'completed';
 
-                                    <div className="pb-8">
-                                        <p className="text-xs font-semibold text-slate-800">Request Submitted</p>
+                                        const isCurrent = state === 'current';
 
-                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">{formatDateTime(request.created_at)}</p>
-                                    </div>
+                                        return (
+                                            <div key={step.id} className="relative flex gap-4">
+                                                {/* STEP ICON */}
+                                                <div
+                                                    className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
+                                                        isCompleted
+                                                            ? 'bg-emerald-500 text-white'
+                                                            : isCurrent
+                                                              ? 'border-2 border-blue-500 bg-blue-50 text-blue-600'
+                                                              : 'border-2 border-slate-200 bg-white text-slate-300'
+                                                    }`}
+                                                >
+                                                    {isCompleted ? (
+                                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    ) : isCurrent ? (
+                                                        <Clock3 className="h-3.5 w-3.5" />
+                                                    ) : null}
+                                                </div>
+
+                                                {/* STEP DETAILS */}
+                                                <div className={index < sortedWorkflowSteps.length - 1 ? 'pb-8' : ''}>
+                                                    <p
+                                                        className={`text-xs font-semibold ${
+                                                            isCompleted ? 'text-emerald-700' : isCurrent ? 'text-blue-700' : 'text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {step.name}
+                                                    </p>
+
+                                                    <p className={`mt-1 text-[10px] leading-4 ${isCurrent ? 'text-blue-500' : 'text-slate-400'}`}>
+                                                        {isCompleted
+                                                            ? 'Step completed.'
+                                                            : isCurrent
+                                                              ? (step.description ?? 'Currently awaiting action.')
+                                                              : 'Waiting for previous step.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
+                            ) : (
+                                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                                    <FileText className="mx-auto h-6 w-6 text-slate-300" />
 
-                                {/* DEPARTMENT REVIEW */}
-
-                                <div className="relative flex gap-4">
-                                    <div
-                                        className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                                            request.current_workflow_step?.code === 'DEPARTMENT_HEAD_REVIEW'
-                                                ? 'border-2 border-blue-500 bg-blue-50 text-blue-600'
-                                                : request.status === 'completed'
-                                                  ? 'bg-emerald-500 text-white'
-                                                  : 'border-2 border-slate-200 bg-white'
-                                        }`}
-                                    >
-                                        {request.status === 'completed' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                                    </div>
-
-                                    <div className="pb-8">
-                                        <p className="text-xs font-semibold text-slate-800">Department Head Review</p>
-
-                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                                            {currentStep?.code === 'DEPARTMENT_HEAD_REVIEW'
-                                                ? 'Awaiting department head approval.'
-                                                : 'Department review.'}
-                                        </p>
-                                    </div>
+                                    <p className="mt-2 text-sm font-medium text-slate-500">No workflow steps found.</p>
                                 </div>
-
-                                {/* PROCESSING */}
-
-                                <div className="relative flex gap-4">
-                                    <div
-                                        className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                                            request.status === 'completed' ? 'bg-emerald-500 text-white' : 'border-2 border-slate-200 bg-white'
-                                        }`}
-                                    >
-                                        {request.status === 'completed' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                                    </div>
-
-                                    <div>
-                                        <p
-                                            className={`text-xs font-semibold ${
-                                                request.status === 'completed' ? 'text-slate-800' : 'text-slate-400'
-                                            }`}
-                                        >
-                                            Processing
-                                        </p>
-
-                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                                            {request.status === 'completed' ? 'Request completed.' : 'Will begin after department approval.'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </section>
                 </div>

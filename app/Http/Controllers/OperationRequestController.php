@@ -422,7 +422,7 @@ class OperationRequestController extends Controller
             'user',
             'department',
             'purchaseRequest.items',
-            'workflow',
+            'workflow.steps',
             'currentWorkflowStep',
             'actions.user',
             'actions.workflowStep',
