@@ -1,7 +1,21 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Building2, CalendarDays, Check, CheckCircle2, Clock3, FileText, Package, RotateCcw, UserRound, X, XCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    Building2,
+    CalendarDays,
+    Check,
+    CheckCircle2,
+    Clock3,
+    FileText,
+    Package,
+    RotateCcw,
+    Send,
+    UserRound,
+    X,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 /*
@@ -344,6 +358,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
         isDepartmentHead;
 
     const canEditReturnedRequest = request.status === 'draft' && !!currentUser && Number(request.user?.id) === Number(currentUser.id);
+    const canResubmitReturnedRequest = canEditReturnedRequest;
 
     /*
     |--------------------------------------------------------------------------
@@ -497,9 +512,28 @@ export default function ShowRequest({ request, auth }: PageProps) {
                             </Link>
                         )}
 
+                        {canResubmitReturnedRequest && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to resubmit this request? It will be sent back to the Department Head for review.',
+                                        )
+                                    ) {
+                                        router.post(`/operations/requests/${request.id}/resubmit`);
+                                    }
+                                }}
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                            >
+                                <Send className="h-3.5 w-3.5" />
+                                Resubmit Request
+                            </button>
+                        )}
+
                         <Link
                             href="/operations/requests"
-                            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                         >
                             Back to Requests
                         </Link>
