@@ -1208,17 +1208,60 @@ class OperationsRequestController extends Controller
 
 
         /*
-        |--------------------------------------------------------------------------
-        | ROLE SECURITY
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| REVIEW AUTHORIZATION
+|--------------------------------------------------------------------------
+|
+| Normal request:
+| Staff → Supervisor → Head
+|
+| If the requester is already the supervisor:
+| Supervisor → Head
+|
+*/
 
-        abort_unless(
-            $this->userIsSupervisor($user),
-            403,
-            'Only a department supervisor can review this request.'
-        );
+$isSupervisor =
+    $this->userIsSupervisor($user);
 
+$requesterIsSupervisor =
+    $serviceRequest->requestedBy
+        ? $this->userIsSupervisor(
+            $serviceRequest->requestedBy
+        )
+        : false;
+
+$isHead =
+    $this->userIsHead($user);
+
+
+/*
+|--------------------------------------------------------------------------
+| NORMAL SUPERVISOR REVIEW
+|--------------------------------------------------------------------------
+*/
+
+$canReviewAsSupervisor =
+    $isSupervisor &&
+    ! $requesterIsSupervisor;
+
+
+/*
+|--------------------------------------------------------------------------
+| HEAD MAY REVIEW SUPERVISOR'S OWN REQUEST
+|--------------------------------------------------------------------------
+*/
+
+$canReviewAsHead =
+    $isHead &&
+    $requesterIsSupervisor;
+
+
+abort_unless(
+    $canReviewAsSupervisor ||
+    $canReviewAsHead,
+    403,
+    'You are not authorized to review this request.'
+);
 
         /*
         |--------------------------------------------------------------------------
