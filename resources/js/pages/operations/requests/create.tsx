@@ -118,7 +118,7 @@ export default function CreateRequest() {
 
     const [items, setItems] = useState<PurchaseItem[]>([createPurchaseItem()]);
 
-    const { data, setData, post, processing, errors } = useForm<RequestForm>({
+    const { data, setData, post, processing, errors, transform } = useForm<RequestForm>({
         type: 'purchase',
         title: '',
         description: '',
@@ -197,7 +197,15 @@ export default function CreateRequest() {
     function submit(e: React.FormEvent) {
         e.preventDefault();
 
-        setData('items', items);
+        transform((formData) => ({
+            ...formData,
+            items: items.map((item) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unit: item.unit,
+                estimated_unit_cost: item.estimated_unit_cost,
+            })),
+        }));
 
         post('/operations/requests', {
             preserveScroll: true,
