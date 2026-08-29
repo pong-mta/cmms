@@ -860,6 +860,13 @@ class OperationRequestController extends Controller
                 $currentStep
             ) {
 
+            $operationRequest->actions()->create([
+                'workflow_step_id' => $currentStep->id,
+                'user_id' => $user->id,
+                'action' => 'approved',
+                'reason' => null,
+            ]);
+
                 $nextStep =
                     $operationRequest
                         ->workflow
