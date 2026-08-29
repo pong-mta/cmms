@@ -59,6 +59,17 @@ interface WorkflowStep {
     description?: string | null;
 }
 
+interface RequestAction {
+    id: number;
+    action: string;
+    reason: string | null;
+    created_at: string;
+
+    user?: User | null;
+
+    workflowStep?: WorkflowStep | null;
+}
+
 interface OperationRequest {
     id: number;
     request_no: string;
@@ -86,6 +97,8 @@ interface OperationRequest {
     } | null;
 
     current_workflow_step?: WorkflowStep | null;
+
+    actions?: RequestAction[];
 }
 
 interface PageProps {
@@ -812,6 +825,115 @@ export default function ShowRequest({ request, auth }: PageProps) {
 
                                 <div className="p-6">
                                     <p className="text-sm leading-6 whitespace-pre-wrap text-slate-700">{request.description}</p>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ====================================================== */}
+                        {/* REQUEST HISTORY */}
+                        {/* ====================================================== */}
+
+                        {request.actions && request.actions.length > 0 && (
+                            <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div className="border-b border-slate-100 px-6 py-4">
+                                    <h2 className="text-sm font-semibold text-slate-900">Request History</h2>
+
+                                    <p className="mt-0.5 text-xs text-slate-500">Actions and decisions made during the request.</p>
+                                </div>
+
+                                <div className="divide-y divide-slate-100">
+                                    {request.actions.map((action) => {
+                                        const actionLabel =
+                                            action.action === 'returned'
+                                                ? 'Returned'
+                                                : action.action === 'rejected'
+                                                  ? 'Rejected'
+                                                  : action.action === 'approved'
+                                                    ? 'Approved'
+                                                    : action.action === 'submitted'
+                                                      ? 'Submitted'
+                                                      : action.action;
+
+                                        const isRejected = action.action === 'rejected';
+
+                                        const isReturned = action.action === 'returned';
+
+                                        const isApproved = action.action === 'approved';
+
+                                        return (
+                                            <div key={action.id} className="p-5">
+                                                <div className="flex items-start gap-4">
+                                                    {/* ACTION ICON */}
+
+                                                    <div
+                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                                                            isRejected
+                                                                ? 'bg-red-50 text-red-600'
+                                                                : isReturned
+                                                                  ? 'bg-amber-50 text-amber-600'
+                                                                  : isApproved
+                                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                                    : 'bg-blue-50 text-blue-600'
+                                                        }`}
+                                                    >
+                                                        {isRejected ? (
+                                                            <XCircle className="h-4 w-4" />
+                                                        ) : isReturned ? (
+                                                            <RotateCcw className="h-4 w-4" />
+                                                        ) : isApproved ? (
+                                                            <CheckCircle2 className="h-4 w-4" />
+                                                        ) : (
+                                                            <FileText className="h-4 w-4" />
+                                                        )}
+                                                    </div>
+
+                                                    {/* ACTION CONTENT */}
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <p
+                                                                    className={`text-sm font-semibold ${
+                                                                        isRejected
+                                                                            ? 'text-red-700'
+                                                                            : isReturned
+                                                                              ? 'text-amber-700'
+                                                                              : isApproved
+                                                                                ? 'text-emerald-700'
+                                                                                : 'text-slate-800'
+                                                                    }`}
+                                                                >
+                                                                    {actionLabel}
+                                                                </p>
+
+                                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                                    {action.user?.name ?? 'System'}
+
+                                                                    {action.workflowStep?.name ? ` • ${action.workflowStep.name}` : ''}
+                                                                </p>
+                                                            </div>
+
+                                                            <p className="text-[10px] text-slate-400">{formatDateTime(action.created_at)}</p>
+                                                        </div>
+
+                                                        {/* REASON */}
+
+                                                        {action.reason && (
+                                                            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                                                <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                                    Reason
+                                                                </p>
+
+                                                                <p className="mt-1 text-sm leading-5 whitespace-pre-wrap text-slate-700">
+                                                                    {action.reason}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </section>
                         )}

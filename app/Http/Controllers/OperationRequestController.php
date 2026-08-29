@@ -375,6 +375,8 @@ class OperationRequestController extends Controller
             'purchaseRequest.items',
             'workflow',
             'currentWorkflowStep',
+            'actions.user',
+            'actions.workflowStep',
         ]);
 
         return Inertia::render(
