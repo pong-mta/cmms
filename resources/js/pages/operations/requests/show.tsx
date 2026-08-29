@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, CheckCircle2, Clock3, FileText, UserRound } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Clock3, FileText, Package, UserRound } from 'lucide-react';
 
 interface Department {
     id: number;
@@ -14,19 +14,43 @@ interface User {
     name: string;
 }
 
+interface PurchaseRequestItem {
+    id: number;
+    description: string;
+    quantity: string | number;
+    unit: string;
+    estimated_unit_cost: string | number;
+    estimated_amount: string | number;
+}
+
+interface PurchaseRequest {
+    id: number;
+    operation_request_id: number;
+    purpose: string;
+    justification: string;
+    requested_date: string;
+
+    items: PurchaseRequestItem[];
+}
+
 interface OperationRequest {
     id: number;
     request_no: string;
     type: string;
     title: string;
     description: string | null;
+
     priority: 'low' | 'normal' | 'high' | 'urgent';
+
     status: 'draft' | 'submitted' | 'pending' | 'approved' | 'rejected' | 'completed';
+
     created_at: string;
     updated_at: string;
 
     user?: User | null;
     department?: Department | null;
+
+    purchaseRequest?: PurchaseRequest | null;
 }
 
 interface PageProps {
@@ -123,6 +147,14 @@ const requestTypeLabels: Record<string, string> = {
     other: 'Other Request',
 };
 
+function formatCurrency(value: number | string) {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        minimumFractionDigits: 2,
+    }).format(Number(value) || 0);
+}
+
 function formatDate(date: string) {
     return new Intl.DateTimeFormat('en-PH', {
         year: 'numeric',
@@ -147,6 +179,12 @@ export default function ShowRequest({ request }: PageProps) {
     const priority = priorityConfig[request.priority] ?? priorityConfig.normal;
 
     const requestType = requestTypeLabels[request.type] ?? request.type;
+
+    const purchaseRequest = request.purchaseRequest;
+
+    const items = purchaseRequest?.items ?? [];
+
+    const totalEstimatedCost = items.reduce((total, item) => total + Number(item.estimated_amount || 0), 0);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -192,17 +230,15 @@ export default function ShowRequest({ request }: PageProps) {
                 <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-100 px-6 py-5">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <FileText className="h-4 w-4" />
-                                    </div>
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                    <FileText className="h-5 w-5" />
+                                </div>
 
-                                    <div>
-                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">{requestType}</p>
+                                <div>
+                                    <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">{requestType}</p>
 
-                                        <h2 className="mt-0.5 text-lg font-semibold text-slate-900">{request.title}</h2>
-                                    </div>
+                                    <h2 className="mt-0.5 text-lg font-semibold text-slate-900">{request.title}</h2>
                                 </div>
                             </div>
 
@@ -218,7 +254,7 @@ export default function ShowRequest({ request }: PageProps) {
                     {/* REQUESTER */}
                     {/* ================================================== */}
 
-                    <div className="grid w-full gap-5 p-6 lg:grid-cols-3">
+                    <div className="grid w-full gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
                         <div>
                             <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Requested By</p>
 
@@ -257,62 +293,243 @@ export default function ShowRequest({ request }: PageProps) {
 
                 <div className="grid w-full gap-5 xl:grid-cols-3">
                     {/* ================================================== */}
-                    {/* REQUEST INFORMATION */}
+                    {/* LEFT CONTENT */}
                     {/* ================================================== */}
 
-                    <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:col-span-2">
-                        <div className="border-b border-slate-100 px-6 py-4">
-                            <h2 className="text-sm font-semibold text-slate-900">Request Information</h2>
+                    <div className="space-y-5 xl:col-span-2">
+                        {/* ================================================== */}
+                        {/* PURCHASE INFORMATION */}
+                        {/* ================================================== */}
 
-                            <p className="mt-0.5 text-xs text-slate-500">Details submitted by the requester.</p>
-                        </div>
+                        {request.type === 'purchase' && purchaseRequest && (
+                            <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div className="border-b border-slate-100 px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                            <Package className="h-4 w-4" />
+                                        </div>
 
-                        <div className="space-y-6 p-6">
-                            {/* Description */}
-
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Description</p>
-
-                                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                                    {request.description ? (
-                                        <p className="text-sm leading-6 whitespace-pre-wrap text-slate-700">{request.description}</p>
-                                    ) : (
-                                        <p className="text-sm text-slate-400 italic">No description provided.</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Purchase Request Placeholder */}
-
-                            {request.type === 'purchase' && (
-                                <div>
-                                    <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Purchase Items</p>
+                                            <h2 className="text-sm font-semibold text-slate-900">Purchase Information</h2>
 
-                                            <p className="mt-1 text-xs text-slate-500">Purchase request items will appear here.</p>
+                                            <p className="mt-0.5 text-xs text-slate-500">Details of the requested purchase.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-6 p-6 md:grid-cols-2">
+                                    {/* Purpose */}
+
+                                    <div>
+                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Purpose</p>
+
+                                        <p className="mt-2 text-sm leading-6 font-medium text-slate-700">{purchaseRequest.purpose}</p>
+                                    </div>
+
+                                    {/* Requested Date */}
+
+                                    <div>
+                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Requested Date</p>
+
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <CalendarDays className="h-4 w-4 text-slate-400" />
+
+                                            <span className="text-sm font-medium text-slate-700">{formatDate(purchaseRequest.requested_date)}</span>
                                         </div>
                                     </div>
 
-                                    <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                                        <FileText className="mx-auto h-6 w-6 text-slate-300" />
+                                    {/* Justification */}
 
-                                        <p className="mt-2 text-xs font-medium text-slate-500">Purchase details are not loaded yet.</p>
+                                    <div className="md:col-span-2">
+                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Justification</p>
 
-                                        <p className="mt-1 text-[10px] text-slate-400">
-                                            We will connect the purchase request items after the purchase tables are created.
-                                        </p>
+                                        <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                            <p className="text-sm leading-6 whitespace-pre-wrap text-slate-700">{purchaseRequest.justification}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </section>
+                            </section>
+                        )}
+
+                        {/* ================================================== */}
+                        {/* ITEMS */}
+                        {/* ================================================== */}
+
+                        {request.type === 'purchase' && purchaseRequest && (
+                            <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h2 className="text-sm font-semibold text-slate-900">Requested Items</h2>
+
+                                        <p className="mt-0.5 text-xs text-slate-500">Items included in this purchase request.</p>
+                                    </div>
+
+                                    <div className="text-left sm:text-right">
+                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Total Estimated Cost</p>
+
+                                        <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(totalEstimatedCost)}</p>
+                                    </div>
+                                </div>
+
+                                {items.length > 0 ? (
+                                    <>
+                                        {/* Desktop */}
+
+                                        <div className="hidden overflow-x-auto lg:block">
+                                            <table className="w-full">
+                                                <thead className="border-b border-slate-200 bg-slate-50">
+                                                    <tr>
+                                                        <th className="w-12 px-4 py-3 text-center text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            #
+                                                        </th>
+
+                                                        <th className="px-4 py-3 text-left text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            Item Description
+                                                        </th>
+
+                                                        <th className="w-28 px-4 py-3 text-right text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            Quantity
+                                                        </th>
+
+                                                        <th className="w-28 px-4 py-3 text-left text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            Unit
+                                                        </th>
+
+                                                        <th className="w-40 px-4 py-3 text-right text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            Unit Cost
+                                                        </th>
+
+                                                        <th className="w-40 px-4 py-3 text-right text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                            Amount
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {items.map((item, index) => (
+                                                        <tr key={item.id} className="hover:bg-slate-50">
+                                                            <td className="px-4 py-4 text-center text-xs font-medium text-slate-400">{index + 1}</td>
+
+                                                            <td className="px-4 py-4">
+                                                                <p className="text-sm font-medium text-slate-700">{item.description}</p>
+                                                            </td>
+
+                                                            <td className="px-4 py-4 text-right text-sm text-slate-700">{item.quantity}</td>
+
+                                                            <td className="px-4 py-4 text-sm text-slate-600">{item.unit}</td>
+
+                                                            <td className="px-4 py-4 text-right text-sm text-slate-700">
+                                                                {formatCurrency(item.estimated_unit_cost)}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 text-right text-sm font-semibold text-slate-800">
+                                                                {formatCurrency(item.estimated_amount)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+
+                                                <tfoot>
+                                                    <tr className="border-t border-slate-200 bg-slate-50">
+                                                        <td
+                                                            colSpan={5}
+                                                            className="px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase"
+                                                        >
+                                                            Total Estimated Cost
+                                                        </td>
+
+                                                        <td className="px-4 py-4 text-right text-base font-bold text-slate-900">
+                                                            {formatCurrency(totalEstimatedCost)}
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+
+                                        {/* Mobile */}
+
+                                        <div className="divide-y divide-slate-100 lg:hidden">
+                                            {items.map((item, index) => (
+                                                <div key={item.id} className="space-y-3 p-4">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div>
+                                                            <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                                Item {index + 1}
+                                                            </p>
+
+                                                            <p className="mt-1 text-sm font-semibold text-slate-700">{item.description}</p>
+                                                        </div>
+
+                                                        <p className="text-sm font-bold text-slate-800">{formatCurrency(item.estimated_amount)}</p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <div>
+                                                            <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                                Quantity
+                                                            </p>
+
+                                                            <p className="mt-1 text-xs font-medium text-slate-700">{item.quantity}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Unit</p>
+
+                                                            <p className="mt-1 text-xs font-medium text-slate-700">{item.unit}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                                                                Unit Cost
+                                                            </p>
+
+                                                            <p className="mt-1 text-xs font-medium text-slate-700">
+                                                                {formatCurrency(item.estimated_unit_cost)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <div className="flex items-center justify-between bg-slate-50 px-4 py-4">
+                                                <span className="text-xs font-semibold text-slate-500">Total Estimated Cost</span>
+
+                                                <span className="text-base font-bold text-slate-900">{formatCurrency(totalEstimatedCost)}</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="p-10 text-center">
+                                        <Package className="mx-auto h-7 w-7 text-slate-300" />
+
+                                        <p className="mt-3 text-sm font-medium text-slate-500">No purchase items found.</p>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
+                        {/* ================================================== */}
+                        {/* GENERAL DESCRIPTION */}
+                        {/* ================================================== */}
+
+                        {request.description && (
+                            <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div className="border-b border-slate-100 px-6 py-4">
+                                    <h2 className="text-sm font-semibold text-slate-900">Additional Notes</h2>
+                                </div>
+
+                                <div className="p-6">
+                                    <p className="text-sm leading-6 whitespace-pre-wrap text-slate-700">{request.description}</p>
+                                </div>
+                            </section>
+                        )}
+                    </div>
 
                     {/* ================================================== */}
-                    {/* STATUS / WORKFLOW */}
+                    {/* RIGHT - STATUS */}
                     {/* ================================================== */}
 
-                    <section className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <section className="h-fit w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div className="border-b border-slate-100 px-6 py-4">
                             <h2 className="text-sm font-semibold text-slate-900">Request Status</h2>
 
@@ -332,7 +549,7 @@ export default function ShowRequest({ request }: PageProps) {
                                         <CheckCircle2 className="h-3.5 w-3.5" />
                                     </div>
 
-                                    <div className="pb-7">
+                                    <div className="pb-8">
                                         <p className="text-xs font-semibold text-slate-800">Request Submitted</p>
 
                                         <p className="mt-1 text-[10px] leading-4 text-slate-400">{formatDateTime(request.created_at)}</p>
@@ -344,32 +561,48 @@ export default function ShowRequest({ request }: PageProps) {
                                 <div className="relative flex gap-4">
                                     <div
                                         className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                                            request.status === 'approved'
+                                            request.status === 'approved' || request.status === 'completed'
                                                 ? 'bg-emerald-500 text-white'
-                                                : 'border-2 border-slate-200 bg-white text-transparent'
+                                                : 'border-2 border-slate-200 bg-white'
                                         }`}
                                     >
-                                        {request.status === 'approved' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                                        {(request.status === 'approved' || request.status === 'completed') && (
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                        )}
                                     </div>
 
-                                    <div className="pb-7">
+                                    <div className="pb-8">
                                         <p className="text-xs font-semibold text-slate-800">Department Review</p>
 
-                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">Awaiting department approval.</p>
+                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                                            {request.status === 'submitted' ? 'Awaiting department approval.' : 'Department review.'}
+                                        </p>
                                     </div>
                                 </div>
 
                                 {/* Processing */}
 
                                 <div className="relative flex gap-4">
-                                    <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-slate-200 bg-white ring-4 ring-white">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                                    <div
+                                        className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
+                                            request.status === 'completed' ? 'bg-emerald-500 text-white' : 'border-2 border-slate-200 bg-white'
+                                        }`}
+                                    >
+                                        {request.status === 'completed' && <CheckCircle2 className="h-3.5 w-3.5" />}
                                     </div>
 
                                     <div>
-                                        <p className="text-xs font-semibold text-slate-400">Processing</p>
+                                        <p
+                                            className={`text-xs font-semibold ${
+                                                request.status === 'completed' ? 'text-slate-800' : 'text-slate-400'
+                                            }`}
+                                        >
+                                            Processing
+                                        </p>
 
-                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">Will begin after approval.</p>
+                                        <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                                            {request.status === 'completed' ? 'Request completed.' : 'Will begin after approval.'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
