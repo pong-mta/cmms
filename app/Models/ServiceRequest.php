@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 class ServiceRequest extends Model
@@ -140,6 +141,48 @@ public function requestType(): BelongsTo
     return $this->belongsTo(
         RequestType::class,
         'request_type_id'
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PURCHASE ITEMS
+|--------------------------------------------------------------------------
+*/
+
+public function purchaseItems(): HasMany
+{
+    return $this->hasMany(
+        PurchaseRequestItem::class
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REIMBURSEMENT ITEMS
+|--------------------------------------------------------------------------
+*/
+
+public function reimbursementItems(): HasMany
+{
+    return $this->hasMany(
+        ReimbursementItem::class
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TRAVEL DETAILS
+|--------------------------------------------------------------------------
+*/
+
+public function travelDetails(): HasOne
+{
+    return $this->hasOne(
+        TravelRequestDetail::class
     );
 }
 }
