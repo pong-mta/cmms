@@ -22,6 +22,8 @@ import {
     Trash2,
     User,
     Wallet,
+    Plane,
+    Hotel,
 } from 'lucide-react';
 
 import type {
@@ -61,49 +63,81 @@ interface AuthUser {
 
 interface RequestType {
     id: number;
-
     code: string;
-
     name: string;
-
     category: string;
-
     description?: string | null;
-
     icon?: string | null;
-
     workflow: string;
-
     requires_items: boolean;
-
     requires_cost: boolean;
-
     requires_attachment: boolean;
-
     active: boolean;
-
     sort_order: number;
 }
 
 
-interface RequestItem {
+/*
+|--------------------------------------------------------------------------
+| PURCHASE ITEM
+|--------------------------------------------------------------------------
+*/
+
+interface PurchaseItem {
     description: string;
-
     quantity: number | string;
-
     unit: string;
-
     estimated_unit_price: number | string;
+    remarks: string;
+}
 
+
+/*
+|--------------------------------------------------------------------------
+| REIMBURSEMENT ITEM
+|--------------------------------------------------------------------------
+*/
+
+interface ReimbursementItem {
+    expense_date: string;
+    expense_type: string;
+    description: string;
+    amount: number | string;
+    receipt_reference: string;
+    remarks: string;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TRAVEL
+|--------------------------------------------------------------------------
+*/
+
+interface TravelDetails {
+    destination: string;
+    purpose: string;
+
+    departure_date: string;
+    return_date: string;
+
+    mode_of_travel: string;
+    accommodation: string;
+
+    estimated_transportation: number | string;
+    estimated_accommodation: number | string;
+    estimated_meals: number | string;
+    estimated_registration: number | string;
+    estimated_other: number | string;
+
+    funding_source: string;
     remarks: string;
 }
 
 
 interface Props {
     user: AuthUser;
-
     assets: Asset[];
-
     requestTypes: RequestType[];
 }
 
@@ -119,12 +153,10 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Operations',
         href: '/operations/requests',
     },
-
     {
         title: 'Requests',
         href: '/operations/requests',
     },
-
     {
         title: 'New Request',
         href: '/operations/requests/create',
@@ -182,30 +214,51 @@ export default function CreateRequest({
         request_type_id: string;
 
         subject: string;
-
         description: string;
-
         priority: string;
 
         location: string;
-
         asset_id: string;
 
         remarks: string;
 
-        items: RequestItem[];
+        /*
+        |--------------------------------------------------------------------------
+        | PURCHASE
+        |--------------------------------------------------------------------------
+        */
+
+        items: PurchaseItem[];
+
+        /*
+        |--------------------------------------------------------------------------
+        | REIMBURSEMENT
+        |--------------------------------------------------------------------------
+        */
+
+        reimbursement_items: ReimbursementItem[];
+
+        /*
+        |--------------------------------------------------------------------------
+        | COST
+        |--------------------------------------------------------------------------
+        */
 
         estimated_total_cost: string;
 
-        destination: string;
+        /*
+        |--------------------------------------------------------------------------
+        | TRAVEL
+        |--------------------------------------------------------------------------
+        */
 
-        travel_start_date: string;
+        travel: TravelDetails;
 
-        travel_end_date: string;
-
-        purpose: string;
-
-        funding_source: string;
+        /*
+        |--------------------------------------------------------------------------
+        | ATTACHMENTS
+        |--------------------------------------------------------------------------
+        */
 
         attachments: File[];
     }>({
@@ -213,30 +266,39 @@ export default function CreateRequest({
         request_type_id: '',
 
         subject: '',
-
         description: '',
-
         priority: 'normal',
 
         location: '',
-
         asset_id: '',
 
         remarks: '',
 
         items: [],
 
+        reimbursement_items: [],
+
         estimated_total_cost: '',
 
-        destination: '',
+        travel: {
+            destination: '',
+            purpose: '',
 
-        travel_start_date: '',
+            departure_date: '',
+            return_date: '',
 
-        travel_end_date: '',
+            mode_of_travel: '',
+            accommodation: '',
 
-        purpose: '',
+            estimated_transportation: '',
+            estimated_accommodation: '',
+            estimated_meals: '',
+            estimated_registration: '',
+            estimated_other: '',
 
-        funding_source: '',
+            funding_source: '',
+            remarks: '',
+        },
 
         attachments: [],
     });
@@ -254,6 +316,71 @@ export default function CreateRequest({
                 String(type.id) ===
                 String(data.request_type_id),
         );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST TYPE HELPERS
+    |--------------------------------------------------------------------------
+    */
+
+    const selectedTypeCode =
+        selectedRequestType?.code
+            ?.toLowerCase()
+            .trim() ?? '';
+
+    const selectedTypeName =
+        selectedRequestType?.name
+            ?.toLowerCase()
+            .trim() ?? '';
+
+    const selectedCategory =
+        selectedRequestType?.category
+            ?.toLowerCase()
+            .trim() ?? '';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PURCHASE REQUEST?
+    |--------------------------------------------------------------------------
+    */
+
+    const isPurchaseRequest =
+        selectedCategory === 'procurement' ||
+        selectedTypeCode.includes('purchase') ||
+        selectedTypeCode.includes('procurement') ||
+        selectedTypeCode.includes('supplies') ||
+        selectedTypeName.includes('purchase') ||
+        selectedTypeName.includes('procurement') ||
+        selectedTypeName.includes('supplies');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT REQUEST?
+    |--------------------------------------------------------------------------
+    */
+
+    const isReimbursementRequest =
+        selectedCategory === 'finance' &&
+        (
+            selectedTypeCode.includes('reimburse') ||
+            selectedTypeName.includes('reimburse')
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRAVEL REQUEST?
+    |--------------------------------------------------------------------------
+    */
+
+    const isTravelRequest =
+        selectedCategory === 'travel' ||
+        selectedTypeCode.includes('travel') ||
+        selectedTypeCode.includes('travel_order') ||
+        selectedTypeName.includes('travel');
 
 
     /*
@@ -345,7 +472,7 @@ export default function CreateRequest({
 
         /*
         |--------------------------------------------------------------------------
-        | CLEAR SPECIALIZED FIELDS
+        | CLEAR PURCHASE
         |--------------------------------------------------------------------------
         */
 
@@ -354,55 +481,75 @@ export default function CreateRequest({
             [],
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLEAR REIMBURSEMENT
+        |--------------------------------------------------------------------------
+        */
+
+        setData(
+            'reimbursement_items',
+            [],
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLEAR COST
+        |--------------------------------------------------------------------------
+        */
+
         setData(
             'estimated_total_cost',
             '',
         );
 
-        setData(
-            'destination',
-            '',
-        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLEAR TRAVEL
+        |--------------------------------------------------------------------------
+        */
 
         setData(
-            'travel_start_date',
-            '',
-        );
+            'travel',
+            {
+                destination: '',
+                purpose: '',
 
-        setData(
-            'travel_end_date',
-            '',
-        );
+                departure_date: '',
+                return_date: '',
 
-        setData(
-            'purpose',
-            '',
-        );
+                mode_of_travel: '',
+                accommodation: '',
 
-        setData(
-            'funding_source',
-            '',
-        );
+                estimated_transportation: '',
+                estimated_accommodation: '',
+                estimated_meals: '',
+                estimated_registration: '',
+                estimated_other: '',
 
-        setData(
-            'attachments',
-            [],
+                funding_source: '',
+                remarks: '',
+            },
         );
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | ITEMS
+    | PURCHASE ITEMS
     |--------------------------------------------------------------------------
     */
 
-    function addItem() {
+    function addPurchaseItem() {
 
         setData(
             'items',
             [
                 ...data.items,
+
                 {
                     description: '',
                     quantity: 1,
@@ -415,7 +562,7 @@ export default function CreateRequest({
     }
 
 
-    function removeItem(
+    function removePurchaseItem(
         index: number,
     ) {
 
@@ -429,9 +576,9 @@ export default function CreateRequest({
     }
 
 
-    function updateItem(
+    function updatePurchaseItem(
         index: number,
-        field: keyof RequestItem,
+        field: keyof PurchaseItem,
         value: string | number,
     ) {
 
@@ -452,12 +599,12 @@ export default function CreateRequest({
 
     /*
     |--------------------------------------------------------------------------
-    | ITEM TOTAL
+    | PURCHASE ITEM AMOUNT
     |--------------------------------------------------------------------------
     */
 
-    function itemAmount(
-        item: RequestItem,
+    function purchaseItemAmount(
+        item: PurchaseItem,
     ): number {
 
         const quantity =
@@ -474,19 +621,132 @@ export default function CreateRequest({
 
     /*
     |--------------------------------------------------------------------------
-    | TOTAL
+    | PURCHASE TOTAL
     |--------------------------------------------------------------------------
     */
 
-    const calculatedTotal =
+    const purchaseTotal =
         data.items.reduce(
             (
                 total,
                 item,
             ) =>
                 total +
-                itemAmount(item),
+                purchaseItemAmount(item),
             0,
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT ITEMS
+    |--------------------------------------------------------------------------
+    */
+
+    function addReimbursementItem() {
+
+        setData(
+            'reimbursement_items',
+            [
+                ...data.reimbursement_items,
+
+                {
+                    expense_date: '',
+                    expense_type: 'Other',
+                    description: '',
+                    amount: '',
+                    receipt_reference: '',
+                    remarks: '',
+                },
+            ],
+        );
+    }
+
+
+    function removeReimbursementItem(
+        index: number,
+    ) {
+
+        setData(
+            'reimbursement_items',
+            data.reimbursement_items.filter(
+                (_, itemIndex) =>
+                    itemIndex !== index,
+            ),
+        );
+    }
+
+
+    function updateReimbursementItem(
+        index: number,
+        field: keyof ReimbursementItem,
+        value: string,
+    ) {
+
+        const items =
+            [...data.reimbursement_items];
+
+        items[index] = {
+            ...items[index],
+            [field]: value,
+        };
+
+        setData(
+            'reimbursement_items',
+            items,
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    const reimbursementTotal =
+        data.reimbursement_items.reduce(
+            (
+                total,
+                item,
+            ) =>
+                total +
+                (Number(item.amount) || 0),
+            0,
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRAVEL TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    const travelTotal =
+        (
+            Number(
+                data.travel.estimated_transportation,
+            ) || 0
+        ) +
+        (
+            Number(
+                data.travel.estimated_accommodation,
+            ) || 0
+        ) +
+        (
+            Number(
+                data.travel.estimated_meals,
+            ) || 0
+        ) +
+        (
+            Number(
+                data.travel.estimated_registration,
+            ) || 0
+        ) +
+        (
+            Number(
+                data.travel.estimated_other,
+            ) || 0
         );
 
 
@@ -570,6 +830,26 @@ export default function CreateRequest({
 
     /*
     |--------------------------------------------------------------------------
+    | MONEY FORMAT
+    |--------------------------------------------------------------------------
+    */
+
+    function money(
+        value: number,
+    ) {
+
+        return value.toLocaleString(
+            'en-PH',
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            },
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | RENDER
     |--------------------------------------------------------------------------
     */
@@ -606,18 +886,14 @@ export default function CreateRequest({
                     </Link>
 
 
-                    <div>
-
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                            New Request
-                        </h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                        New Request
+                    </h1>
 
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            Submit a request for your department.
-                        </p>
-
-                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Submit a request for your department.
+                    </p>
 
                 </div>
 
@@ -643,12 +919,10 @@ export default function CreateRequest({
                                 Requesting Department
                             </p>
 
-
                             <p className="text-sm font-semibold text-slate-800">
                                 {user.department?.name ??
                                     'No Department'}
                             </p>
-
 
                             {user.department?.code && (
 
@@ -688,7 +962,6 @@ export default function CreateRequest({
                                 Request Information
                             </h2>
 
-
                             <p className="mt-1 text-xs text-slate-500">
                                 Select what your department needs.
                             </p>
@@ -699,9 +972,7 @@ export default function CreateRequest({
                         <div className="grid gap-5 md:grid-cols-2">
 
 
-                            {/* ================================================== */}
                             {/* REQUEST TYPE */}
-                            {/* ================================================== */}
 
                             <div>
 
@@ -709,7 +980,6 @@ export default function CreateRequest({
                                     htmlFor="request_type_id"
                                     className="mb-1.5 block text-xs font-semibold text-slate-700"
                                 >
-
                                     Request Type
 
                                     <span className="ml-1 text-red-500">
@@ -748,8 +1018,7 @@ export default function CreateRequest({
 
                                             if (
                                                 !types ||
-                                                types.length ===
-                                                    0
+                                                types.length === 0
                                             ) {
                                                 return null;
                                             }
@@ -758,12 +1027,8 @@ export default function CreateRequest({
                                             return (
 
                                                 <optgroup
-                                                    key={
-                                                        category
-                                                    }
-                                                    label={
-                                                        category
-                                                    }
+                                                    key={category}
+                                                    label={category}
                                                 >
 
                                                     {types.map(
@@ -772,16 +1037,10 @@ export default function CreateRequest({
                                                         ) => (
 
                                                             <option
-                                                                key={
-                                                                    type.id
-                                                                }
-                                                                value={
-                                                                    type.id
-                                                                }
+                                                                key={type.id}
+                                                                value={type.id}
                                                             >
-                                                                {
-                                                                    type.name
-                                                                }
+                                                                {type.name}
                                                             </option>
 
                                                         ),
@@ -810,12 +1069,8 @@ export default function CreateRequest({
                                             ]) => (
 
                                                 <optgroup
-                                                    key={
-                                                        category
-                                                    }
-                                                    label={
-                                                        category
-                                                    }
+                                                    key={category}
+                                                    label={category}
                                                 >
 
                                                     {types.map(
@@ -824,16 +1079,10 @@ export default function CreateRequest({
                                                         ) => (
 
                                                             <option
-                                                                key={
-                                                                    type.id
-                                                                }
-                                                                value={
-                                                                    type.id
-                                                                }
+                                                                key={type.id}
+                                                                value={type.id}
                                                             >
-                                                                {
-                                                                    type.name
-                                                                }
+                                                                {type.name}
                                                             </option>
 
                                                         ),
@@ -860,9 +1109,7 @@ export default function CreateRequest({
                             </div>
 
 
-                            {/* ================================================== */}
                             {/* PRIORITY */}
-                            {/* ================================================== */}
 
                             <div>
 
@@ -870,7 +1117,6 @@ export default function CreateRequest({
                                     htmlFor="priority"
                                     className="mb-1.5 block text-xs font-semibold text-slate-700"
                                 >
-
                                     Priority
 
                                     <span className="ml-1 text-red-500">
@@ -914,23 +1160,10 @@ export default function CreateRequest({
 
                                 </select>
 
-
-                                {errors.priority && (
-
-                                    <p className="mt-1.5 text-xs text-red-600">
-                                        {
-                                            errors.priority
-                                        }
-                                    </p>
-
-                                )}
-
                             </div>
 
 
-                            {/* ================================================== */}
                             {/* SELECTED TYPE DESCRIPTION */}
-                            {/* ================================================== */}
 
                             {selectedRequestType && (
 
@@ -974,9 +1207,7 @@ export default function CreateRequest({
                             )}
 
 
-                            {/* ================================================== */}
                             {/* SUBJECT */}
-                            {/* ================================================== */}
 
                             <div className="md:col-span-2">
 
@@ -1026,9 +1257,7 @@ export default function CreateRequest({
                             </div>
 
 
-                            {/* ================================================== */}
                             {/* DESCRIPTION */}
-                            {/* ================================================== */}
 
                             <div className="md:col-span-2">
 
@@ -1055,19 +1284,8 @@ export default function CreateRequest({
                                         )
                                     }
                                     placeholder="Provide the details of your request..."
-                                    className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                    className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                 />
-
-
-                                {errors.description && (
-
-                                    <p className="mt-1.5 text-xs text-red-600">
-                                        {
-                                            errors.description
-                                        }
-                                    </p>
-
-                                )}
 
                             </div>
 
@@ -1077,10 +1295,10 @@ export default function CreateRequest({
 
 
                     {/* ====================================================== */}
-                    {/* PURCHASE / COST ITEMS */}
+                    {/* PURCHASE */}
                     {/* ====================================================== */}
 
-                    {selectedRequestType?.requires_items && (
+                    {isPurchaseRequest && (
 
                         <div className="border-b border-slate-100 p-6">
 
@@ -1088,13 +1306,18 @@ export default function CreateRequest({
 
                                 <div>
 
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Items / Expenses
-                                    </h2>
+                                    <div className="flex items-center gap-2">
 
+                                        <Package className="h-4 w-4 text-blue-600" />
+
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Purchase Items
+                                        </h2>
+
+                                    </div>
 
                                     <p className="mt-1 text-xs text-slate-500">
-                                        Add the items or expenses associated with this request.
+                                        Add the supplies, materials, equipment, or other items being requested.
                                     </p>
 
                                 </div>
@@ -1103,7 +1326,7 @@ export default function CreateRequest({
                                 <button
                                     type="button"
                                     onClick={
-                                        addItem
+                                        addPurchaseItem
                                     }
                                     className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
                                 >
@@ -1117,21 +1340,18 @@ export default function CreateRequest({
                             </div>
 
 
-                            {data.items.length ===
-                                0 ? (
+                            {data.items.length === 0 ? (
 
                                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
 
                                     <Package className="mx-auto h-6 w-6 text-slate-300" />
 
-
                                     <p className="mt-2 text-xs font-semibold text-slate-600">
-                                        No items added
+                                        No purchase items added
                                     </p>
 
-
                                     <p className="mt-1 text-[10px] text-slate-400">
-                                        Add an item to calculate the estimated request cost.
+                                        Add items to calculate the estimated purchase cost.
                                     </p>
 
                                 </div>
@@ -1147,27 +1367,21 @@ export default function CreateRequest({
                                         ) => (
 
                                             <div
-                                                key={
-                                                    index
-                                                }
+                                                key={index}
                                                 className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                                             >
 
                                                 <div className="mb-4 flex items-center justify-between">
 
                                                     <p className="text-xs font-semibold text-slate-700">
-                                                        Item #
-                                                        {
-                                                            index +
-                                                            1
-                                                        }
+                                                        Item #{index + 1}
                                                     </p>
 
 
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            removeItem(
+                                                            removePurchaseItem(
                                                                 index,
                                                             )
                                                         }
@@ -1191,9 +1405,8 @@ export default function CreateRequest({
                                                     <div className="md:col-span-5">
 
                                                         <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                                                            Description
+                                                            Item Description
                                                         </label>
-
 
                                                         <input
                                                             type="text"
@@ -1203,13 +1416,13 @@ export default function CreateRequest({
                                                             onChange={(
                                                                 event,
                                                             ) =>
-                                                                updateItem(
+                                                                updatePurchaseItem(
                                                                     index,
                                                                     'description',
                                                                     event.target.value,
                                                                 )
                                                             }
-                                                            placeholder="Item or expense"
+                                                            placeholder="e.g. Bond paper A4"
                                                             className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                                         />
 
@@ -1224,7 +1437,6 @@ export default function CreateRequest({
                                                             Quantity
                                                         </label>
 
-
                                                         <input
                                                             type="number"
                                                             min="0"
@@ -1235,7 +1447,7 @@ export default function CreateRequest({
                                                             onChange={(
                                                                 event,
                                                             ) =>
-                                                                updateItem(
+                                                                updatePurchaseItem(
                                                                     index,
                                                                     'quantity',
                                                                     event.target.value,
@@ -1255,7 +1467,6 @@ export default function CreateRequest({
                                                             Unit
                                                         </label>
 
-
                                                         <input
                                                             type="text"
                                                             value={
@@ -1264,7 +1475,7 @@ export default function CreateRequest({
                                                             onChange={(
                                                                 event,
                                                             ) =>
-                                                                updateItem(
+                                                                updatePurchaseItem(
                                                                     index,
                                                                     'unit',
                                                                     event.target.value,
@@ -1285,13 +1496,11 @@ export default function CreateRequest({
                                                             Estimated Unit Price
                                                         </label>
 
-
                                                         <div className="relative">
 
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                                                                 ₱
                                                             </span>
-
 
                                                             <input
                                                                 type="number"
@@ -1303,7 +1512,7 @@ export default function CreateRequest({
                                                                 onChange={(
                                                                     event,
                                                                 ) =>
-                                                                    updateItem(
+                                                                    updatePurchaseItem(
                                                                         index,
                                                                         'estimated_unit_price',
                                                                         event.target.value,
@@ -1328,19 +1537,13 @@ export default function CreateRequest({
                                                                 Estimated Amount
                                                             </span>
 
-
                                                             <span className="text-sm font-bold text-slate-800">
 
                                                                 ₱
-
-                                                                {itemAmount(
-                                                                    item,
-                                                                ).toLocaleString(
-                                                                    'en-PH',
-                                                                    {
-                                                                        minimumFractionDigits: 2,
-                                                                        maximumFractionDigits: 2,
-                                                                    },
+                                                                {money(
+                                                                    purchaseItemAmount(
+                                                                        item,
+                                                                    ),
                                                                 )}
 
                                                             </span>
@@ -1357,8 +1560,6 @@ export default function CreateRequest({
                                     )}
 
 
-                                    {/* TOTAL */}
-
                                     <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
 
                                         <div className="flex items-center gap-3">
@@ -1369,13 +1570,11 @@ export default function CreateRequest({
 
                                             </div>
 
-
                                             <div>
 
                                                 <p className="text-xs font-semibold text-slate-700">
-                                                    Estimated Total
+                                                    Estimated Purchase Total
                                                 </p>
-
 
                                                 <p className="text-[10px] text-slate-400">
                                                     Based on the items above
@@ -1387,17 +1586,7 @@ export default function CreateRequest({
 
 
                                         <span className="text-lg font-bold text-blue-700">
-
-                                            ₱
-
-                                            {calculatedTotal.toLocaleString(
-                                                'en-PH',
-                                                {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                },
-                                            )}
-
+                                            ₱{money(purchaseTotal)}
                                         </span>
 
                                     </div>
@@ -1412,79 +1601,334 @@ export default function CreateRequest({
 
 
                     {/* ====================================================== */}
-                    {/* COST */}
+                    {/* REIMBURSEMENT */}
                     {/* ====================================================== */}
 
-                    {selectedRequestType?.requires_cost &&
-                    !selectedRequestType.requires_items && (
+                    {isReimbursementRequest && (
 
                         <div className="border-b border-slate-100 p-6">
 
-                            <div className="mb-5">
+                            <div className="mb-5 flex items-start justify-between gap-4">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Estimated Cost
-                                </h2>
+                                <div>
 
+                                    <div className="flex items-center gap-2">
 
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Provide the estimated amount for this request.
-                                </p>
+                                        <Receipt className="h-4 w-4 text-blue-600" />
 
-                            </div>
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Reimbursement Expenses
+                                        </h2>
 
+                                    </div>
 
-                            <div className="max-w-sm">
-
-                                <label
-                                    htmlFor="estimated_total_cost"
-                                    className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                >
-                                    Estimated Total Cost
-                                </label>
-
-
-                                <div className="relative">
-
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-                                        ₱
-                                    </span>
-
-
-                                    <input
-                                        id="estimated_total_cost"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={
-                                            data.estimated_total_cost
-                                        }
-                                        onChange={(
-                                            event,
-                                        ) =>
-                                            setData(
-                                                'estimated_total_cost',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="0.00"
-                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                                    />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        List the actual expenses you are requesting for reimbursement.
+                                    </p>
 
                                 </div>
 
 
-                                {errors.estimated_total_cost && (
+                                <button
+                                    type="button"
+                                    onClick={
+                                        addReimbursementItem
+                                    }
+                                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                                >
 
-                                    <p className="mt-1.5 text-xs text-red-600">
-                                        {
-                                            errors.estimated_total_cost
-                                        }
-                                    </p>
+                                    <Plus className="h-4 w-4" />
 
-                                )}
+                                    Add Expense
+
+                                </button>
 
                             </div>
+
+
+                            {data.reimbursement_items.length === 0 ? (
+
+                                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
+
+                                    <Receipt className="mx-auto h-6 w-6 text-slate-300" />
+
+                                    <p className="mt-2 text-xs font-semibold text-slate-600">
+                                        No expenses added
+                                    </p>
+
+                                    <p className="mt-1 text-[10px] text-slate-400">
+                                        Add each expense that you want reimbursed.
+                                    </p>
+
+                                </div>
+
+                            ) : (
+
+                                <div className="space-y-4">
+
+                                    {data.reimbursement_items.map(
+                                        (
+                                            item,
+                                            index,
+                                        ) => (
+
+                                            <div
+                                                key={index}
+                                                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                            >
+
+                                                <div className="mb-4 flex items-center justify-between">
+
+                                                    <p className="text-xs font-semibold text-slate-700">
+                                                        Expense #{index + 1}
+                                                    </p>
+
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeReimbursementItem(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700"
+                                                    >
+
+                                                        <Trash2 className="h-3.5 w-3.5" />
+
+                                                        Remove
+
+                                                    </button>
+
+                                                </div>
+
+
+                                                <div className="grid gap-4 md:grid-cols-12">
+
+
+                                                    {/* DATE */}
+
+                                                    <div className="md:col-span-3">
+
+                                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                            Expense Date
+                                                        </label>
+
+                                                        <input
+                                                            type="date"
+                                                            value={
+                                                                item.expense_date
+                                                            }
+                                                            onChange={(
+                                                                event,
+                                                            ) =>
+                                                                updateReimbursementItem(
+                                                                    index,
+                                                                    'expense_date',
+                                                                    event.target.value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                                        />
+
+                                                    </div>
+
+
+                                                    {/* TYPE */}
+
+                                                    <div className="md:col-span-3">
+
+                                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                            Expense Type
+                                                        </label>
+
+                                                        <select
+                                                            value={
+                                                                item.expense_type
+                                                            }
+                                                            onChange={(
+                                                                event,
+                                                            ) =>
+                                                                updateReimbursementItem(
+                                                                    index,
+                                                                    'expense_type',
+                                                                    event.target.value,
+                                                                )
+                                                            }
+                                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                                        >
+
+                                                            <option value="Transportation">
+                                                                Transportation
+                                                            </option>
+
+                                                            <option value="Meals">
+                                                                Meals
+                                                            </option>
+
+                                                            <option value="Accommodation">
+                                                                Accommodation
+                                                            </option>
+
+                                                            <option value="Supplies">
+                                                                Supplies
+                                                            </option>
+
+                                                            <option value="Registration">
+                                                                Registration
+                                                            </option>
+
+                                                            <option value="Communication">
+                                                                Communication
+                                                            </option>
+
+                                                            <option value="Other">
+                                                                Other
+                                                            </option>
+
+                                                        </select>
+
+                                                    </div>
+
+
+                                                    {/* AMOUNT */}
+
+                                                    <div className="md:col-span-3">
+
+                                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                            Amount
+                                                        </label>
+
+                                                        <div className="relative">
+
+                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                                ₱
+                                                            </span>
+
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                step="0.01"
+                                                                value={
+                                                                    item.amount
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    updateReimbursementItem(
+                                                                        index,
+                                                                        'amount',
+                                                                        event.target.value,
+                                                                    )
+                                                                }
+                                                                placeholder="0.00"
+                                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                                            />
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    {/* RECEIPT */}
+
+                                                    <div className="md:col-span-3">
+
+                                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                            Receipt Reference
+                                                        </label>
+
+                                                        <input
+                                                            type="text"
+                                                            value={
+                                                                item.receipt_reference
+                                                            }
+                                                            onChange={(
+                                                                event,
+                                                            ) =>
+                                                                updateReimbursementItem(
+                                                                    index,
+                                                                    'receipt_reference',
+                                                                    event.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="OR / receipt no."
+                                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                                        />
+
+                                                    </div>
+
+
+                                                    {/* DESCRIPTION */}
+
+                                                    <div className="md:col-span-12">
+
+                                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                            Description
+                                                        </label>
+
+                                                        <input
+                                                            type="text"
+                                                            value={
+                                                                item.description
+                                                            }
+                                                            onChange={(
+                                                                event,
+                                                            ) =>
+                                                                updateReimbursementItem(
+                                                                    index,
+                                                                    'description',
+                                                                    event.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="Describe the expense"
+                                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                                        />
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        ),
+                                    )}
+
+
+                                    <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+
+                                        <div className="flex items-center gap-3">
+
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-blue-600">
+
+                                                <Wallet className="h-4 w-4" />
+
+                                            </div>
+
+                                            <div>
+
+                                                <p className="text-xs font-semibold text-slate-700">
+                                                    Total Reimbursement
+                                                </p>
+
+                                                <p className="text-[10px] text-slate-400">
+                                                    Total amount being claimed
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <span className="text-lg font-bold text-blue-700">
+                                            ₱{money(reimbursementTotal)}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            )}
 
                         </div>
 
@@ -1492,23 +1936,27 @@ export default function CreateRequest({
 
 
                     {/* ====================================================== */}
-                    {/* TRAVEL DETAILS */}
+                    {/* TRAVEL */}
                     {/* ====================================================== */}
 
-                    {selectedRequestType?.workflow ===
-                        'travel' && (
+                    {isTravelRequest && (
 
                         <div className="border-b border-slate-100 p-6">
 
                             <div className="mb-5">
 
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Travel Details
-                                </h2>
+                                <div className="flex items-center gap-2">
 
+                                    <Plane className="h-4 w-4 text-blue-600" />
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Travel Details
+                                    </h2>
+
+                                </div>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Provide the details of the official travel.
+                                    Provide the details and estimated expenses for the official travel.
                                 </p>
 
                             </div>
@@ -1517,68 +1965,33 @@ export default function CreateRequest({
                             <div className="grid gap-5 md:grid-cols-2">
 
 
-                                {/* PURPOSE */}
+                                {/* DESTINATION */}
 
                                 <div className="md:col-span-2">
 
-                                    <label
-                                        htmlFor="purpose"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
-                                        Travel Purpose
-                                    </label>
-
-
-                                    <textarea
-                                        id="purpose"
-                                        rows={3}
-                                        value={
-                                            data.purpose
-                                        }
-                                        onChange={(
-                                            event,
-                                        ) =>
-                                            setData(
-                                                'purpose',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="Purpose of official travel..."
-                                        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                                    />
-
-                                </div>
-
-
-                                {/* DESTINATION */}
-
-                                <div>
-
-                                    <label
-                                        htmlFor="destination"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
                                         Destination
                                     </label>
-
 
                                     <div className="relative">
 
                                         <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-
                                         <input
-                                            id="destination"
                                             type="text"
                                             value={
-                                                data.destination
+                                                data.travel.destination
                                             }
                                             onChange={(
                                                 event,
                                             ) =>
                                                 setData(
-                                                    'destination',
-                                                    event.target.value,
+                                                    'travel',
+                                                    {
+                                                        ...data.travel,
+                                                        destination:
+                                                            event.target.value,
+                                                    },
                                                 )
                                             }
                                             placeholder="City / Municipality / Province"
@@ -1590,68 +2003,65 @@ export default function CreateRequest({
                                 </div>
 
 
-                                {/* FUNDING */}
+                                {/* PURPOSE */}
 
-                                <div>
+                                <div className="md:col-span-2">
 
-                                    <label
-                                        htmlFor="funding_source"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
-                                        Funding Source
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                        Travel Purpose
                                     </label>
 
-
-                                    <input
-                                        id="funding_source"
-                                        type="text"
+                                    <textarea
+                                        rows={3}
                                         value={
-                                            data.funding_source
+                                            data.travel.purpose
                                         }
                                         onChange={(
                                             event,
                                         ) =>
                                             setData(
-                                                'funding_source',
-                                                event.target.value,
+                                                'travel',
+                                                {
+                                                    ...data.travel,
+                                                    purpose:
+                                                        event.target.value,
+                                                },
                                             )
                                         }
-                                        placeholder="e.g. General Fund"
-                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                        placeholder="Purpose of official travel..."
+                                        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                     />
 
                                 </div>
 
 
-                                {/* START DATE */}
+                                {/* DEPARTURE */}
 
                                 <div>
 
-                                    <label
-                                        htmlFor="travel_start_date"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
                                         Departure Date
                                     </label>
-
 
                                     <div className="relative">
 
                                         <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-
                                         <input
-                                            id="travel_start_date"
                                             type="date"
                                             value={
-                                                data.travel_start_date
+                                                data.travel.departure_date
                                             }
                                             onChange={(
                                                 event,
                                             ) =>
                                                 setData(
-                                                    'travel_start_date',
-                                                    event.target.value,
+                                                    'travel',
+                                                    {
+                                                        ...data.travel,
+                                                        departure_date:
+                                                            event.target.value,
+                                                    },
                                                 )
                                             }
                                             className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -1662,37 +2072,129 @@ export default function CreateRequest({
                                 </div>
 
 
-                                {/* END DATE */}
+                                {/* RETURN */}
 
                                 <div>
 
-                                    <label
-                                        htmlFor="travel_end_date"
-                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
-                                    >
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
                                         Return Date
                                     </label>
-
 
                                     <div className="relative">
 
                                         <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-
                                         <input
-                                            id="travel_end_date"
                                             type="date"
                                             value={
-                                                data.travel_end_date
+                                                data.travel.return_date
                                             }
                                             onChange={(
                                                 event,
                                             ) =>
                                                 setData(
-                                                    'travel_end_date',
-                                                    event.target.value,
+                                                    'travel',
+                                                    {
+                                                        ...data.travel,
+                                                        return_date:
+                                                            event.target.value,
+                                                    },
                                                 )
                                             }
+                                            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* MODE */}
+
+                                <div>
+
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                        Mode of Travel
+                                    </label>
+
+                                    <select
+                                        value={
+                                            data.travel.mode_of_travel
+                                        }
+                                        onChange={(
+                                            event,
+                                        ) =>
+                                            setData(
+                                                'travel',
+                                                {
+                                                    ...data.travel,
+                                                    mode_of_travel:
+                                                        event.target.value,
+                                                },
+                                            )
+                                        }
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                    >
+
+                                        <option value="">
+                                            Select mode
+                                        </option>
+
+                                        <option value="Government Vehicle">
+                                            Government Vehicle
+                                        </option>
+
+                                        <option value="Private Vehicle">
+                                            Private Vehicle
+                                        </option>
+
+                                        <option value="Public Transportation">
+                                            Public Transportation
+                                        </option>
+
+                                        <option value="Air Travel">
+                                            Air Travel
+                                        </option>
+
+                                        <option value="Other">
+                                            Other
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* ACCOMMODATION */}
+
+                                <div>
+
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                        Accommodation
+                                    </label>
+
+                                    <div className="relative">
+
+                                        <Hotel className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                                        <input
+                                            type="text"
+                                            value={
+                                                data.travel.accommodation
+                                            }
+                                            onChange={(
+                                                event,
+                                            ) =>
+                                                setData(
+                                                    'travel',
+                                                    {
+                                                        ...data.travel,
+                                                        accommodation:
+                                                            event.target.value,
+                                                    },
+                                                )
+                                            }
+                                            placeholder="Hotel / lodging"
                                             className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                         />
 
@@ -1702,9 +2204,381 @@ export default function CreateRequest({
 
                             </div>
 
+
+                            {/* ================================================== */}
+                            {/* TRAVEL COST */}
+                            {/* ================================================== */}
+
+                            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+
+                                <div className="mb-4">
+
+                                    <h3 className="text-xs font-bold text-slate-800">
+                                        Estimated Travel Expenses
+                                    </h3>
+
+                                    <p className="mt-1 text-[10px] text-slate-400">
+                                        Provide an estimated amount for each expense category.
+                                    </p>
+
+                                </div>
+
+
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+
+                                    {/* TRANSPORTATION */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Transportation
+                                        </label>
+
+                                        <div className="relative">
+
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                ₱
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    data.travel.estimated_transportation
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    setData(
+                                                        'travel',
+                                                        {
+                                                            ...data.travel,
+                                                            estimated_transportation:
+                                                                event.target.value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* ACCOMMODATION */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Accommodation
+                                        </label>
+
+                                        <div className="relative">
+
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                ₱
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    data.travel.estimated_accommodation
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    setData(
+                                                        'travel',
+                                                        {
+                                                            ...data.travel,
+                                                            estimated_accommodation:
+                                                                event.target.value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* MEALS */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Meals
+                                        </label>
+
+                                        <div className="relative">
+
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                ₱
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    data.travel.estimated_meals
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    setData(
+                                                        'travel',
+                                                        {
+                                                            ...data.travel,
+                                                            estimated_meals:
+                                                                event.target.value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* REGISTRATION */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Registration
+                                        </label>
+
+                                        <div className="relative">
+
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                ₱
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    data.travel.estimated_registration
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    setData(
+                                                        'travel',
+                                                        {
+                                                            ...data.travel,
+                                                            estimated_registration:
+                                                                event.target.value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* OTHER */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Other
+                                        </label>
+
+                                        <div className="relative">
+
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                                ₱
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={
+                                                    data.travel.estimated_other
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    setData(
+                                                        'travel',
+                                                        {
+                                                            ...data.travel,
+                                                            estimated_other:
+                                                                event.target.value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* FUNDING */}
+
+                                    <div>
+
+                                        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                            Funding Source
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            value={
+                                                data.travel.funding_source
+                                            }
+                                            onChange={(
+                                                event,
+                                            ) =>
+                                                setData(
+                                                    'travel',
+                                                    {
+                                                        ...data.travel,
+                                                        funding_source:
+                                                            event.target.value,
+                                                    },
+                                                )
+                                            }
+                                            placeholder="e.g. General Fund"
+                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* TRAVEL TOTAL */}
+
+                                <div className="mt-5 flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-blue-600">
+
+                                            <Calculator className="h-4 w-4" />
+
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-xs font-semibold text-slate-700">
+                                                Estimated Travel Cost
+                                            </p>
+
+                                            <p className="text-[10px] text-slate-400">
+                                                Total estimated official travel expenses
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span className="text-lg font-bold text-blue-700">
+                                        ₱{money(travelTotal)}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
                         </div>
 
                     )}
+
+
+                    {/* ====================================================== */}
+                    {/* GENERIC COST */}
+                    {/* ====================================================== */}
+
+                    {selectedRequestType?.requires_cost &&
+                        !isPurchaseRequest &&
+                        !isReimbursementRequest &&
+                        !isTravelRequest && (
+
+                            <div className="border-b border-slate-100 p-6">
+
+                                <div className="mb-5">
+
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Estimated Cost
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Provide the estimated amount for this request.
+                                    </p>
+
+                                </div>
+
+
+                                <div className="max-w-sm">
+
+                                    <label
+                                        htmlFor="estimated_total_cost"
+                                        className="mb-1.5 block text-xs font-semibold text-slate-700"
+                                    >
+                                        Estimated Total Cost
+                                    </label>
+
+
+                                    <div className="relative">
+
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                                            ₱
+                                        </span>
+
+
+                                        <input
+                                            id="estimated_total_cost"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={
+                                                data.estimated_total_cost
+                                            }
+                                            onChange={(
+                                                event,
+                                            ) =>
+                                                setData(
+                                                    'estimated_total_cost',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="0.00"
+                                            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        )}
 
 
                     {/* ====================================================== */}
@@ -1718,7 +2592,6 @@ export default function CreateRequest({
                             <h2 className="text-sm font-bold text-slate-900">
                                 Related Information
                             </h2>
-
 
                             <p className="mt-1 text-xs text-slate-500">
                                 Add location or asset information when applicable.
@@ -1825,23 +2698,13 @@ export default function CreateRequest({
                                             ) => (
 
                                                 <option
-                                                    key={
-                                                        asset.id
-                                                    }
-                                                    value={
-                                                        asset.id
-                                                    }
+                                                    key={asset.id}
+                                                    value={asset.id}
                                                 >
 
-                                                    {
-                                                        asset.asset_code
-                                                    }
-
+                                                    {asset.asset_code}
                                                     {' — '}
-
-                                                    {
-                                                        asset.name
-                                                    }
+                                                    {asset.name}
 
                                                 </option>
 
@@ -1883,7 +2746,6 @@ export default function CreateRequest({
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Supporting Documents
                                 </h2>
-
 
                                 <p className="mt-1 text-xs text-slate-500">
                                     Attach receipts, quotations, documents, or other supporting files.
@@ -1927,8 +2789,7 @@ export default function CreateRequest({
                             </label>
 
 
-                            {data.attachments.length >
-                                0 && (
+                            {data.attachments.length > 0 && (
 
                                 <div className="mt-3 space-y-2">
 
@@ -1939,19 +2800,14 @@ export default function CreateRequest({
                                         ) => (
 
                                             <div
-                                                key={
-                                                    index
-                                                }
+                                                key={index}
                                                 className="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2"
                                             >
 
                                                 <FileText className="h-4 w-4 shrink-0 text-blue-600" />
 
-
                                                 <span className="min-w-0 flex-1 truncate text-xs text-slate-600">
-                                                    {
-                                                        file.name
-                                                    }
+                                                    {file.name}
                                                 </span>
 
                                             </div>
@@ -1979,7 +2835,6 @@ export default function CreateRequest({
                             <h2 className="text-sm font-bold text-slate-900">
                                 Additional Information
                             </h2>
-
 
                             <p className="mt-1 text-xs text-slate-500">
                                 Add any additional instructions or remarks.

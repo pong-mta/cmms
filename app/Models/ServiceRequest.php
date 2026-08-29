@@ -7,14 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-
 class ServiceRequest extends Model
 {
     protected $fillable = [
         'request_code',
         'request_type',
+        'request_type_id',
+
         'subject',
         'description',
+
         'priority',
         'status',
 
@@ -37,8 +39,6 @@ class ServiceRequest extends Model
         'assigned_at',
         'completed_at',
 
-        'request_type_id',
-
         'remarks',
     ];
 
@@ -50,6 +50,13 @@ class ServiceRequest extends Model
         'completed_at' => 'datetime',
     ];
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUESTED BY
+    |--------------------------------------------------------------------------
+    */
+
     public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(
@@ -57,6 +64,13 @@ class ServiceRequest extends Model
             'requested_by'
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
 
     public function department(): BelongsTo
     {
@@ -66,6 +80,13 @@ class ServiceRequest extends Model
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGNED DEPARTMENT
+    |--------------------------------------------------------------------------
+    */
+
     public function assignedDepartment(): BelongsTo
     {
         return $this->belongsTo(
@@ -73,6 +94,13 @@ class ServiceRequest extends Model
             'assigned_department_id'
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGNED TO
+    |--------------------------------------------------------------------------
+    */
 
     public function assignedTo(): BelongsTo
     {
@@ -82,6 +110,13 @@ class ServiceRequest extends Model
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSET
+    |--------------------------------------------------------------------------
+    */
+
     public function asset(): BelongsTo
     {
         return $this->belongsTo(
@@ -89,6 +124,13 @@ class ServiceRequest extends Model
             'asset_id'
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REVIEWED BY
+    |--------------------------------------------------------------------------
+    */
 
     public function reviewedBy(): BelongsTo
     {
@@ -98,6 +140,13 @@ class ServiceRequest extends Model
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPROVED BY
+    |--------------------------------------------------------------------------
+    */
+
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(
@@ -105,6 +154,13 @@ class ServiceRequest extends Model
             'approved_by'
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPLETED BY
+    |--------------------------------------------------------------------------
+    */
 
     public function completedBy(): BelongsTo
     {
@@ -114,6 +170,28 @@ class ServiceRequest extends Model
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    public function requestType(): BelongsTo
+    {
+        return $this->belongsTo(
+            RequestType::class,
+            'request_type_id'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HISTORIES
+    |--------------------------------------------------------------------------
+    */
+
     public function histories(): HasMany
     {
         return $this->hasMany(
@@ -121,6 +199,13 @@ class ServiceRequest extends Model
             'service_request_id'
         )->latest();
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTACHMENTS
+    |--------------------------------------------------------------------------
+    */
 
     public function attachments(): HasMany
     {
@@ -130,59 +215,48 @@ class ServiceRequest extends Model
         )->latest();
     }
 
+
     /*
-|--------------------------------------------------------------------------
-| REQUEST TYPE
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | PURCHASE ITEMS
+    |--------------------------------------------------------------------------
+    */
 
-public function requestType(): BelongsTo
-{
-    return $this->belongsTo(
-        RequestType::class,
-        'request_type_id'
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| PURCHASE ITEMS
-|--------------------------------------------------------------------------
-*/
-
-public function purchaseItems(): HasMany
-{
-    return $this->hasMany(
-        PurchaseRequestItem::class
-    );
-}
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(
+            PurchaseRequestItem::class,
+            'service_request_id'
+        );
+    }
 
 
-/*
-|--------------------------------------------------------------------------
-| REIMBURSEMENT ITEMS
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT ITEMS
+    |--------------------------------------------------------------------------
+    */
 
-public function reimbursementItems(): HasMany
-{
-    return $this->hasMany(
-        ReimbursementItem::class
-    );
-}
+    public function reimbursementItems(): HasMany
+    {
+        return $this->hasMany(
+            ReimbursementItem::class,
+            'service_request_id'
+        );
+    }
 
 
-/*
-|--------------------------------------------------------------------------
-| TRAVEL DETAILS
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | TRAVEL DETAILS
+    |--------------------------------------------------------------------------
+    */
 
-public function travelDetails(): HasOne
-{
-    return $this->hasOne(
-        TravelRequestDetail::class
-    );
-}
+    public function travelDetails(): HasOne
+    {
+        return $this->hasOne(
+            TravelRequestDetail::class,
+            'service_request_id'
+        );
+    }
 }

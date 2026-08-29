@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\PurchaseRequestItem;
+use App\Models\ReimbursementItem;
+use App\Models\TravelRequestDetail;
 
 class OperationsRequestController extends Controller
 {
@@ -447,274 +450,936 @@ class OperationsRequestController extends Controller
     |
     */
 
-    public function store(Request $request)
-    {
-        $user = $request->user();
+   public function store(Request $request)
+{
+    $user = $request->user();
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENT SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$user->department_id) {
+        return back()
+            ->withErrors([
+                'department' =>
+                    'Your account is not assigned to a department.',
+            ])
+            ->withInput();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAIN REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        'request_type_id' => [
+            'required',
+            'integer',
+            'exists:request_types,id',
+        ],
+
+        'subject' => [
+            'required',
+            'string',
+            'max:255',
+        ],
+
+        'description' => [
+            'nullable',
+            'string',
+        ],
+
+        'priority' => [
+            'required',
+            'in:low,normal,high,critical',
+        ],
+
+        'location' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'asset_id' => [
+            'nullable',
+            'integer',
+            'exists:assets,id',
+        ],
+
+        'remarks' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
 
 
         /*
         |--------------------------------------------------------------------------
-        | DEPARTMENT SECURITY
+        | PURCHASE ITEMS
         |--------------------------------------------------------------------------
         */
 
-        if (!$user->department_id) {
+        'items' => [
+            'nullable',
+            'array',
+        ],
 
+        'items.*.description' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'items.*.quantity' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'items.*.unit' => [
+            'nullable',
+            'string',
+            'max:50',
+        ],
+
+        'items.*.estimated_unit_price' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'items.*.remarks' => [
+            'nullable',
+            'string',
+            'max:1000',
+        ],
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REIMBURSEMENT ITEMS
+        |--------------------------------------------------------------------------
+        */
+
+        'reimbursement_items' => [
+            'nullable',
+            'array',
+        ],
+
+        'reimbursement_items.*.expense_date' => [
+            'nullable',
+            'date',
+        ],
+
+        'reimbursement_items.*.expense_type' => [
+            'nullable',
+            'string',
+            'max:100',
+        ],
+
+        'reimbursement_items.*.description' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'reimbursement_items.*.amount' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'reimbursement_items.*.receipt_reference' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'reimbursement_items.*.remarks' => [
+            'nullable',
+            'string',
+            'max:1000',
+        ],
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GENERIC COST
+        |--------------------------------------------------------------------------
+        */
+
+        'estimated_total_cost' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRAVEL
+        |--------------------------------------------------------------------------
+        */
+
+        'travel' => [
+            'nullable',
+            'array',
+        ],
+
+        'travel.destination' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'travel.purpose' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+
+        'travel.departure_date' => [
+            'nullable',
+            'date',
+        ],
+
+        'travel.return_date' => [
+            'nullable',
+            'date',
+            'after_or_equal:travel.departure_date',
+        ],
+
+        'travel.mode_of_travel' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'travel.accommodation' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'travel.estimated_transportation' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'travel.estimated_accommodation' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'travel.estimated_meals' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'travel.estimated_registration' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'travel.estimated_other' => [
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+
+        'travel.funding_source' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'travel.remarks' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    $requestType = RequestType::query()
+        ->where('id', $validated['request_type_id'])
+        ->where('active', true)
+        ->first();
+
+
+    if (!$requestType) {
+        return back()
+            ->withErrors([
+                'request_type_id' =>
+                    'The selected request type is not available.',
+            ])
+            ->withInput();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST TYPE CODE
+    |--------------------------------------------------------------------------
+    */
+
+    $typeCode = strtoupper(
+        trim($requestType->code)
+    );
+
+
+    $typeName = strtolower(
+        trim($requestType->name)
+    );
+
+
+    $typeCategory = strtolower(
+        trim($requestType->category)
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETERMINE SPECIALIZED TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    $isPurchase =
+        str_contains($typeCode, 'PURCHASE') ||
+        str_contains($typeCode, 'PROCUREMENT') ||
+        str_contains($typeCode, 'SUPPLIES') ||
+        str_contains($typeName, 'purchase') ||
+        str_contains($typeName, 'procurement') ||
+        str_contains($typeName, 'supplies');
+
+
+    $isReimbursement =
+        str_contains($typeCode, 'REIMBURSE') ||
+        str_contains($typeName, 'reimburse');
+
+
+    $isTravel =
+        $typeCategory === 'travel' ||
+        str_contains($typeCode, 'TRAVEL') ||
+        str_contains($typeName, 'travel');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSET SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    if (!empty($validated['asset_id'])) {
+
+        $assetBelongsToDepartment =
+            Asset::query()
+                ->where(
+                    'id',
+                    $validated['asset_id']
+                )
+                ->where(
+                    'department_id',
+                    $user->department_id
+                )
+                ->exists();
+
+
+        if (!$assetBelongsToDepartment) {
             return back()
                 ->withErrors([
-                    'department' =>
-                        'Your account is not assigned to a department.',
+                    'asset_id' =>
+                        'The selected asset does not belong to your department.',
                 ])
                 ->withInput();
         }
+    }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | PURCHASE TOTAL
+    |--------------------------------------------------------------------------
+    */
 
-        $validated = $request->validate([
-
-            'request_type_id' => [
-                'required',
-                'integer',
-                'exists:request_types,id',
-            ],
-
-            'subject' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'priority' => [
-                'required',
-                'in:low,normal,high,critical',
-            ],
-
-            'location' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'asset_id' => [
-                'nullable',
-                'integer',
-                'exists:assets,id',
-            ],
-
-            'remarks' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
-        ]);
+    $purchaseTotal = 0;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | REQUEST TYPE
-        |--------------------------------------------------------------------------
-        |
-        | Make sure the selected request type is active.
-        |
-        */
+    if ($isPurchase) {
 
-        $requestType = RequestType::query()
-            ->where('id', $validated['request_type_id'])
-            ->where('active', true)
-            ->first();
+        foreach (
+            $validated['items'] ?? []
+            as $item
+        ) {
 
-
-        if (!$requestType) {
-
-            return back()
-                ->withErrors([
-                    'request_type_id' =>
-                        'The selected request type is not available.',
-                ])
-                ->withInput();
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ASSET SECURITY
-        |--------------------------------------------------------------------------
-        |
-        | The requester can only attach an asset belonging to their
-        | own department.
-        |
-        */
-
-        if (!empty($validated['asset_id'])) {
-
-            $assetBelongsToDepartment =
-                Asset::query()
-                    ->where(
-                        'id',
-                        $validated['asset_id']
+            $description =
+                trim(
+                    (string) (
+                        $item['description']
+                        ?? ''
                     )
-                    ->where(
-                        'department_id',
-                        $user->department_id
-                    )
-                    ->exists();
+                );
 
 
-            if (!$assetBelongsToDepartment) {
-
-                return back()
-                    ->withErrors([
-                        'asset_id' =>
-                            'The selected asset does not belong to your department.',
-                    ])
-                    ->withInput();
+            if ($description === '') {
+                continue;
             }
+
+
+            $quantity =
+                (float) (
+                    $item['quantity']
+                    ?? 0
+                );
+
+
+            $unitPrice =
+                (float) (
+                    $item['estimated_unit_price']
+                    ?? 0
+                );
+
+
+            $purchaseTotal +=
+                $quantity *
+                $unitPrice;
         }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE REQUEST
-        |--------------------------------------------------------------------------
-        */
-
-        $serviceRequest =
-            DB::transaction(
-                function () use (
-                    $validated,
-                    $user,
-                    $requestType
-                ) {
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | SERVICE REQUEST
-                    |--------------------------------------------------------------------------
-                    */
-
-                    $serviceRequest =
-                        ServiceRequest::create([
-
-                            'request_code' =>
-                                $this->generateRequestCode(),
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | NEW REQUEST TYPE RELATION
-                            |--------------------------------------------------------------------------
-                            */
-
-                            'request_type_id' =>
-                                $requestType->id,
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | LEGACY REQUEST TYPE
-                            |--------------------------------------------------------------------------
-                            |
-                            | Keep this because your existing index/filter/workflow
-                            | still uses the old request_type column.
-                            |
-                            */
-
-                            'request_type' =>
-                                $requestType->code,
-
-                            'subject' =>
-                                $validated['subject'],
-
-                            'description' =>
-                                $validated['description']
-                                    ?? null,
-
-                            'priority' =>
-                                $validated['priority'],
-
-                            'status' =>
-                                'pending',
-
-                            'requested_by' =>
-                                $user->id,
-
-                            'department_id' =>
-                                $user->department_id,
-
-                            'location' =>
-                                $validated['location']
-                                    ?? null,
-
-                            'asset_id' =>
-                                $validated['asset_id']
-                                    ?? null,
-
-                            'requested_at' =>
-                                now(),
-
-                            'remarks' =>
-                                $validated['remarks']
-                                    ?? null,
-                        ]);
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | HISTORY
-                    |--------------------------------------------------------------------------
-                    */
-
-                    $serviceRequest
-                        ->histories()
-                        ->create([
-
-                            'user_id' =>
-                                $user->id,
-
-                            'action' =>
-                                'created',
-
-                            'from_status' =>
-                                null,
-
-                            'to_status' =>
-                                'pending',
-
-                            'remarks' =>
-                                'Request created.',
-                        ]);
-
-
-                    return $serviceRequest;
-                }
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | REDIRECT
-        |--------------------------------------------------------------------------
-        */
-
-        return redirect()
-            ->route(
-                'operations.requests.show',
-                $serviceRequest
-            )
-            ->with(
-                'success',
-                'Request submitted successfully.'
+        $purchaseTotal =
+            round(
+                $purchaseTotal,
+                2
             );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | REIMBURSEMENT TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    $reimbursementTotal = 0;
+
+
+    if ($isReimbursement) {
+
+        foreach (
+            $validated['reimbursement_items'] ?? []
+            as $item
+        ) {
+
+            $description =
+                trim(
+                    (string) (
+                        $item['description']
+                        ?? ''
+                    )
+                );
+
+
+            if ($description === '') {
+                continue;
+            }
+
+
+            $amount =
+                (float) (
+                    $item['amount']
+                    ?? 0
+                );
+
+
+            $reimbursementTotal +=
+                $amount;
+        }
+
+
+        $reimbursementTotal =
+            round(
+                $reimbursementTotal,
+                2
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRAVEL TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    $travelTotal = 0;
+
+
+    if ($isTravel) {
+
+        $travel =
+            $validated['travel'] ?? [];
+
+
+        $travelTotal =
+            (
+                (float) (
+                    $travel['estimated_transportation']
+                    ?? 0
+                )
+            ) +
+            (
+                (float) (
+                    $travel['estimated_accommodation']
+                    ?? 0
+                )
+            ) +
+            (
+                (float) (
+                    $travel['estimated_meals']
+                    ?? 0
+                )
+            ) +
+            (
+                (float) (
+                    $travel['estimated_registration']
+                    ?? 0
+                )
+            ) +
+            (
+                (float) (
+                    $travel['estimated_other']
+                    ?? 0
+                )
+            );
+
+
+        $travelTotal =
+            round(
+                $travelTotal,
+                2
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETERMINE TOTAL COST
+    |--------------------------------------------------------------------------
+    */
+
+    $estimatedTotalCost = null;
+
+
+    if ($isPurchase) {
+
+        $estimatedTotalCost =
+            $purchaseTotal;
+
+    } elseif ($isReimbursement) {
+
+        $estimatedTotalCost =
+            $reimbursementTotal;
+
+    } elseif ($isTravel) {
+
+        $estimatedTotalCost =
+            $travelTotal;
+
+    } elseif (
+        isset(
+            $validated['estimated_total_cost']
+        )
+    ) {
+
+        $estimatedTotalCost =
+            round(
+                (float)
+                $validated['estimated_total_cost'],
+                2
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DATABASE TRANSACTION
+    |--------------------------------------------------------------------------
+    */
+
+    $serviceRequest = DB::transaction(
+        function () use (
+            $validated,
+            $user,
+            $requestType,
+            $isPurchase,
+            $isReimbursement,
+            $isTravel,
+            $estimatedTotalCost
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | MAIN SERVICE REQUEST
+            |--------------------------------------------------------------------------
+            */
+
+            $serviceRequest =
+                ServiceRequest::create([
+
+                    'request_code' =>
+                        $this->generateRequestCode(),
+
+                    'request_type_id' =>
+                        $requestType->id,
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | KEEP LEGACY REQUEST TYPE
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'request_type' =>
+                        $requestType->code,
+
+                    'subject' =>
+                        $validated['subject'],
+
+                    'description' =>
+                        $validated['description']
+                        ?? null,
+
+                    'priority' =>
+                        $validated['priority'],
+
+                    'status' =>
+                        'pending',
+
+                    'requested_by' =>
+                        $user->id,
+
+                    'department_id' =>
+                        $user->department_id,
+
+                    'location' =>
+                        $validated['location']
+                        ?? null,
+
+                    'asset_id' =>
+                        $validated['asset_id']
+                        ?? null,
+
+                    'requested_at' =>
+                        now(),
+
+                    'remarks' =>
+                        $validated['remarks']
+                        ?? null,
+                ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | PURCHASE ITEMS
+            |--------------------------------------------------------------------------
+            */
+
+            if ($isPurchase) {
+
+                foreach (
+                    $validated['items'] ?? []
+                    as $item
+                ) {
+
+                    $description =
+                        trim(
+                            (string) (
+                                $item['description']
+                                ?? ''
+                            )
+                        );
+
+
+                    if ($description === '') {
+                        continue;
+                    }
+
+
+                    $quantity =
+                        (float) (
+                            $item['quantity']
+                            ?? 0
+                        );
+
+
+                    $unitPrice =
+                        (float) (
+                            $item['estimated_unit_price']
+                            ?? 0
+                        );
+
+
+                    $amount =
+                        round(
+                            $quantity *
+                            $unitPrice,
+                            2
+                        );
+
+
+                    $serviceRequest
+                        ->purchaseItems()
+                        ->create([
+
+                            'description' =>
+                                $description,
+
+                            'quantity' =>
+                                $quantity,
+
+                            'unit' =>
+                                $item['unit']
+                                ?? null,
+
+                            'estimated_unit_price' =>
+                                $unitPrice,
+
+                            'estimated_amount' =>
+                                $amount,
+
+                            'remarks' =>
+                                $item['remarks']
+                                ?? null,
+                        ]);
+                }
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | REIMBURSEMENT ITEMS
+            |--------------------------------------------------------------------------
+            */
+
+            if ($isReimbursement) {
+
+                foreach (
+                    $validated['reimbursement_items'] ?? []
+                    as $item
+                ) {
+
+                    $description =
+                        trim(
+                            (string) (
+                                $item['description']
+                                ?? ''
+                            )
+                        );
+
+
+                    if ($description === '') {
+                        continue;
+                    }
+
+
+                    $amount =
+                        round(
+                            (float) (
+                                $item['amount']
+                                ?? 0
+                            ),
+                            2
+                        );
+
+
+                    $serviceRequest
+                        ->reimbursementItems()
+                        ->create([
+
+                            'expense_date' =>
+                                $item['expense_date']
+                                ?? now()->toDateString(),
+
+                            'expense_type' =>
+                                $item['expense_type']
+                                ?? 'Other',
+
+                            'description' =>
+                                $description,
+
+                            'amount' =>
+                                $amount,
+
+                            'receipt_reference' =>
+                                $item['receipt_reference']
+                                ?? null,
+
+                            'remarks' =>
+                                $item['remarks']
+                                ?? null,
+                        ]);
+                }
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | TRAVEL DETAILS
+            |--------------------------------------------------------------------------
+            */
+
+            if ($isTravel) {
+
+                $travel =
+                    $validated['travel']
+                    ?? [];
+
+
+                $serviceRequest
+                    ->travelDetails()
+                    ->create([
+
+                        'destination' =>
+                            $travel['destination']
+                            ?? null,
+
+                        'purpose' =>
+                            $travel['purpose']
+                            ?? null,
+
+                        'departure_date' =>
+                            $travel['departure_date']
+                            ?? null,
+
+                        'return_date' =>
+                            $travel['return_date']
+                            ?? null,
+
+                        'mode_of_travel' =>
+                            $travel['mode_of_travel']
+                            ?? null,
+
+                        'accommodation' =>
+                            $travel['accommodation']
+                            ?? null,
+
+                        'estimated_transportation' =>
+                            (float) (
+                                $travel[
+                                    'estimated_transportation'
+                                ] ?? 0
+                            ),
+
+                        'estimated_accommodation' =>
+                            (float) (
+                                $travel[
+                                    'estimated_accommodation'
+                                ] ?? 0
+                            ),
+
+                        'estimated_meals' =>
+                            (float) (
+                                $travel[
+                                    'estimated_meals'
+                                ] ?? 0
+                            ),
+
+                        'estimated_registration' =>
+                            (float) (
+                                $travel[
+                                    'estimated_registration'
+                                ] ?? 0
+                            ),
+
+                        'estimated_other' =>
+                            (float) (
+                                $travel[
+                                    'estimated_other'
+                                ] ?? 0
+                            ),
+
+                        'estimated_total' =>
+                            $estimatedTotalCost ?? 0,
+
+                        'funding_source' =>
+                            $travel['funding_source']
+                            ?? null,
+
+                        'remarks' =>
+                            $travel['remarks']
+                            ?? null,
+                    ]);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | HISTORY
+            |--------------------------------------------------------------------------
+            */
+
+            $serviceRequest
+                ->histories()
+                ->create([
+
+                    'user_id' =>
+                        $user->id,
+
+                    'action' =>
+                        'created',
+
+                    'from_status' =>
+                        null,
+
+                    'to_status' =>
+                        'pending',
+
+                    'remarks' =>
+                        'Request created.',
+                ]);
+
+
+            return $serviceRequest;
+        }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REDIRECT
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()
+        ->route(
+            'operations.requests.show',
+            $serviceRequest
+        )
+        ->with(
+            'success',
+            'Request submitted successfully.'
+        );
+}
 
     /*
     |--------------------------------------------------------------------------
