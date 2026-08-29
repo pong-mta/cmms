@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+
 class ServiceRequest extends Model
 {
     protected $fillable = [
@@ -34,6 +35,8 @@ class ServiceRequest extends Model
         'approved_at',
         'assigned_at',
         'completed_at',
+
+        'request_type_id',
 
         'remarks',
     ];
@@ -125,4 +128,18 @@ class ServiceRequest extends Model
             'service_request_id'
         )->latest();
     }
+
+    /*
+|--------------------------------------------------------------------------
+| REQUEST TYPE
+|--------------------------------------------------------------------------
+*/
+
+public function requestType(): BelongsTo
+{
+    return $this->belongsTo(
+        RequestType::class,
+        'request_type_id'
+    );
+}
 }

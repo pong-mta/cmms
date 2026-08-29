@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             AssetCategorySeeder::class,
             MaintenanceTypeSeeder::class,
+            RequestTypeSeeder::class,
         ]);
     }
 }
