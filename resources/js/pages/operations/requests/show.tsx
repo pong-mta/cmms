@@ -137,7 +137,14 @@ interface ServiceRequest {
 
     request_code: string;
 
-    request_type: string;
+    request_type:
+    | string
+    | {
+          id: number;
+          code: string;
+          name: string;
+          category?: string | null;
+      };
     request_type_id?: number | null;
 
     requestType?: {
@@ -454,6 +461,12 @@ export default function ShowRequest({
     const head =
         isHead(currentUser);
 
+    const requestTypeName =
+    typeof request.request_type === 'object' &&
+    request.request_type !== null
+        ? request.request_type.name
+        : String(request.request_type ?? 'Request');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -746,9 +759,7 @@ export default function ShowRequest({
 
                             <p className="mt-1 text-sm text-slate-500">
 
-                                {formatStatus(
-                                    request.request_type,
-                                )}
+                                {requestTypeName}
 
                                 {' • '}
 
@@ -856,9 +867,7 @@ export default function ShowRequest({
                                             <FileText className="h-4 w-4" />
                                         }
                                         label="Request Type"
-                                        value={formatStatus(
-                                            request.request_type,
-                                        )}
+                                        value={requestTypeName}
                                     />
 
 
