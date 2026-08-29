@@ -131,13 +131,43 @@ export default function CreateRequest() {
 
                                     <option value="purchase">Purchase Request</option>
 
+                                    <option value="procurement">Procurement Request</option>
+
                                     <option value="service">Service Request</option>
+
+                                    <option value="maintenance">Maintenance Request</option>
+
+                                    <option value="repair">Repair Request</option>
 
                                     <option value="equipment">Equipment Request</option>
 
                                     <option value="vehicle">Vehicle Request</option>
 
                                     <option value="personnel">Personnel Request</option>
+
+                                    <option value="travel">Travel Request</option>
+
+                                    <option value="training">Training Request</option>
+
+                                    <option value="supply">Supply Request</option>
+
+                                    <option value="it_support">IT Support Request</option>
+
+                                    <option value="facility">Facility Request</option>
+
+                                    <option value="document">Document Request</option>
+
+                                    <option value="financial">Financial Request</option>
+
+                                    <option value="event">Event Request</option>
+
+                                    <option value="project">Project Request</option>
+
+                                    <option value="inspection">Inspection Request</option>
+
+                                    <option value="permit_clearance">Permit / Clearance Request</option>
+
+                                    <option value="assistance">Assistance Request</option>
 
                                     <option value="other">Other Request</option>
                                 </select>
