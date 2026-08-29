@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ClipboardList, Plus, Search } from 'lucide-react';
+import { ClipboardList, Eye, Plus, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -91,7 +91,7 @@ export default function RequestsIndex({ requests }: PageProps) {
                 {/* FILTERS */}
                 {/* ====================================================== */}
 
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 md:flex-row">
                         {/* Search */}
 
@@ -149,10 +149,10 @@ export default function RequestsIndex({ requests }: PageProps) {
                 {/* REQUEST TABLE */}
                 {/* ====================================================== */}
 
-                <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="border-b bg-slate-50">
+                            <thead className="border-b border-slate-200 bg-slate-50">
                                 <tr>
                                     <th className="px-5 py-3 text-xs font-semibold text-slate-500">Request</th>
 
@@ -167,13 +167,15 @@ export default function RequestsIndex({ requests }: PageProps) {
                                     <th className="px-5 py-3 text-xs font-semibold text-slate-500">Status</th>
 
                                     <th className="px-5 py-3 text-xs font-semibold text-slate-500">Date</th>
+
+                                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500">Action</th>
                                 </tr>
                             </thead>
 
                             <tbody className="divide-y divide-slate-100">
                                 {requests.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-16 text-center">
+                                        <td colSpan={8} className="px-5 py-16 text-center">
                                             <div className="flex flex-col items-center">
                                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
                                                     <ClipboardList className="h-6 w-6" />
@@ -188,17 +190,23 @@ export default function RequestsIndex({ requests }: PageProps) {
                                 ) : (
                                     requests.data.map((request) => (
                                         <tr key={request.id} className="transition hover:bg-slate-50">
+                                            {/* Request */}
+
                                             <td className="px-5 py-4">
                                                 <div>
                                                     <p className="text-xs font-semibold text-blue-600">{request.request_no}</p>
 
-                                                    <p className="mt-1 text-sm font-medium text-slate-800">{request.title}</p>
+                                                    <p className="mt-1 max-w-xs truncate text-sm font-medium text-slate-800">{request.title}</p>
                                                 </div>
                                             </td>
+
+                                            {/* Type */}
 
                                             <td className="px-5 py-4">
                                                 <span className="text-xs text-slate-600 capitalize">{request.type.replace(/_/g, ' ')}</span>
                                             </td>
+
+                                            {/* Department */}
 
                                             <td className="px-5 py-4">
                                                 <div>
@@ -210,20 +218,44 @@ export default function RequestsIndex({ requests }: PageProps) {
                                                 </div>
                                             </td>
 
+                                            {/* Requested By */}
+
                                             <td className="px-5 py-4">
                                                 <span className="text-xs text-slate-600">{request.user?.name ?? '—'}</span>
                                             </td>
+
+                                            {/* Priority */}
 
                                             <td className="px-5 py-4">
                                                 <PriorityBadge priority={request.priority} />
                                             </td>
 
+                                            {/* Status */}
+
                                             <td className="px-5 py-4">
                                                 <StatusBadge status={request.status} />
                                             </td>
 
+                                            {/* Date */}
+
                                             <td className="px-5 py-4">
                                                 <span className="text-xs text-slate-500">{formatDate(request.created_at)}</span>
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-5 py-4">
+                                                <div className="flex justify-end">
+                                                    <Link
+                                                        href={`/operations/requests/${request.id}`}
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                                                        title="View Request"
+                                                    >
+                                                        <Eye className="h-3.5 w-3.5" />
+
+                                                        <span>View</span>
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -237,7 +269,7 @@ export default function RequestsIndex({ requests }: PageProps) {
                     {/* ================================================== */}
 
                     {requests.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t px-5 py-4">
+                        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
                             <p className="text-xs text-slate-500">
                                 Showing <span className="font-medium">{requests.data.length}</span> of{' '}
                                 <span className="font-medium">{requests.total}</span> requests
@@ -278,10 +310,15 @@ export default function RequestsIndex({ requests }: PageProps) {
 function StatusBadge({ status }: { status: string }) {
     const styles: Record<string, string> = {
         draft: 'bg-slate-100 text-slate-600',
+
         submitted: 'bg-blue-50 text-blue-700',
+
         pending: 'bg-amber-50 text-amber-700',
+
         approved: 'bg-emerald-50 text-emerald-700',
+
         rejected: 'bg-red-50 text-red-700',
+
         completed: 'bg-green-50 text-green-700',
     };
 
@@ -303,8 +340,11 @@ function StatusBadge({ status }: { status: string }) {
 function PriorityBadge({ priority }: { priority: string }) {
     const styles: Record<string, string> = {
         low: 'bg-slate-100 text-slate-600',
+
         normal: 'bg-blue-50 text-blue-700',
+
         high: 'bg-orange-50 text-orange-700',
+
         urgent: 'bg-red-50 text-red-700',
     };
 
