@@ -133,7 +133,7 @@ export default function Register() {
 
     return (
         <>
-            <Head title="Create Account | CMMS">
+            <Head title="Create Account | Estancia">
                 <meta
                     name="description"
                     content="Create an account for the Computerized Maintenance Management System of the Municipality of Estancia, Iloilo."
@@ -269,7 +269,7 @@ export default function Register() {
                                     </div>
 
                                     <div>
-                                        <p className="text-[9px] font-semibold tracking-[0.18em] text-blue-600 uppercase">CMMS Account</p>
+                                        <p className="text-[9px] font-semibold tracking-[0.18em] text-blue-600 uppercase">LGU Account</p>
 
                                         <h2 className="text-lg font-bold tracking-tight text-slate-900 xl:text-xl">Create Account</h2>
                                     </div>
@@ -468,7 +468,7 @@ export default function Register() {
                                             Creating account...
                                         </>
                                     ) : (
-                                        'Create CMMS Account'
+                                        'Create LGU Account'
                                     )}
                                 </Button>
                             </form>

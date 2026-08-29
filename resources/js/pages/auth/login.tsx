@@ -48,7 +48,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     return (
         <>
-            <Head title="Login | CMMS">
+            <Head title="Login | Estancia">
                 <meta name="description" content="Login to the Computerized Maintenance Management System of the Municipality of Estancia, Iloilo." />
             </Head>
 
@@ -196,7 +196,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             <Building2 className="h-4 w-4" />
                                         </div>
 
-                                        <p className="text-[9px] font-bold tracking-[0.2em] text-blue-700 uppercase">CMMS Portal</p>
+                                        <p className="text-[9px] font-bold tracking-[0.2em] text-blue-700 uppercase">LGU Portal</p>
                                     </div>
 
                                     <h2 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h2>
@@ -301,7 +301,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             </>
                                         ) : (
                                             <>
-                                                Sign in to CMMS
+                                                Sign in
                                                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                             </>
                                         )}
