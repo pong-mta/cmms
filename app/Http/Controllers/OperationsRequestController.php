@@ -1084,6 +1084,7 @@ class OperationsRequestController extends Controller
             'department:id,name,code',
 
             'requestedBy:id,name,phone,department_id',
+            'requestedBy.roles:id,name',
 
             'assignedDepartment:id,name,code',
 
@@ -1208,60 +1209,60 @@ class OperationsRequestController extends Controller
 
 
         /*
-|--------------------------------------------------------------------------
-| REVIEW AUTHORIZATION
-|--------------------------------------------------------------------------
-|
-| Normal request:
-| Staff → Supervisor → Head
-|
-| If the requester is already the supervisor:
-| Supervisor → Head
-|
-*/
+        |--------------------------------------------------------------------------
+        | REVIEW AUTHORIZATION
+        |--------------------------------------------------------------------------
+        |
+        | Normal request:
+        | Staff → Supervisor → Head
+        |
+        | If the requester is already the supervisor:
+        | Supervisor → Head
+        |
+        */
 
-$isSupervisor =
-    $this->userIsSupervisor($user);
+        $isSupervisor =
+            $this->userIsSupervisor($user);
 
-$requesterIsSupervisor =
-    $serviceRequest->requestedBy
-        ? $this->userIsSupervisor(
+        $requesterIsSupervisor =
             $serviceRequest->requestedBy
-        )
-        : false;
+                ? $this->userIsSupervisor(
+                    $serviceRequest->requestedBy
+                )
+                : false;
 
-$isHead =
-    $this->userIsHead($user);
-
-
-/*
-|--------------------------------------------------------------------------
-| NORMAL SUPERVISOR REVIEW
-|--------------------------------------------------------------------------
-*/
-
-$canReviewAsSupervisor =
-    $isSupervisor &&
-    ! $requesterIsSupervisor;
+        $isHead =
+            $this->userIsHead($user);
 
 
-/*
-|--------------------------------------------------------------------------
-| HEAD MAY REVIEW SUPERVISOR'S OWN REQUEST
-|--------------------------------------------------------------------------
-*/
+        /*
+        |--------------------------------------------------------------------------
+        | NORMAL SUPERVISOR REVIEW
+        |--------------------------------------------------------------------------
+        */
 
-$canReviewAsHead =
-    $isHead &&
-    $requesterIsSupervisor;
+        $canReviewAsSupervisor =
+            $isSupervisor &&
+            ! $requesterIsSupervisor;
 
 
-abort_unless(
-    $canReviewAsSupervisor ||
-    $canReviewAsHead,
-    403,
-    'You are not authorized to review this request.'
-);
+        /*
+        |--------------------------------------------------------------------------
+        | HEAD MAY REVIEW SUPERVISOR'S OWN REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        $canReviewAsHead =
+            $isHead &&
+            $requesterIsSupervisor;
+
+
+        abort_unless(
+            $canReviewAsSupervisor ||
+            $canReviewAsHead,
+            403,
+            'You are not authorized to review this request.'
+        );
 
         /*
         |--------------------------------------------------------------------------
