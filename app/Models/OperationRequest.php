@@ -20,6 +20,9 @@ class OperationRequest extends Model
         'description',
         'priority',
         'status',
+
+        'workflow_id',
+        'current_workflow_step_id',
     ];
 
     /*

@@ -1,7 +1,13 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Clock3, FileText, Package, UserRound } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Building2, CalendarDays, Check, CheckCircle2, Clock3, FileText, Package, RotateCcw, UserRound, XCircle } from 'lucide-react';
+
+/*
+|--------------------------------------------------------------------------
+| TYPES
+|--------------------------------------------------------------------------
+*/
 
 interface Department {
     id: number;
@@ -9,9 +15,17 @@ interface Department {
     code: string;
 }
 
+interface Role {
+    id: number;
+    name: string;
+}
+
 interface User {
     id: number;
     name: string;
+    department_id?: number | null;
+    department?: Department | null;
+    roles?: Role[];
 }
 
 interface PurchaseRequestItem {
@@ -32,6 +46,18 @@ interface PurchaseRequest {
     items: PurchaseRequestItem[];
 }
 
+interface WorkflowStep {
+    id: number;
+    step_order: number;
+    name: string;
+    code: string;
+    department_id: number | null;
+    role_id: number | null;
+    assignment_type: string;
+    action: string;
+    description?: string | null;
+}
+
 interface OperationRequest {
     id: number;
     request_no: string;
@@ -49,20 +75,35 @@ interface OperationRequest {
     user?: User | null;
     department?: Department | null;
 
-    /*
-    |--------------------------------------------------------------------------
-    | IMPORTANT
-    |--------------------------------------------------------------------------
-    | Laravel serializes the Eloquent relationship as purchase_request.
-    |--------------------------------------------------------------------------
-    */
-
     purchase_request?: PurchaseRequest | null;
+
+    workflow?: {
+        id: number;
+        name: string;
+        code: string;
+        version: number;
+    } | null;
+
+    current_workflow_step?: WorkflowStep | null;
+}
+
+interface AuthProps {
+    user: User | null;
 }
 
 interface PageProps {
     request: OperationRequest;
+
+    auth: {
+        user: User | null;
+    };
 }
+
+/*
+|--------------------------------------------------------------------------
+| BREADCRUMBS
+|--------------------------------------------------------------------------
+*/
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -74,6 +115,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '#',
     },
 ];
+
+/*
+|--------------------------------------------------------------------------
+| STATUS CONFIG
+|--------------------------------------------------------------------------
+*/
 
 const statusConfig: Record<
     string,
@@ -113,6 +160,12 @@ const statusConfig: Record<
     },
 };
 
+/*
+|--------------------------------------------------------------------------
+| PRIORITY CONFIG
+|--------------------------------------------------------------------------
+*/
+
 const priorityConfig: Record<
     string,
     {
@@ -141,6 +194,12 @@ const priorityConfig: Record<
     },
 };
 
+/*
+|--------------------------------------------------------------------------
+| REQUEST TYPE LABELS
+|--------------------------------------------------------------------------
+*/
+
 const requestTypeLabels: Record<string, string> = {
     general: 'General Request',
     purchase: 'Purchase Request',
@@ -165,6 +224,12 @@ const requestTypeLabels: Record<string, string> = {
     assistance: 'Assistance Request',
     other: 'Other Request',
 };
+
+/*
+|--------------------------------------------------------------------------
+| HELPERS
+|--------------------------------------------------------------------------
+*/
 
 function formatCurrency(value: number | string): string {
     return new Intl.NumberFormat('en-PH', {
@@ -192,7 +257,13 @@ function formatDateTime(date: string): string {
     }).format(new Date(date));
 }
 
-export default function ShowRequest({ request }: PageProps) {
+/*
+|--------------------------------------------------------------------------
+| COMPONENT
+|--------------------------------------------------------------------------
+*/
+
+export default function ShowRequest({ request, auth }: PageProps) {
     /*
     |--------------------------------------------------------------------------
     | REQUEST DATA
@@ -209,10 +280,6 @@ export default function ShowRequest({ request }: PageProps) {
     |--------------------------------------------------------------------------
     | PURCHASE REQUEST
     |--------------------------------------------------------------------------
-    |
-    | IMPORTANT:
-    | Laravel returns the relationship as purchase_request.
-    |
     */
 
     const purchaseRequest = request.purchase_request ?? null;
@@ -220,6 +287,106 @@ export default function ShowRequest({ request }: PageProps) {
     const items = purchaseRequest?.items ?? [];
 
     const totalEstimatedCost = items.reduce((total, item) => total + Number(item.estimated_amount ?? 0), 0);
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENT USER
+    |--------------------------------------------------------------------------
+    */
+
+    const currentUser = auth?.user ?? null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENT WORKFLOW STEP
+    |--------------------------------------------------------------------------
+    */
+
+    const currentStep = request.current_workflow_step ?? null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | AUTHORIZATION FOR UI
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT:
+    | This only controls visibility.
+    |
+    | The Laravel controller remains the real
+    | authorization/security layer.
+    |
+    */
+
+    const isSameDepartment = !!currentUser && !!request.department && Number(currentUser.department_id) === Number(request.department.id);
+
+    const isDepartmentHead = !!currentUser?.roles?.some((role) => role.name === 'department_head');
+
+    const canReviewDepartment =
+        request.status === 'pending' &&
+        currentStep?.code === 'DEPARTMENT_HEAD_REVIEW' &&
+        currentStep?.assignment_type === 'requesting_department' &&
+        isSameDepartment &&
+        isDepartmentHead;
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACTION HANDLERS
+    |--------------------------------------------------------------------------
+    */
+
+    function approveRequest() {
+        if (!canReviewDepartment) {
+            return;
+        }
+
+        if (!confirm('Approve this Purchase Request and forward it to the next workflow step?')) {
+            return;
+        }
+
+        router.post(
+            `/operations/requests/${request.id}/approve`,
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function returnRequest() {
+        if (!canReviewDepartment) {
+            return;
+        }
+
+        if (!confirm('Return this request to the previous workflow step?')) {
+            return;
+        }
+
+        router.post(
+            `/operations/requests/${request.id}/return`,
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
+    }
+
+    function rejectRequest() {
+        if (!canReviewDepartment) {
+            return;
+        }
+
+        if (!confirm('Reject this Purchase Request?')) {
+            return;
+        }
+
+        router.post(
+            `/operations/requests/${request.id}/reject`,
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -259,6 +426,59 @@ export default function ShowRequest({ request }: PageProps) {
                 </div>
 
                 {/* ====================================================== */}
+                {/* DEPARTMENT HEAD ACTION PANEL */}
+                {/* ====================================================== */}
+
+                {canReviewDepartment && (
+                    <section className="w-full overflow-hidden rounded-xl border border-blue-200 bg-blue-50/50 shadow-sm">
+                        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+                                        <FileText className="h-4 w-4" />
+                                    </div>
+
+                                    <div>
+                                        <h2 className="text-sm font-semibold text-slate-900">Department Head Review</h2>
+
+                                        <p className="mt-0.5 text-xs text-slate-500">This request is awaiting your review.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <button
+                                    type="button"
+                                    onClick={returnRequest}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Return
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={rejectRequest}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                >
+                                    <XCircle className="h-3.5 w-3.5" />
+                                    Reject
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={approveRequest}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                                >
+                                    <Check className="h-3.5 w-3.5" />
+                                    Approve & Forward
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* ====================================================== */}
                 {/* REQUEST SUMMARY */}
                 {/* ====================================================== */}
 
@@ -284,10 +504,6 @@ export default function ShowRequest({ request }: PageProps) {
                             </div>
                         </div>
                     </div>
-
-                    {/* ================================================== */}
-                    {/* REQUESTER */}
-                    {/* ================================================== */}
 
                     <div className="grid w-full gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
                         <div>
@@ -353,15 +569,11 @@ export default function ShowRequest({ request }: PageProps) {
                                 </div>
 
                                 <div className="grid gap-6 p-6 md:grid-cols-2">
-                                    {/* Purpose */}
-
                                     <div>
                                         <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Purpose</p>
 
                                         <p className="mt-2 text-sm leading-6 font-medium text-slate-700">{purchaseRequest.purpose}</p>
                                     </div>
-
-                                    {/* Requested Date */}
 
                                     <div>
                                         <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Requested Date</p>
@@ -372,8 +584,6 @@ export default function ShowRequest({ request }: PageProps) {
                                             <span className="text-sm font-medium text-slate-700">{formatDate(purchaseRequest.requested_date)}</span>
                                         </div>
                                     </div>
-
-                                    {/* Justification */}
 
                                     <div className="md:col-span-2">
                                         <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Justification</p>
@@ -408,10 +618,6 @@ export default function ShowRequest({ request }: PageProps) {
 
                                 {items.length > 0 ? (
                                     <>
-                                        {/* ================================================== */}
-                                        {/* DESKTOP TABLE */}
-                                        {/* ================================================== */}
-
                                         <div className="hidden overflow-x-auto lg:block">
                                             <table className="w-full">
                                                 <thead className="border-b border-slate-200 bg-slate-50">
@@ -482,10 +688,6 @@ export default function ShowRequest({ request }: PageProps) {
                                                 </tfoot>
                                             </table>
                                         </div>
-
-                                        {/* ================================================== */}
-                                        {/* MOBILE ITEMS */}
-                                        {/* ================================================== */}
 
                                         <div className="divide-y divide-slate-100 lg:hidden">
                                             {items.map((item, index) => (
@@ -577,13 +779,9 @@ export default function ShowRequest({ request }: PageProps) {
 
                         <div className="p-6">
                             <div className="relative">
-                                {/* Vertical Line */}
-
                                 <div className="absolute top-3 left-3 h-[calc(100%-24px)] w-px bg-slate-200" />
 
-                                {/* ================================================== */}
                                 {/* SUBMITTED */}
-                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white ring-4 ring-white">
@@ -597,35 +795,33 @@ export default function ShowRequest({ request }: PageProps) {
                                     </div>
                                 </div>
 
-                                {/* ================================================== */}
                                 {/* DEPARTMENT REVIEW */}
-                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div
                                         className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                                            request.status === 'approved' || request.status === 'completed'
-                                                ? 'bg-emerald-500 text-white'
-                                                : 'border-2 border-slate-200 bg-white'
+                                            request.current_workflow_step?.code === 'DEPARTMENT_HEAD_REVIEW'
+                                                ? 'border-2 border-blue-500 bg-blue-50 text-blue-600'
+                                                : request.status === 'completed'
+                                                  ? 'bg-emerald-500 text-white'
+                                                  : 'border-2 border-slate-200 bg-white'
                                         }`}
                                     >
-                                        {(request.status === 'approved' || request.status === 'completed') && (
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                        )}
+                                        {request.status === 'completed' && <CheckCircle2 className="h-3.5 w-3.5" />}
                                     </div>
 
                                     <div className="pb-8">
-                                        <p className="text-xs font-semibold text-slate-800">Department Review</p>
+                                        <p className="text-xs font-semibold text-slate-800">Department Head Review</p>
 
                                         <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                                            {request.status === 'submitted' ? 'Awaiting department approval.' : 'Department review.'}
+                                            {currentStep?.code === 'DEPARTMENT_HEAD_REVIEW'
+                                                ? 'Awaiting department head approval.'
+                                                : 'Department review.'}
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* ================================================== */}
                                 {/* PROCESSING */}
-                                {/* ================================================== */}
 
                                 <div className="relative flex gap-4">
                                     <div
@@ -646,7 +842,7 @@ export default function ShowRequest({ request }: PageProps) {
                                         </p>
 
                                         <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                                            {request.status === 'completed' ? 'Request completed.' : 'Will begin after approval.'}
+                                            {request.status === 'completed' ? 'Request completed.' : 'Will begin after department approval.'}
                                         </p>
                                     </div>
                                 </div>

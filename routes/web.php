@@ -58,6 +58,21 @@ Route::middleware(['auth'])->group(function () {
         'show',
     ])->name('operations.requests.show');
 
+    Route::post(
+        '/operations/requests/{operationRequest}/approve',
+        [OperationRequestController::class, 'approve']
+    )->name('operations.requests.approve');
+
+    Route::post(
+        '/operations/requests/{operationRequest}/return',
+        [OperationRequestController::class, 'returnRequest']
+    )->name('operations.requests.return');
+
+    Route::post(
+        '/operations/requests/{operationRequest}/reject',
+        [OperationRequestController::class, 'reject']
+    )->name('operations.requests.reject');
+
 });
 
 require __DIR__ . '/settings.php';
