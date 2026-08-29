@@ -73,23 +73,15 @@ class OperationRequestController extends Controller
     | REQUEST VISIBILITY
     |--------------------------------------------------------------------------
     |
-    | System administrators can see everything.
+    | SYSTEM ADMIN
+    |     -> sees everything
     |
-    | Other users can see:
+    | NORMAL USER
+    |     -> sees requests they submitted
+    |     -> sees requests currently assigned to their
+    |        department + role through the workflow
     |
-    | A. Requests they submitted.
-    |
-    | B. Requests currently assigned to them through
-    |    the current workflow step.
-    |
-    | IMPORTANT:
-    |
-    | Draft / Returned requests must NOT appear in the
-    | workflow department's queue.
-    |
-    | Rejected requests must NOT appear in the
-    | workflow department's queue.
-    |
+    |--------------------------------------------------------------------------
     */
 
     if (!$isSystemAdmin) {
@@ -101,12 +93,20 @@ class OperationRequestController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | A. REQUESTS SUBMITTED BY THE USER
+            | A. REQUESTS CREATED BY THE USER
             |--------------------------------------------------------------------------
             |
-            | The requester can always see their own request,
-            | including Draft, Returned, Pending, Approved,
-            | Rejected, and Completed requests.
+            | Requesters can see their own requests regardless
+            | of status.
+            |
+            | This allows the requester to see:
+            |
+            | draft
+            | pending
+            | returned
+            | rejected
+            | approved
+            | completed
             |
             */
 
@@ -120,13 +120,12 @@ class OperationRequestController extends Controller
             | B. REQUESTS CURRENTLY ASSIGNED TO THE USER
             |--------------------------------------------------------------------------
             |
-            | Only active workflow requests can appear here.
+            | This branch is for workflow participants.
             |
-            | Draft / Returned:
-            |     NOT visible to workflow departments.
+            | IMPORTANT:
             |
-            | Rejected:
-            |     NOT visible to workflow departments.
+            | Draft / returned / rejected requests must NOT
+            | appear in another department's workflow queue.
             |
             */
 
@@ -134,6 +133,24 @@ class OperationRequestController extends Controller
                 $user,
                 $userRoleIds
             ) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | ONLY ACTIVE WORKFLOW REQUESTS
+                |--------------------------------------------------------------------------
+                |
+                | A workflow participant should only see requests
+                | that are currently moving through the workflow.
+                |
+                */
+
+                $query->whereIn(
+                    'operation_requests.status',
+                    [
+                        'pending',
+                        'approved',
+                    ]
+                );
 
                 /*
                 |--------------------------------------------------------------------------
@@ -147,7 +164,7 @@ class OperationRequestController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | CURRENT WORKFLOW STEP MUST BELONG TO THIS USER
+                | CURRENT WORKFLOW STEP
                 |--------------------------------------------------------------------------
                 */
 
@@ -163,42 +180,74 @@ class OperationRequestController extends Controller
                         | REQUESTING DEPARTMENT
                         |--------------------------------------------------------------------------
                         |
-                        | The request stays with its original department.
-                        |
                         | Example:
                         |
                         | Engineering Supervisor
-                        |        ↓
+                        |          ↓
                         | Engineering Department Head
+                        |
+                        | The request belongs to Engineering.
+                        |
+                        | Therefore only Engineering users with the
+                        | appropriate role can see this step.
                         |
                         */
 
-                        $stepQuery->where(function ($assignmentQuery) use (
+                        $stepQuery->where(function (
+                            $assignmentQuery
+                        ) use (
                             $user,
                             $userRoleIds
                         ) {
 
-                            $assignmentQuery->where(
-                                'assignment_type',
-                                'requesting_department'
-                            )
-                            ->where(function ($roleQuery) use (
-                                $userRoleIds
-                            ) {
+                            $assignmentQuery
+                                ->where(
+                                    'assignment_type',
+                                    'requesting_department'
+                                )
 
-                                $roleQuery->whereNull(
-                                    'role_id'
-                                );
+                                /*
+                                |--------------------------------------------------------------------------
+                                | REQUEST DEPARTMENT MUST MATCH USER DEPARTMENT
+                                |--------------------------------------------------------------------------
+                                */
 
-                                if (!empty($userRoleIds)) {
+                                ->where(
+                                    'operation_requests.department_id',
+                                    $user->department_id
+                                )
 
-                                    $roleQuery->orWhereIn(
-                                        'role_id',
-                                        $userRoleIds
+                                /*
+                                |--------------------------------------------------------------------------
+                                | ROLE
+                                |--------------------------------------------------------------------------
+                                |
+                                | If role_id is NULL:
+                                |     any role in the department can act.
+                                |
+                                | If role_id is specified:
+                                |     user must have that role.
+                                |
+                                */
+
+                                ->where(function (
+                                    $roleQuery
+                                ) use (
+                                    $userRoleIds
+                                ) {
+
+                                    $roleQuery->whereNull(
+                                        'role_id'
                                     );
-                                }
-                            });
 
+                                    if (!empty($userRoleIds)) {
+
+                                        $roleQuery->orWhereIn(
+                                            'role_id',
+                                            $userRoleIds
+                                        );
+                                    }
+                                });
                         });
 
                         /*
@@ -206,13 +255,18 @@ class OperationRequestController extends Controller
                         | FIXED DEPARTMENT
                         |--------------------------------------------------------------------------
                         |
-                        | The workflow step itself determines the department.
-                        |
                         | Example:
                         |
                         | Engineering Department Head
-                        |        ↓
+                        |          ↓
                         | Budget Office
+                        |
+                        | The request still belongs to Engineering.
+                        |
+                        | BUT the current workflow step belongs to
+                        | Budget Office.
+                        |
+                        | Therefore Budget users can see it.
                         |
                         */
 
@@ -228,10 +282,24 @@ class OperationRequestController extends Controller
                                     'assignment_type',
                                     'fixed'
                                 )
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | WORKFLOW STEP DEPARTMENT MUST MATCH USER
+                                |--------------------------------------------------------------------------
+                                */
+
                                 ->where(
                                     'department_id',
                                     $user->department_id
                                 )
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | ROLE
+                                |--------------------------------------------------------------------------
+                                */
+
                                 ->where(function (
                                     $roleQuery
                                 ) use (
@@ -253,22 +321,6 @@ class OperationRequestController extends Controller
                         });
                     }
                 );
-
-                /*
-                |--------------------------------------------------------------------------
-                | IMPORTANT
-                |--------------------------------------------------------------------------
-                |
-                | DO NOT put:
-                |
-                | operation_requests.department_id = user.department_id
-                |
-                | here.
-                |
-                | That would prevent fixed departments such as Budget
-                | from receiving Engineering requests.
-                |
-                */
             });
         });
     }
