@@ -949,6 +949,7 @@ public function edit(
     */
 
     $operationRequest->load([
+        'user',
         'department',
         'purchaseRequest.items',
     ]);
