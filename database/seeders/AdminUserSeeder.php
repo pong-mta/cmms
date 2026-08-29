@@ -21,68 +21,55 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        $departments = [];
+        $hrmoDepartment = Department::where(
+            'code',
+            'HRMO'
+        )->first();
 
-        $departmentCodes = [
-            'HRMO',
-            'ENGINEERING',
-            'BUDGET',
-            'GSO',
-            'ACCOUNTING',
-            'MAYOR',
-        ];
+        $engineeringDepartment = Department::where(
+            'code',
+            'ENGINEERING'
+        )->first();
 
-        foreach ($departmentCodes as $code) {
-            $department = Department::where(
-                'code',
-                $code
-            )->first();
+        $budgetDepartment = Department::where(
+            'code',
+            'BUDGET'
+        )->first();
 
-            if (!$department) {
-                throw new \RuntimeException(
-                    "Department [{$code}] does not exist. Run DepartmentSeeder first."
-                );
-            }
+        $accountingDepartment = Department::where(
+            'code',
+            'ACCOUNTING'
+        )->first();
 
-            $departments[$code] = $department;
-        }
+        $gsoDepartment = Department::where(
+            'code',
+            'GSO'
+        )->first();
+
+        $mayorDepartment = Department::where(
+            'code',
+            'MAYOR'
+        )->first();
 
         /*
         |--------------------------------------------------------------------------
-        | ROLES
+        | VERIFY DEPARTMENTS
         |--------------------------------------------------------------------------
         */
 
-        $roleNames = [
-            'system_admin',
-            'department_head',
-            'maintenance_supervisor',
-            'technician',
-            'gso',
-            'staff',
-            'budget_officer',
-            'accounting_officer',
-            'procurement_officer',
-            'bac_secretariat',
-            'bac_member',
-            'supply_officer',
-            'property_officer',
-            'inspector',
-            'mayor',
+        $requiredDepartments = [
+            'HRMO' => $hrmoDepartment,
+            'ENGINEERING' => $engineeringDepartment,
+            'BUDGET' => $budgetDepartment,
+            'ACCOUNTING' => $accountingDepartment,
+            'GSO' => $gsoDepartment,
+            'MAYOR' => $mayorDepartment,
         ];
 
-        $roles = Role::whereIn(
-            'name',
-            $roleNames
-        )->pluck(
-            'id',
-            'name'
-        );
-
-        foreach ($roleNames as $roleName) {
-            if (!$roles->has($roleName)) {
+        foreach ($requiredDepartments as $code => $department) {
+            if (!$department) {
                 throw new \RuntimeException(
-                    "Role [{$roleName}] does not exist. Run RoleSeeder first."
+                    "Department [{$code}] does not exist. Run DepartmentSeeder first."
                 );
             }
         }
@@ -93,9 +80,51 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        $password = Hash::make(
-            '12345678'
-        );
+        $password = Hash::make('12345678');
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROLES
+        |--------------------------------------------------------------------------
+        */
+
+        $roles = Role::whereIn('name', [
+            'system_admin',
+            'department_head',
+            'maintenance_supervisor',
+            'gso',
+            'technician',
+            'staff',
+            'budget_officer',
+            'accounting_officer',
+            'mayor',
+        ])->pluck('id', 'name');
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY ROLES
+        |--------------------------------------------------------------------------
+        */
+
+        $requiredRoles = [
+            'system_admin',
+            'department_head',
+            'maintenance_supervisor',
+            'gso',
+            'technician',
+            'staff',
+            'budget_officer',
+            'accounting_officer',
+            'mayor',
+        ];
+
+        foreach ($requiredRoles as $roleName) {
+            if (!$roles->has($roleName)) {
+                throw new \RuntimeException(
+                    "Role [{$roleName}] does not exist. Run RoleSeeder first."
+                );
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -110,7 +139,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'PONG ADMIN',
                 'phone_verified' => true,
-                'department_id' => $departments['HRMO']->id,
+                'department_id' => $hrmoDepartment->id,
                 'password' => $password,
             ]
         );
@@ -123,6 +152,10 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         | ENGINEERING DEPARTMENT HEAD
         |--------------------------------------------------------------------------
+        |
+        | This user approves requests submitted by the
+        | Engineering Department.
+        |
         */
 
         $engineeringHead = User::updateOrCreate(
@@ -130,9 +163,9 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014663',
             ],
             [
-                'name' => 'Municipal Engineer',
+                'name' => 'Engineering Department Head',
                 'phone_verified' => true,
-                'department_id' => $departments['ENGINEERING']->id,
+                'department_id' => $engineeringDepartment->id,
                 'password' => $password,
             ]
         );
@@ -145,6 +178,9 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         | MAINTENANCE SUPERVISOR
         |--------------------------------------------------------------------------
+        |
+        | Requester for Engineering Department.
+        |
         */
 
         $supervisor = User::updateOrCreate(
@@ -154,7 +190,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Maintenance Supervisor',
                 'phone_verified' => true,
-                'department_id' => $departments['ENGINEERING']->id,
+                'department_id' => $engineeringDepartment->id,
                 'password' => $password,
             ]
         );
@@ -165,7 +201,7 @@ class AdminUserSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | MAINTENANCE TECHNICIAN
+        | TECHNICIAN
         |--------------------------------------------------------------------------
         */
 
@@ -176,7 +212,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Maintenance Technician',
                 'phone_verified' => true,
-                'department_id' => $departments['ENGINEERING']->id,
+                'department_id' => $engineeringDepartment->id,
                 'password' => $password,
             ]
         );
@@ -187,7 +223,7 @@ class AdminUserSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | MAINTENANCE STAFF
+        | STAFF
         |--------------------------------------------------------------------------
         */
 
@@ -198,7 +234,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Maintenance Staff',
                 'phone_verified' => true,
-                'department_id' => $departments['ENGINEERING']->id,
+                'department_id' => $engineeringDepartment->id,
                 'password' => $password,
             ]
         );
@@ -211,6 +247,14 @@ class AdminUserSeeder extends Seeder
         |--------------------------------------------------------------------------
         | BUDGET OFFICER
         |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | This account belongs to the MUNICIPAL BUDGET OFFICE.
+        |
+        | Previously this was incorrectly assigned to the
+        | Engineering Department.
+        |
         */
 
         $budgetOfficer = User::updateOrCreate(
@@ -218,9 +262,9 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014667',
             ],
             [
-                'name' => 'Municipal Budget Officer',
+                'name' => 'Budget Office Officer',
                 'phone_verified' => true,
-                'department_id' => $departments['BUDGET']->id,
+                'department_id' => $budgetDepartment->id,
                 'password' => $password,
             ]
         );
@@ -231,8 +275,11 @@ class AdminUserSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | GENERAL SERVICES OFFICER
+        | GSO / PURCHASING
         |--------------------------------------------------------------------------
+        |
+        | This account belongs to the General Services Office.
+        |
         */
 
         $gso = User::updateOrCreate(
@@ -242,7 +289,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'General Services Officer',
                 'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
+                'department_id' => $gsoDepartment->id,
                 'password' => $password,
             ]
         );
@@ -262,9 +309,9 @@ class AdminUserSeeder extends Seeder
                 'phone' => '09156014669',
             ],
             [
-                'name' => 'Municipal Accounting Officer',
+                'name' => 'Accounting Office Officer',
                 'phone_verified' => true,
-                'department_id' => $departments['ACCOUNTING']->id,
+                'department_id' => $accountingDepartment->id,
                 'password' => $password,
             ]
         );
@@ -275,7 +322,7 @@ class AdminUserSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | MAYOR
+        | MUNICIPAL MAYOR
         |--------------------------------------------------------------------------
         */
 
@@ -286,155 +333,13 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Municipal Mayor',
                 'phone_verified' => true,
-                'department_id' => $departments['MAYOR']->id,
+                'department_id' => $mayorDepartment->id,
                 'password' => $password,
             ]
         );
 
         $mayor->roles()->sync([
             $roles['mayor'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | PROCUREMENT OFFICER
-        |--------------------------------------------------------------------------
-        |
-        | For now, this test account is assigned to GSO because we have not
-        | yet created a separate organizational-unit/committee table for BAC.
-        |
-        | We will fix this properly when we implement workflow participants.
-        |
-        */
-
-        $procurementOfficer = User::updateOrCreate(
-            [
-                'phone' => '09156014671',
-            ],
-            [
-                'name' => 'Procurement Officer',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $procurementOfficer->roles()->sync([
-            $roles['procurement_officer'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | BAC SECRETARIAT
-        |--------------------------------------------------------------------------
-        */
-
-        $bacSecretariat = User::updateOrCreate(
-            [
-                'phone' => '09156014672',
-            ],
-            [
-                'name' => 'BAC Secretariat',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $bacSecretariat->roles()->sync([
-            $roles['bac_secretariat'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | BAC MEMBER
-        |--------------------------------------------------------------------------
-        */
-
-        $bacMember = User::updateOrCreate(
-            [
-                'phone' => '09156014673',
-            ],
-            [
-                'name' => 'BAC Member',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $bacMember->roles()->sync([
-            $roles['bac_member'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | SUPPLY OFFICER
-        |--------------------------------------------------------------------------
-        */
-
-        $supplyOfficer = User::updateOrCreate(
-            [
-                'phone' => '09156014674',
-            ],
-            [
-                'name' => 'Supply Officer',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $supplyOfficer->roles()->sync([
-            $roles['supply_officer'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | PROPERTY OFFICER
-        |--------------------------------------------------------------------------
-        */
-
-        $propertyOfficer = User::updateOrCreate(
-            [
-                'phone' => '09156014675',
-            ],
-            [
-                'name' => 'Property Officer',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $propertyOfficer->roles()->sync([
-            $roles['property_officer'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | INSPECTOR
-        |--------------------------------------------------------------------------
-        |
-        | Temporarily assigned to GSO for testing.
-        | We will later introduce proper committee/unit assignment.
-        |
-        */
-
-        $inspector = User::updateOrCreate(
-            [
-                'phone' => '09156014676',
-            ],
-            [
-                'name' => 'Inspection and Acceptance Officer',
-                'phone_verified' => true,
-                'department_id' => $departments['GSO']->id,
-                'password' => $password,
-            ]
-        );
-
-        $inspector->roles()->sync([
-            $roles['inspector'],
         ]);
     }
 }
