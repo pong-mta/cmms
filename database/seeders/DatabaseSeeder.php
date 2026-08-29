@@ -12,9 +12,6 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             RoleSeeder::class,
             AdminUserSeeder::class,
-            AssetCategorySeeder::class,
-            MaintenanceTypeSeeder::class,
-            RequestTypeSeeder::class,
         ]);
     }
 }
