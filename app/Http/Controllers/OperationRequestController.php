@@ -14,22 +14,343 @@ use Inertia\Response;
 class OperationRequestController extends Controller
 {
     /**
-     * Display all requests.
+     * Display requests visible to the authenticated user.
+     *
+     * A normal user can see:
+     *
+     * 1. Requests they personally submitted.
+     *
+     * 2. Requests whose CURRENT workflow step is assigned
+     *    to their department and role.
+     *
+     * A system administrator can see everything.
      */
     public function index(Request $request): Response
     {
-        $requests = OperationRequest::with([
-            'user',
-            'department',
-            'purchaseRequest',
-        ])
+        $user = $request->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | USER ROLES
+        |--------------------------------------------------------------------------
+        */
+
+        $userRoleIds = $user->roles()
+            ->pluck('roles.id')
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | SYSTEM ADMIN
+        |--------------------------------------------------------------------------
+        */
+
+        $isSystemAdmin = $user->roles()
+            ->where('name', 'system_admin')
+            ->exists();
+
+        /*
+        |--------------------------------------------------------------------------
+        | BASE QUERY
+        |--------------------------------------------------------------------------
+        */
+
+        $query = OperationRequest::query()
+            ->with([
+                'user',
+                'department',
+                'purchaseRequest',
+                'workflow',
+                'currentWorkflowStep',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | REQUEST VISIBILITY
+        |--------------------------------------------------------------------------
+        |
+        | System administrators can see everything.
+        |
+        | Other users can only see:
+        |
+        | A. Requests they submitted.
+        |
+        | OR
+        |
+        | B. Requests currently assigned to them through
+        |    the current workflow step.
+        |
+        */
+
+        if (!$isSystemAdmin) {
+
+            $query->where(function ($query) use (
+                $user,
+                $userRoleIds
+            ) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | A. REQUESTS SUBMITTED BY THE USER
+                |--------------------------------------------------------------------------
+                */
+
+                $query->where(
+                    'operation_requests.user_id',
+                    $user->id
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | B. REQUESTS CURRENTLY ASSIGNED TO THE USER
+                |--------------------------------------------------------------------------
+                */
+
+                $query->orWhere(function ($query) use (
+                    $user,
+                    $userRoleIds
+                ) {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REQUEST MUST HAVE A CURRENT WORKFLOW STEP
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $query->whereNotNull(
+                        'operation_requests.current_workflow_step_id'
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REQUESTING DEPARTMENT / FIXED DEPARTMENT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $query->whereHas(
+                        'currentWorkflowStep',
+                        function ($stepQuery) use (
+                            $user,
+                            $userRoleIds
+                        ) {
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | REQUESTING DEPARTMENT
+                            |--------------------------------------------------------------------------
+                            |
+                            | Example:
+                            |
+                            | Engineering Supervisor
+                            |          ↓
+                            | Engineering Department Head
+                            |
+                            | Only users in Engineering with the
+                            | required role can see this step.
+                            |
+                            */
+
+                            $stepQuery->where(function ($assignmentQuery) use (
+                                $user,
+                                $userRoleIds
+                            ) {
+
+                                $assignmentQuery->where(
+                                    'assignment_type',
+                                    'requesting_department'
+                                )
+                                ->where(function ($roleQuery) use (
+                                    $userRoleIds
+                                ) {
+
+                                    /*
+                                    |------------------------------------------------------
+                                    | Step does not require a specific role
+                                    |------------------------------------------------------
+                                    */
+
+                                    $roleQuery->whereNull('role_id');
+
+                                    /*
+                                    |------------------------------------------------------
+                                    | OR user's role matches the workflow step
+                                    |------------------------------------------------------
+                                    */
+
+                                    if (!empty($userRoleIds)) {
+                                        $roleQuery->orWhereIn(
+                                            'role_id',
+                                            $userRoleIds
+                                        );
+                                    }
+                                });
+
+                            });
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | FIXED DEPARTMENT
+                            |--------------------------------------------------------------------------
+                            |
+                            | Example:
+                            |
+                            | Engineering Department Head
+                            |          ↓
+                            | Budget Office
+                            |
+                            | Only Budget Office users with the
+                            | required role can see this step.
+                            |
+                            */
+
+                            $stepQuery->orWhere(function ($assignmentQuery) use (
+                                $user,
+                                $userRoleIds
+                            ) {
+
+                                $assignmentQuery
+                                    ->where(
+                                        'assignment_type',
+                                        'fixed'
+                                    )
+                                    ->where(
+                                        'department_id',
+                                        $user->department_id
+                                    )
+                                    ->where(function ($roleQuery) use (
+                                        $userRoleIds
+                                    ) {
+
+                                        /*
+                                        |--------------------------------------------------
+                                        | Step does not require a specific role
+                                        |--------------------------------------------------
+                                        */
+
+                                        $roleQuery->whereNull('role_id');
+
+                                        /*
+                                        |--------------------------------------------------
+                                        | OR user's role matches the workflow step
+                                        |--------------------------------------------------
+                                        */
+
+                                        if (!empty($userRoleIds)) {
+                                            $roleQuery->orWhereIn(
+                                                'role_id',
+                                                $userRoleIds
+                                            );
+                                        }
+                                    });
+
+                            });
+                        }
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REQUESTING DEPARTMENT MUST MATCH USER DEPARTMENT
+                    |--------------------------------------------------------------------------
+                    |
+                    | This prevents a user from another department from seeing
+                    | a requesting_department step.
+                    |
+                    */
+
+                    $query->where(
+                        'operation_requests.department_id',
+                        $user->department_id
+                    );
+                });
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEARCH
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('search')) {
+
+            $search = $request->input('search');
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where(
+                    'request_no',
+                    'like',
+                    "%{$search}%"
+                )
+                ->orWhere(
+                    'title',
+                    'like',
+                    "%{$search}%"
+                )
+                ->orWhere(
+                    'type',
+                    'like',
+                    "%{$search}%"
+                );
+
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS FILTER
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('status')) {
+
+            $query->where(
+                'status',
+                $request->input('status')
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRIORITY FILTER
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('priority')) {
+
+            $query->where(
+                'priority',
+                $request->input('priority')
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAGINATION
+        |--------------------------------------------------------------------------
+        */
+
+        $requests = $query
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('operations/requests/index', [
-            'requests' => $requests,
-        ]);
+        /*
+        |--------------------------------------------------------------------------
+        | RESPONSE
+        |--------------------------------------------------------------------------
+        */
+
+        return Inertia::render(
+            'operations/requests/index',
+            [
+                'requests' => $requests,
+            ]
+        );
     }
 
     /**
@@ -37,7 +358,9 @@ class OperationRequestController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('operations/requests/create');
+        return Inertia::render(
+            'operations/requests/create'
+        );
     }
 
     /**
@@ -54,16 +377,20 @@ class OperationRequestController extends Controller
             'currentWorkflowStep',
         ]);
 
-        return Inertia::render('operations/requests/show', [
-            'request' => $operationRequest,
-        ]);
+        return Inertia::render(
+            'operations/requests/show',
+            [
+                'request' => $operationRequest,
+            ]
+        );
     }
 
     /**
      * Store a new request.
      */
-    public function store(Request $request): RedirectResponse
-    {
+    public function store(
+        Request $request
+    ): RedirectResponse {
         /*
         |--------------------------------------------------------------------------
         | COMMON VALIDATION
@@ -94,7 +421,10 @@ class OperationRequestController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->input('type') === 'purchase') {
+        if (
+            $request->input('type') === 'purchase'
+        ) {
+
             $purchaseValidated = $request->validate([
                 'purpose' => [
                     'required',
@@ -168,6 +498,7 @@ class OperationRequestController extends Controller
         */
 
         if (!$user->department_id) {
+
             return back()
                 ->withErrors([
                     'department' =>
@@ -183,7 +514,10 @@ class OperationRequestController extends Controller
         */
 
         $operationRequest = DB::transaction(
-            function () use ($validated, $user) {
+            function () use (
+                $validated,
+                $user
+            ) {
 
                 /*
                 |--------------------------------------------------------------------------
@@ -197,7 +531,9 @@ class OperationRequestController extends Controller
                     $validated['type'] === 'purchase'
                     && !empty($validated['purpose'])
                 ) {
-                    $title = $validated['purpose'];
+
+                    $title =
+                        $validated['purpose'];
                 }
 
                 /*
@@ -208,14 +544,26 @@ class OperationRequestController extends Controller
 
                 $workflow = null;
 
-                if ($validated['type'] === 'purchase') {
+                if (
+                    $validated['type'] === 'purchase'
+                ) {
+
                     $workflow = Workflow::query()
-                        ->where('code', 'PURCHASE_REQUEST')
-                        ->where('is_active', true)
-                        ->orderByDesc('version')
+                        ->where(
+                            'code',
+                            'PURCHASE_REQUEST'
+                        )
+                        ->where(
+                            'is_active',
+                            true
+                        )
+                        ->orderByDesc(
+                            'version'
+                        )
                         ->first();
 
                     if (!$workflow) {
+
                         throw new \RuntimeException(
                             'No active Purchase Request workflow is configured.'
                         );
@@ -230,20 +578,29 @@ class OperationRequestController extends Controller
                 | Step 1 = Request Submission
                 | Step 2 = Department Head Review
                 |
-                | Once the requester submits the request, we start at
-                | Department Head Review.
-                |
                 */
 
                 $currentWorkflowStep = null;
 
                 if ($workflow) {
-                    $currentWorkflowStep = $workflow->steps()
-                        ->where('step_order', '>', 1)
-                        ->orderBy('step_order')
-                        ->first();
 
-                    if (!$currentWorkflowStep) {
+                    $currentWorkflowStep =
+                        $workflow
+                            ->steps()
+                            ->where(
+                                'step_order',
+                                '>',
+                                1
+                            )
+                            ->orderBy(
+                                'step_order'
+                            )
+                            ->first();
+
+                    if (
+                        !$currentWorkflowStep
+                    ) {
+
                         throw new \RuntimeException(
                             'The Purchase Request workflow has no review step.'
                         );
@@ -256,37 +613,39 @@ class OperationRequestController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                $operationRequest = OperationRequest::create([
-                    'request_no' =>
-                        $this->generateRequestNumber(),
+                $operationRequest =
+                    OperationRequest::create([
+                        'request_no' =>
+                            $this->generateRequestNumber(),
 
-                    'user_id' =>
-                        $user->id,
+                        'user_id' =>
+                            $user->id,
 
-                    'department_id' =>
-                        $user->department_id,
+                        'department_id' =>
+                            $user->department_id,
 
-                    'type' =>
-                        $validated['type'],
+                        'type' =>
+                            $validated['type'],
 
-                    'title' =>
-                        $title,
+                        'title' =>
+                            $title,
 
-                    'description' =>
-                        $validated['description'] ?? null,
+                        'description' =>
+                            $validated['description']
+                            ?? null,
 
-                    'priority' =>
-                        $validated['priority'],
+                        'priority' =>
+                            $validated['priority'],
 
-                    'status' =>
-                        'pending',
+                        'status' =>
+                            'pending',
 
-                    'workflow_id' =>
-                        $workflow?->id,
+                        'workflow_id' =>
+                            $workflow?->id,
 
-                    'current_workflow_step_id' =>
-                        $currentWorkflowStep?->id,
-                ]);
+                        'current_workflow_step_id' =>
+                            $currentWorkflowStep?->id,
+                    ]);
 
                 /*
                 |--------------------------------------------------------------------------
@@ -297,6 +656,7 @@ class OperationRequestController extends Controller
                 if (
                     $validated['type'] === 'purchase'
                 ) {
+
                     $purchaseRequest =
                         $operationRequest
                             ->purchaseRequest()
@@ -321,16 +681,21 @@ class OperationRequestController extends Controller
                         $validated['items']
                         as $item
                     ) {
+
                         $quantity =
-                            (float) $item['quantity'];
+                            (float)
+                            $item['quantity'];
 
                         $unitCost =
                             (float)
-                            $item['estimated_unit_cost'];
+                            $item[
+                                'estimated_unit_cost'
+                            ];
 
                         $estimatedAmount =
                             round(
-                                $quantity * $unitCost,
+                                $quantity *
+                                $unitCost,
                                 2
                             );
 
@@ -404,10 +769,12 @@ class OperationRequestController extends Controller
             $operationRequest->currentWorkflowStep;
 
         if (!$currentStep) {
-            return back()->withErrors([
-                'workflow' =>
-                    'This request does not have an active workflow step.',
-            ]);
+
+            return back()
+                ->withErrors([
+                    'workflow' =>
+                        'This request does not have an active workflow step.',
+                ]);
         }
 
         /*
@@ -423,6 +790,7 @@ class OperationRequestController extends Controller
                 $currentStep
             )
         ) {
+
             abort(
                 403,
                 'You are not authorized to approve this request.'
@@ -435,63 +803,88 @@ class OperationRequestController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        DB::transaction(function () use (
-            $operationRequest,
-            $currentStep
-        ) {
-            $nextStep =
-                $operationRequest
-                    ->workflow
-                    ->steps()
-                    ->where(
-                        'step_order',
-                        '>',
-                        $currentStep->step_order
-                    )
-                    ->orderBy('step_order')
-                    ->first();
+        DB::transaction(
+            function () use (
+                $operationRequest,
+                $currentStep
+            ) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | NO NEXT STEP
-            |--------------------------------------------------------------------------
-            */
+                $nextStep =
+                    $operationRequest
+                        ->workflow
+                        ->steps()
+                        ->where(
+                            'step_order',
+                            '>',
+                            $currentStep->step_order
+                        )
+                        ->orderBy(
+                            'step_order'
+                        )
+                        ->first();
 
-            if (!$nextStep) {
+                /*
+                |--------------------------------------------------------------------------
+                | NO NEXT STEP
+                |--------------------------------------------------------------------------
+                */
+
+                if (!$nextStep) {
+
+                    $operationRequest->update([
+                        'status' =>
+                            'completed',
+
+                        'current_workflow_step_id' =>
+                            null,
+                    ]);
+
+                    return;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | COMPLETED STEP
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $nextStep->code ===
+                    'COMPLETED'
+                ) {
+
+                    $operationRequest->update([
+                        'status' =>
+                            'completed',
+
+                        'current_workflow_step_id' =>
+                            $nextStep->id,
+                    ]);
+
+                    return;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | MOVE TO NEXT STEP
+                |--------------------------------------------------------------------------
+                */
+
                 $operationRequest->update([
-                    'status' => 'completed',
-                    'current_workflow_step_id' => null,
+                    'status' =>
+                        'pending',
+
+                    'current_workflow_step_id' =>
+                        $nextStep->id,
                 ]);
-
-                return;
             }
+        );
 
-            /*
-            |--------------------------------------------------------------------------
-            | COMPLETED STEP
-            |--------------------------------------------------------------------------
-            */
-
-            if ($nextStep->code === 'COMPLETED') {
-                $operationRequest->update([
-                    'status' => 'completed',
-                    'current_workflow_step_id' => $nextStep->id,
-                ]);
-
-                return;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | MOVE TO NEXT STEP
-            |--------------------------------------------------------------------------
-            */
-
-            $operationRequest->update([
-                'status' => 'pending',
-                'current_workflow_step_id' => $nextStep->id,
-            ]);
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
             ->route(
@@ -517,6 +910,12 @@ class OperationRequestController extends Controller
             abort(403);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD CURRENT STEP
+        |--------------------------------------------------------------------------
+        */
+
         $operationRequest->load([
             'currentWorkflowStep',
         ]);
@@ -525,10 +924,12 @@ class OperationRequestController extends Controller
             $operationRequest->currentWorkflowStep;
 
         if (!$currentStep) {
-            return back()->withErrors([
-                'workflow' =>
-                    'This request does not have an active workflow step.',
-            ]);
+
+            return back()
+                ->withErrors([
+                    'workflow' =>
+                        'This request does not have an active workflow step.',
+                ]);
         }
 
         /*
@@ -544,6 +945,7 @@ class OperationRequestController extends Controller
                 $currentStep
             )
         ) {
+
             abort(
                 403,
                 'You are not authorized to reject this request.'
@@ -557,8 +959,15 @@ class OperationRequestController extends Controller
         */
 
         $operationRequest->update([
-            'status' => 'rejected',
+            'status' =>
+                'rejected',
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
             ->route(
@@ -584,6 +993,12 @@ class OperationRequestController extends Controller
             abort(403);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD WORKFLOW
+        |--------------------------------------------------------------------------
+        */
+
         $operationRequest->load([
             'workflow',
             'currentWorkflowStep',
@@ -593,10 +1008,12 @@ class OperationRequestController extends Controller
             $operationRequest->currentWorkflowStep;
 
         if (!$currentStep) {
-            return back()->withErrors([
-                'workflow' =>
-                    'This request does not have an active workflow step.',
-            ]);
+
+            return back()
+                ->withErrors([
+                    'workflow' =>
+                        'This request does not have an active workflow step.',
+                ]);
         }
 
         /*
@@ -612,6 +1029,7 @@ class OperationRequestController extends Controller
                 $currentStep
             )
         ) {
+
             abort(
                 403,
                 'You are not authorized to return this request.'
@@ -633,14 +1051,18 @@ class OperationRequestController extends Controller
                     '<',
                     $currentStep->step_order
                 )
-                ->orderByDesc('step_order')
+                ->orderByDesc(
+                    'step_order'
+                )
                 ->first();
 
         if (!$previousStep) {
-            return back()->withErrors([
-                'workflow' =>
-                    'There is no previous workflow step.',
-            ]);
+
+            return back()
+                ->withErrors([
+                    'workflow' =>
+                        'There is no previous workflow step.',
+                ]);
         }
 
         /*
@@ -650,9 +1072,18 @@ class OperationRequestController extends Controller
         */
 
         $operationRequest->update([
-            'status' => 'draft',
-            'current_workflow_step_id' => $previousStep->id,
+            'status' =>
+                'draft',
+
+            'current_workflow_step_id' =>
+                $previousStep->id,
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
             ->route(
@@ -674,19 +1105,23 @@ class OperationRequestController extends Controller
         OperationRequest $operationRequest,
         WorkflowStep $step
     ): bool {
+
         /*
         |--------------------------------------------------------------------------
-        | DEPARTMENT
+        | REQUESTING DEPARTMENT
         |--------------------------------------------------------------------------
         */
 
         if (
-            $step->assignment_type === 'requesting_department'
+            $step->assignment_type ===
+            'requesting_department'
         ) {
+
             if (
                 (int) $user->department_id !==
                 (int) $operationRequest->department_id
             ) {
+
                 return false;
             }
         }
@@ -698,13 +1133,16 @@ class OperationRequestController extends Controller
         */
 
         if (
-            $step->assignment_type === 'fixed'
+            $step->assignment_type ===
+            'fixed'
         ) {
+
             if (
                 !$step->department_id ||
                 (int) $user->department_id !==
                 (int) $step->department_id
             ) {
+
                 return false;
             }
         }
@@ -716,6 +1154,7 @@ class OperationRequestController extends Controller
         */
 
         if ($step->role_id) {
+
             $userHasRole =
                 $user->roles()
                     ->where(
@@ -738,6 +1177,7 @@ class OperationRequestController extends Controller
     private function generateRequestNumber(): string
     {
         do {
+
             $number =
                 'REQ-' .
                 now()->format('Y') .
@@ -751,6 +1191,7 @@ class OperationRequestController extends Controller
                     '0',
                     STR_PAD_LEFT
                 );
+
         } while (
             OperationRequest::where(
                 'request_no',
