@@ -73,12 +73,6 @@ class OperationRequestController extends Controller
                 'max:50',
             ],
 
-            'title' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
             'description' => [
                 'nullable',
                 'string',
@@ -172,7 +166,8 @@ class OperationRequestController extends Controller
         if (!$user->department_id) {
             return back()
                 ->withErrors([
-                    'department' => 'Your account is not assigned to a department.',
+                    'department' =>
+                        'Your account is not assigned to a department.',
                 ])
                 ->withInput();
         }
@@ -181,102 +176,139 @@ class OperationRequestController extends Controller
         |--------------------------------------------------------------------------
         | DATABASE TRANSACTION
         |--------------------------------------------------------------------------
-        |
-        | Everything must succeed together.
-        |
         */
 
-        $operationRequest = DB::transaction(function () use (
-            $validated,
-            $user
-        ) {
-            /*
-            |--------------------------------------------------------------------------
-            | CREATE COMMON REQUEST
-            |--------------------------------------------------------------------------
-            */
+        $operationRequest = DB::transaction(
+            function () use ($validated, $user) {
 
-            $operationRequest = OperationRequest::create([
-                'request_no' => $this->generateRequestNumber(),
+                /*
+                |--------------------------------------------------------------------------
+                | REQUEST TITLE
+                |--------------------------------------------------------------------------
+                |
+                | Purchase Requests use the purpose as their title.
+                | Other request types receive a generic title for now.
+                |
+                */
 
-                'user_id' => $user->id,
+                $title = 'General Request';
 
-                'department_id' => $user->department_id,
+                if (
+                    $validated['type'] === 'purchase'
+                    && !empty($validated['purpose'])
+                ) {
+                    $title = $validated['purpose'];
+                }
 
-                'type' => $validated['type'],
+                /*
+                |--------------------------------------------------------------------------
+                | CREATE OPERATION REQUEST
+                |--------------------------------------------------------------------------
+                */
 
-                'title' => $validated['title'],
+                $operationRequest =
+                    OperationRequest::create([
+                        'request_no' =>
+                            $this->generateRequestNumber(),
 
-                'description' => $validated['description'] ?? null,
+                        'user_id' =>
+                            $user->id,
 
-                'priority' => $validated['priority'],
+                        'department_id' =>
+                            $user->department_id,
 
-                'status' => 'submitted',
-            ]);
+                        'type' =>
+                            $validated['type'],
 
-            /*
-            |--------------------------------------------------------------------------
-            | PURCHASE REQUEST
-            |--------------------------------------------------------------------------
-            */
+                        'title' =>
+                            $title,
 
-            if ($validated['type'] === 'purchase') {
+                        'description' =>
+                            $validated['description'] ?? null,
 
-                $purchaseRequest =
-                    $operationRequest->purchaseRequest()->create([
-                        'purpose' => $validated['purpose'],
+                        'priority' =>
+                            $validated['priority'],
 
-                        'justification' =>
-                            $validated['justification'],
-
-                        'requested_date' =>
-                            $validated['requested_date'],
+                        'status' =>
+                            'submitted',
                     ]);
 
                 /*
                 |--------------------------------------------------------------------------
-                | PURCHASE ITEMS
+                | CREATE PURCHASE REQUEST
                 |--------------------------------------------------------------------------
                 */
 
-                foreach ($validated['items'] as $item) {
+                if (
+                    $validated['type'] === 'purchase'
+                ) {
 
-                    $quantity = (float) $item['quantity'];
+                    $purchaseRequest =
+                        $operationRequest
+                            ->purchaseRequest()
+                            ->create([
+                                'purpose' =>
+                                    $validated['purpose'],
 
-                    $unitCost =
-                        (float) $item['estimated_unit_cost'];
+                                'justification' =>
+                                    $validated['justification'],
 
-                    $estimatedAmount =
-                        round(
-                            $quantity * $unitCost,
-                            2
-                        );
+                                'requested_date' =>
+                                    $validated['requested_date'],
+                            ]);
 
-                    $purchaseRequest->items()->create([
-                        'description' =>
-                            $item['description'],
+                    /*
+                    |--------------------------------------------------------------------------
+                    | CREATE PURCHASE ITEMS
+                    |--------------------------------------------------------------------------
+                    */
 
-                        'quantity' =>
-                            $quantity,
+                    foreach (
+                        $validated['items']
+                        as $item
+                    ) {
 
-                        'unit' =>
-                            $item['unit'],
+                        $quantity =
+                            (float) $item['quantity'];
 
-                        'estimated_unit_cost' =>
-                            $unitCost,
+                        $unitCost =
+                            (float)
+                            $item['estimated_unit_cost'];
 
-                        'estimated_amount' =>
-                            $estimatedAmount,
-                    ]);
+                        $estimatedAmount =
+                            round(
+                                $quantity * $unitCost,
+                                2
+                            );
+
+                        $purchaseRequest
+                            ->items()
+                            ->create([
+                                'description' =>
+                                    $item['description'],
+
+                                'quantity' =>
+                                    $quantity,
+
+                                'unit' =>
+                                    $item['unit'],
+
+                                'estimated_unit_cost' =>
+                                    $unitCost,
+
+                                'estimated_amount' =>
+                                    $estimatedAmount,
+                            ]);
+                    }
                 }
-            }
 
-            return $operationRequest;
-        });
+                return $operationRequest;
+            }
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT TO REQUEST DETAILS
+        | REDIRECT TO SHOW PAGE
         |--------------------------------------------------------------------------
         */
 
@@ -302,10 +334,13 @@ class OperationRequestController extends Controller
                 now()->format('Y') .
                 '-' .
                 str_pad(
-                    (string) random_int(1, 999999),
+                    (string) random_int(
+                        1,
+                        999999
+                    ),
                     6,
                     '0',
-                    STR_PAD_LEFT,
+                    STR_PAD_LEFT
                 );
         } while (
             OperationRequest::where(
