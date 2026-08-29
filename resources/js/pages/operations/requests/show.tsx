@@ -143,13 +143,12 @@ interface ServiceRequest {
         name?: string;
         category?: string | null;
     } | null;
-
     request_type_id?: number | null;
 
     requestType?: {
-        id?: number;
-        code?: string;
-        name?: string;
+        id: number;
+        code: string;
+        name: string;
         category?: string | null;
     } | null;
 
@@ -256,6 +255,9 @@ function isSupervisor(
         roles.includes('supervisor') ||
         roles.includes(
             'department_supervisor',
+        ) ||
+        roles.includes(
+            'maintenance_supervisor',
         )
     );
 }
@@ -279,11 +281,8 @@ function isHead(
 function formatStatus(
     status?: unknown,
 ): string {
-    if (
-        status === null ||
-        status === undefined ||
-        status === ''
-    ) {
+
+    if (status === null || status === undefined || status === '') {
         return '—';
     }
 
@@ -301,27 +300,32 @@ function formatStatus(
 function getRequestTypeName(
     request: ServiceRequest,
 ): string {
-    const relationship = request.requestType;
-
-    if (relationship?.name) {
-        return String(relationship.name);
+    if (request.requestType?.name) {
+        return String(request.requestType.name);
     }
 
-    if (relationship?.code) {
-        return formatStatus(relationship.code);
+    if (request.requestType?.code) {
+        return formatStatus(request.requestType.code);
     }
 
-    const raw = request.request_type;
-
-    if (typeof raw === 'string') {
-        return formatStatus(raw);
+    if (typeof request.request_type === 'string') {
+        return formatStatus(request.request_type);
     }
 
-    if (raw && typeof raw === 'object') {
+    if (
+        request.request_type &&
+        typeof request.request_type === 'object'
+    ) {
+        const type = request.request_type as {
+            name?: unknown;
+            code?: unknown;
+            category?: unknown;
+        };
+
         return formatStatus(
-            raw.name ??
-            raw.code ??
-            raw.category,
+            type.name ??
+            type.code ??
+            type.category,
         );
     }
 
