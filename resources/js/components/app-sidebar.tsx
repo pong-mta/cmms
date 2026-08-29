@@ -83,8 +83,30 @@ function getNavigation(): NavItem[] {
 
         {
             title: 'Requests',
-            url: '/operations/requests',
+            url: '#',
             icon: ClipboardList,
+            items: [
+                {
+                    title: 'All Requests',
+                    url: '/operations/requests',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'My Requests',
+                    url: '/operations/requests/my',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'Pending',
+                    url: '/operations/requests/pending',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'Completed',
+                    url: '/operations/requests/completed',
+                    icon: ClipboardList,
+                },
+            ],
         },
     ];
 }
