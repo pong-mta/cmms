@@ -51,4 +51,19 @@ class OperationRequest extends Model
             'operation_request_id'
         );
     }
+
+    public function workflow(): BelongsTo
+    {
+        return $this->belongsTo(
+            Workflow::class
+        );
+    }
+
+    public function currentWorkflowStep(): BelongsTo
+    {
+        return $this->belongsTo(
+            WorkflowStep::class,
+            'current_workflow_step_id'
+        );
+    }
 }
