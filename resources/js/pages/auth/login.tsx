@@ -103,9 +103,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             {/* Background Decoration */}
 
                             <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full border border-blue-400/10" />
-
                             <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full border border-blue-400/10" />
-
                             <div className="absolute top-24 right-10 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl" />
 
                             <div className="relative">
@@ -116,18 +114,18 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 </div>
 
                                 <p className="mt-7 text-[9px] font-semibold tracking-[0.25em] text-blue-400 uppercase xl:mt-10 xl:text-[10px]">
-                                    Municipal Operations
+                                    Municipality of Estancia
                                 </p>
 
                                 <h2 className="mt-2 text-3xl leading-tight font-bold tracking-tight xl:text-4xl">
-                                    Computerized
-                                    <span className="block text-blue-400">Maintenance</span>
-                                    <span className="block">Management</span>
+                                    Municipal
+                                    <span className="block text-blue-400">Operations</span>
+                                    <span className="block">Platform</span>
                                 </h2>
 
                                 <p className="mt-4 max-w-md text-xs leading-6 text-slate-300 xl:mt-6 xl:text-sm xl:leading-7">
-                                    A centralized platform for managing municipal assets, equipment, maintenance activities, work orders, and service
-                                    records.
+                                    A centralized platform for managing municipal operations, services, resources, personnel, assets, and field
+                                    activities.
                                 </p>
 
                                 {/* Features */}
@@ -138,7 +136,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-[11px] text-slate-300 xl:text-xs">Asset & Equipment Management</span>
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">Municipal Operations Management</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
@@ -146,7 +144,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-[11px] text-slate-300 xl:text-xs">Preventive Maintenance</span>
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">Services & Resource Management</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
@@ -154,7 +152,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                                         </div>
 
-                                        <span className="text-[11px] text-slate-300 xl:text-xs">Work Order Management</span>
+                                        <span className="text-[11px] text-slate-300 xl:text-xs">Integrated Field Operations</span>
                                     </div>
                                 </div>
                             </div>
