@@ -1,14 +1,12 @@
 <?php
 
-use App\Http\Controllers\AssetController;
-use App\Http\Controllers\MaintenanceRecordController;
-use App\Http\Controllers\MaintenanceRequestController;
-use App\Http\Controllers\PreventiveMaintenanceScheduleController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OperationsRequestController;
+use App\Http\Controllers\OperationRequestController;
+
 
 
 Route::get('/', function () {
@@ -32,6 +30,15 @@ Route::middleware(['auth'])->group(function () {
         'dashboard',
         [DashboardController::class, 'index']
     )->name('dashboard');
+
+
+    //REQUEST
+  
+    Route::get(
+        '/operations/requests',
+        [OperationRequestController::class, 'index']
+    )->name('operations.requests.index');
+
 });
 
 require __DIR__ . '/settings.php';
