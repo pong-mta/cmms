@@ -373,16 +373,28 @@ export default function ShowRequest({ request, auth }: PageProps) {
     |--------------------------------------------------------------------------
     */
 
-    const isSameDepartment = !!currentUser && !!request.department && Number(currentUser.department_id) === Number(request.department.id);
+    /*
+|--------------------------------------------------------------------------
+| WORKFLOW ACTION AUTHORIZATION
+|--------------------------------------------------------------------------
+*/
 
-    const isDepartmentHead = !!currentUser?.roles?.some((role) => role.name === 'department_head');
+    const userRoleIds = currentUser?.roles?.map((role) => Number(role.id)) ?? [];
 
-    const canReviewDepartment =
+    const isSameRequestingDepartment = !!currentUser && !!request.department && Number(currentUser.department_id) === Number(request.department.id);
+
+    const isCurrentStepDepartment =
+        !!currentUser && !!currentStep?.department_id && Number(currentUser.department_id) === Number(currentStep.department_id);
+
+    const hasRequiredRole = !currentStep?.role_id || userRoleIds.includes(Number(currentStep.role_id));
+
+    const canActOnCurrentStep =
         request.status === 'pending' &&
-        currentStep?.code === 'DEPARTMENT_HEAD_REVIEW' &&
-        currentStep?.assignment_type === 'requesting_department' &&
-        isSameDepartment &&
-        isDepartmentHead;
+        !!currentUser &&
+        !!currentStep &&
+        ((currentStep.assignment_type === 'requesting_department' && isSameRequestingDepartment) ||
+            (currentStep.assignment_type === 'fixed' && isCurrentStepDepartment)) &&
+        hasRequiredRole;
 
     const canEditReturnedRequest = request.status === 'draft' && !!currentUser && Number(request.user?.id) === Number(currentUser.id);
     const canResubmitReturnedRequest = canEditReturnedRequest;
@@ -394,7 +406,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
     */
 
     function approveRequest() {
-        if (!canReviewDepartment) {
+        if (!canActOnCurrentStep) {
             return;
         }
 
@@ -418,7 +430,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
     */
 
     function openReturnModal() {
-        if (!canReviewDepartment) {
+        if (!canActOnCurrentStep) {
             return;
         }
 
@@ -433,7 +445,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
     */
 
     function openRejectModal() {
-        if (!canReviewDepartment) {
+        if (!canActOnCurrentStep) {
             return;
         }
 
@@ -571,7 +583,7 @@ export default function ShowRequest({ request, auth }: PageProps) {
                 {/* DEPARTMENT HEAD ACTION PANEL */}
                 {/* ====================================================== */}
 
-                {canReviewDepartment && (
+                {canActOnCurrentStep && (
                     <section className="w-full overflow-hidden rounded-xl border border-blue-200 bg-blue-50/50 shadow-sm">
                         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -581,9 +593,9 @@ export default function ShowRequest({ request, auth }: PageProps) {
                                     </div>
 
                                     <div>
-                                        <h2 className="text-sm font-semibold text-slate-900">Department Head Review</h2>
+                                        <h2 className="text-sm font-semibold text-slate-900">{currentStep?.name ?? 'Workflow Review'}</h2>
 
-                                        <p className="mt-0.5 text-xs text-slate-500">This request is awaiting your review.</p>
+                                        <p className="mt-0.5 text-xs text-slate-500">This request is awaiting your action.</p>
                                     </div>
                                 </div>
                             </div>
