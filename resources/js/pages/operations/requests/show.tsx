@@ -428,6 +428,11 @@ export default function ShowRequest({ request, auth }: PageProps) {
             {
                 preserveScroll: true,
 
+                onSuccess: () => {
+                    setActionModal(null);
+                    setReason('');
+                },
+
                 onFinish: () => {
                     setProcessing(false);
                 },
